@@ -58,3 +58,5 @@ https://stackoverflow.com/q/18666014/8069403
 
 ---> Astropy  chiu2 method for error estimation
 https://image-registration.readthedocs.io/en/latest/
+
+
