@@ -14,200 +14,260 @@
 #     name: py3
 # ---
 
-# +
-from glob import glob
-import os
-import re
-from tabulate import tabulate
+# # Strechable Corr
 
-from collections import defaultdict
-from itertools import groupby
-
-from skimage import io
 import numpy as np
 import matplotlib.pylab as plt
-# -
+from skimage import io
+from skimage import img_as_uint
 
-DATA_DIR = "./images"
-IMAGE_EXT = "TIF"
+# ## Search and select images
 
+# %load_ext autoreload
+# %autoreload 2
+import filetools as ft
+import os
+from tabulate import tabulate
 
-# ## List all images and parse filename
+data_dir = "./images"
 
-def parse_path(img_path, verbose=False):
-    info = defaultdict(str)
-    info['path'] = img_path
-    # pre - processing
-    img_path = img_path.replace(DATA_DIR, '')
-    img_path = img_path.replace(IMAGE_EXT, '').strip('.')
-    img_path = img_path.replace("\\", "/") # for windows
-    img_path = img_path.strip("/")
-
-    parts = img_path.split("/")
-    if len(parts) != 3:
-        if verbose:
-            print("dir structure error:", parts)
-        info['msg'] += "dir structure error "
-        return info
-    
-    parts = [s.lower() for s in parts]
-    sample_name, step_name, image_name = parts
-
-    info['sample'] = sample_name
-    info['step_name'] = step_name
-
-    if not image_name.startswith(sample_name) or step_name not in image_name:
-        if verbose:
-            print('warning: no in prefix in filename', parts)
-        info['msg'] += "warning: no in prefix in filename "
-    
-    if 'u' in step_name:
-        info['direction'] = "unloading"
-    else:
-        info['direction'] = 'loading'
-    
-    strain = step_name.replace('u', '').replace('p', '.')
-    try:
-        info['applied_strain'] = float(strain)
-    except ValueError:
-        info['applied_strain'] = 0
-        
-    image_name = image_name.replace(sample_name, '')
-    image_name = image_name.replace(step_name, '')
-
-    image_name = image_name.replace('_', '')
-
-    img_pattern = re.compile( r'(u?)(\D*)(\d*)' )
-    matchs = re.findall(img_pattern, image_name)
-
-    if matchs:
-        m = matchs[0]
-        #info['direction'] = "unloading" if m[0] == 'u' else 'loading'
-        info['tag'] = m[1]
-        info['file_idx'] = int(m[-1])
-    else:
-        if verbose:
-            print("filename error:", parts)
-        info['msg'] += "filename error: " + parts
-
-    info['label'] = f'{sample_name} {step_name}'#' {image_name}'
-    return info
-
-
-def load_image(path):
-    """ returns 2d array
-    """
-    try:
-        I = io.imread(path)
-        # convert to grayscale if needed:
-        I = I.mean(axis=2) if I.ndim == 3 else I  
-    except FileNotFoundError:
-        print("File %s Not Found" % path)
-        I = None
-
-    return I
-
-
-# ## list all images
+# Sample list
+samples = os.listdir(data_dir)
+print(', '.join(samples))
 
 # +
-pattern = os.path.join(DATA_DIR, "**/*.%s" % IMAGE_EXT)
-all_path = glob(pattern, recursive=True)
+# Select a sample
+sample_name = 'HS2'
 
-images_info = []
-for img_path in all_path:
-    info = parse_path(img_path)
-    images_info.append(info)
-    #if info['msg']:
-    #    print(info)
+# List, select and sort loading steps
+sample_dir = os.path.join(data_dir, sample_name)
+steps = os.listdir(sample_dir)
+
+stepsinfo = [ft.parse_step_dir(step) for step in steps]
+
+steps = [info for info in stepsinfo
+         if info['direction'] == 'loading'
+         and not info['tag']]
+
+steps.sort(key=lambda x: x['strain'])
+
+# Get image path list
+
+def pick_onefile(path):
+    filename = os.listdir(path)[0]
+    return os.path.join(path, filename)
+
+image_list = [pick_onefile(os.path.join(sample_dir, step['stepname']))
+              for step in steps]
+
+steps = [{**info, 'img path': p}
+         for info, p in zip(steps, image_list)]
+
+# Print table
+print(' sample name:', sample_name)
+print(tabulate(steps, headers='keys'))
 # -
 
-samples = set(info['sample'] for info in images_info)
-print(samples)
-
-# ## Sample selection
+# ## Set output directory
 
 # +
-# Selection and sort
-sample = 'ss2'
-direction = 'loading'
+output_dir = "./output"
 
-selection = [info for info in images_info
-             if info['sample'] == sample
-             and info['direction'] == direction]
+output_path = os.path.join(output_dir, sample_name)
+ft.create_dir(output_path)
 
-groups = groupby(selection, key=lambda x:x['step_name'])
-
-# take first element for each step
-selection = [next(group) for key, group in groups]
-
-selection = sorted(selection, key=lambda x:x['applied_strain'])
-
-print("nbr images: ", len(selection))
+# + [markdown] toc-hr-collapsed=false
+# ## Export selected images
 # -
 
-# ### Show selected images
+image_dir = os.path.join(output_path, 'images')
+ft.create_dir(image_dir)
 
-# Show selected image
-show = input('show %i images? [no]'% len(selection))
-if show:
-    for info in selection:
-        I = load_image(info['path'])
-        plt.figure(figsize=(12, 6));
-        plt.title(info['label']);
-        plt.imshow(I);
+# Check image histogram
+image = ft.load_image(steps[1]['img path'])
+plt.hist(image.flatten(), bins=100);
+plt.xlabel('intensity value'); plt.ylabel('pixel counts');
 
-# ### Correlation
+# Rescale intensities
+intensity_high = 3900
+intensity_low = 100
 
 from strechablescorr import *
 
+# Export images
+for k, info in enumerate(steps):
+    image_filename = f"{k:03d}_{info['stepname']}.tiff"
+    image = ft.load_image(info['img path'])
+    image = colorize_image(image, intensity_low, intensity_high)
+    image = img_as_uint(image)
+    img_path = os.path.join(image_dir, image_filename)
+    io.imsave(img_path, image)
+    print(f'save {img_path}', ' '*10, end='\r')
+print('done', ' '*40)
 
-def displacement_graph(grid, shift_x, shift_y, info_I, info_J,
+# ## Test correlation
+
+# +
+# init the loop
+info_J = steps[0]
+J = ft.load_image( info_J['img path'] )
+
+# Define the grid
+grid = build_grid(J.shape, margin=100, grid_spacing=25)
+x, y = grid[0].flatten(), grid[1].flatten()
+
+I = J
+info_I = info_J
+
+info_J = steps[1]
+J = ft.load_image( info_J['img path'] )
+
+# Diff consecutive images
+shift_x, shift_y, errors = compute_shifts(I, J, grid, 
+                                          window_half_size=45)
+
+# Fit
+eps, residuals_x, residuals_y = bilinear_fit(x, y, shift_x, shift_y)
+# -
+
+print(eps)
+
+plt.imshow(residuals_y)
+plt.colorbar()
+
+
+def graph_field(ax, field, name):
+    color_limits = np.std(field)*5.
+    ax.imshow(field.reshape(grid[0].shape),
+              cmap='bwr',
+              clim=(-color_limits, +color_limits));
+    #ax.colorbar();
+    ax.set_title(name);
+
+
+ax = plt.subplot(1, 1, 1)
+graph_field(ax, shift_x, 'x')
+
+# ## Loop
+
+# +
+# init the loop
+info_J = steps[0]
+J = ft.load_image( info_J['img path'] )
+
+# Define the grid
+grid = build_grid(J.shape, margin=100, grid_spacing=50)
+x, y = grid[0].flatten(), grid[1].flatten()
+
+output_data = []
+
+# loop
+for k in range(1, len(steps)):
+    I = J
+    info_I = info_J
+    info_J = steps[k]
+    J = ft.load_image( info_J['img path'] )
+    img_name = info_J['stepname']
+    print(f"image {img_name}", end='\n')
+    
+    # Diff consecutive images
+    shift_x, shift_y, errors = compute_shifts(I, J, grid, 
+                                              window_half_size=45)
+    
+    
+    # Fit
+    eps, residuals_x, residuals_y = bilinear_fit(x, y, shift_x, shift_y)
+    
+    data_dict = {'eps':eps,
+                 'shift_x':shift_x,
+                 'shift_y':shift_y,
+                 'shift_error':errors,
+                 'residuals_x':residuals_x,
+                 'residuals_y':residuals_y,
+                 'info_I':info_I,
+                 'info_J':info_J
+                }
+    output_data.append(data_dict)
+    
+print('..done..')
+
+# +
+applied_strain = [step['strain'] for step in steps[1:]]
+
+delta_eps_x = np.array([d['eps'][0] for d in output_data])
+eps_x = np.cumsum(delta_eps_x)*100 # %
+delta_eps_y = np.array([d['eps'][1] for d in output_data])
+eps_y = np.cumsum(delta_eps_y)*100 # %
+
+plt.plot(applied_strain, eps_y, '-o');
+plt.xlabel('applied strain (%)');
+plt.ylabel('eps_yy (%)');
+
+plt.figure();
+plt.plot(applied_strain, eps_x, '-o');
+plt.xlabel('applied strain (%)');
+plt.ylabel('eps_xx (%)');
+# -
+
+# ## Create figures
+
+output_dir = os.path.join(output_path, 'displacement')
+create_dir(output_dir)
+
+for k, data in enumerate(output_data):
+    displacement_graph(grid, data, number=k,
+                       samplename=sample_name, fit=True,
+                       save=True, save_dir=output_dir)
+
+
+def displacement_graph(grid, data, samplename='',
                        save=False, number=None, tag=None, fit=False,
                        save_dir=None):
-    # grid, shift_x, shift_y, info_I, info_J
-    tagstr = f" ({tag})" if tag else ''
+
     
     if fit:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 10))
     else:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 5))
-        
-    title = f"{number:03d}  {info_I['label']} → {info_J['label']} {tagstr}"
+
+    tagstr = f" ({tag})" if tag else ''
+    numberstr = f'#{number:03d}' + ' '*5 if number is not None else ''
+    samplenamestr = 'sample: '+ samplename + ' '*5 if samplename else ''
+    title = f"{samplenamestr}{numberstr}{data['info_I']['stepname']} → {data['info_J']['stepname']} {tagstr}"
     fig.suptitle(title, fontsize=16)
 
+    # displacement X
     ax1.set_title('displacement x')
-    color_limits = np.std(shift_x)*2.5
-    pcm = ax1.pcolormesh(*grid, shift_x.reshape(grid[0].shape),
+    color_limits = np.std(data['shift_x'])*2.5
+    pcm = ax1.pcolormesh(*grid, data['shift_x'].reshape(grid[0].shape),
                          cmap='bwr',
                          vmin=-color_limits, vmax=+color_limits);
     ax1.set_ylim(ax1.get_ylim()[::-1]);
     ax1.set_xlabel("x (px)"); ax1.set_ylabel("y (px)");
     ax1.set_aspect('equal');
     fig.colorbar(pcm, ax=ax1)
-
-    color_limits = np.std(shift_y)*2.5
+    
+    # displacement Y
+    color_limits = np.std(data['shift_y'])*2.5
     ax2.set_title('displacement y')
-    ax2.pcolormesh(*grid, shift_y.reshape(grid[0].shape),
+    ax2.pcolormesh(*grid, data['shift_y'].reshape(grid[0].shape),
                    cmap='bwr',
                    vmin=-color_limits, vmax=+color_limits);
     fig.colorbar(pcm, ax=ax2);
     ax2.set_aspect('equal');
     ax2.set_xlabel("x (px)"); ax2.set_ylabel("y (px)");
     ax2.set_ylim(ax2.get_ylim()[::-1]); # reverse axis
-
+    
     # Fit
     if fit:
-        x = grid[0].flatten()
-        y = grid[1].flatten()
-        (eps_x, eps_y, eps_xy), residuals = bilinear_fit(x, y, shift_x, shift_y)
         text = f"""Least-square fit with a plane \n
-eps_xx = {eps_x*100:.3f}%
-eps_yy = {eps_y*100:.3f}%
-eps_xy = {eps_xy*100:.3f}%"""
+$\\varepsilon_{{xx}}$ = {data['eps'][0]*100:.3f}%
+$\\varepsilon_{{yy}}$ = {data['eps'][1]*100:.3f}%
+$\\varepsilon_{{xy}}$ = {data['eps'][2]*100:.3f}%"""
         ax3.text(.1, .4, text, fontsize=14)
         ax3.axis('off')
 
+        residuals = np.sqrt( data['residuals_x']**2 + data['residuals_y']**2 )
         color_limits = np.std(residuals)*4
         ax4.set_title(f'norm of residual displacement (px)  max:{np.max(residuals):.1f}px')
         pcm = ax4.pcolormesh(*grid, residuals.reshape(grid[0].shape),
@@ -216,12 +276,15 @@ eps_xy = {eps_xy*100:.3f}%"""
         fig.colorbar(pcm, ax=ax4);
         ax4.set_xlabel("x (px)"); ax4.set_ylabel("y (px)");
         ax4.set_ylim(ax4.get_ylim()[::-1]); # reverse axis
-
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    
     # Save
     if save:
-        numberstr = f"{number:03d}" if number else ''
+        assert save_dir is not None
+        numberstr = f'{number:03d}' if number is not None else ''
         tagstr = f"{tag}_" if tag else '_'
-        figfilename = f"{numberstr}{tagstr}{info_I['step_name']}-{info_J['step_name']}.png"
+        figfilename = f"{numberstr}{tagstr}{data['info_I']['stepname']}-{data['info_J']['stepname']}.png"
         
         output_path = os.path.join(save_dir, figfilename)
         print(figfilename, "saved in", output_path)
@@ -229,70 +292,3 @@ eps_xy = {eps_xy*100:.3f}%"""
         fig.savefig(output_path)
         
         plt.close()
-
-
-# !mkdir output
-
-# +
-OUTPUT_DIR = "./output"
-output_path = os.path.join(OUTPUT_DIR, sample)
-if not os.path.isdir(output_path):
-    os.mkdir(output_path)
-    print("create", output_path)
-    
-print('output dir:', output_path)
-
-# +
-# init the loop
-info_J = selection[0]
-J = load_image( info_J['path'] )
-
-# Define the grid
-grid = build_grid(J.shape, margin=100, grid_spacing=20)
-x, y = grid[0].flatten(), grid[1].flatten()
-
-#data = [{'image name':get_image_name(image_paths[0])}]
-shift_x_cumulative = np.zeros(x.shape)
-shift_y_cumulative = np.zeros(x.shape)
-
-# loop
-for k in range(1, len(selection)):
-    I = J
-    info_I = info_J
-    info_J = selection[k]
-    J = load_image( info_J['path'] )
-    img_name = info_J['label']
-    print(img_name+'...', end='\r')
-    
-    # Diff consecutive images
-    shift_x, shift_y, errors = compute_shifts(I, J, grid, 
-                                              window_half_size=45)
-    
-    
-    #mean_disp = np.mean( np.sqrt(shift_x**2 + shift_y**2) )
-    #eps, residuals = bilinear_fit(x, y, shift_x, shift_y)
-
-    displacement_graph(grid, shift_x, shift_y, info_I, info_J,
-                       save=True, save_dir=output_path,
-                       number=k, tag=None, fit=True)
-   
-    
-    #shift_x_cumulative += shift_x
-    #shift_y_cumulative += shift_y
-    #
-    #displacement_graph(grid, shift_x_cumulative, shift_y_cumulative, info_I, info_J,
-    #                   save=True, fit=True, save_dir=output_path,
-    #                   number=k, tag='cumulative')
-    
-print('..done..')
-# -
-
-# # done 
-# hpr1
-# hs2
-# spp1
-# spp2
-# ss3
-# ss2
-
-
