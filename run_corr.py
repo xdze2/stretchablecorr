@@ -7,11 +7,11 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.3.4
 #   kernelspec:
-#     display_name: py3 venv
+#     display_name: Python 3
 #     language: python
-#     name: py3
+#     name: python3
 # ---
 
 # # Strechable Corr
@@ -21,6 +21,10 @@ import matplotlib.pylab as plt
 from skimage import io
 from skimage import img_as_uint
 
+# +
+# #!pip install scikit-image
+# -
+
 # ## Search and select images
 
 # %load_ext autoreload
@@ -29,7 +33,8 @@ import filetools as ft
 import os
 from tabulate import tabulate
 
-data_dir = "./images"
+#data_dir = "./images"
+data_dir = "/media/etienne/Transcend/20200127_SOLEIL_DIFFABS/images"
 
 # Sample list
 samples = os.listdir(data_dir)
@@ -71,6 +76,9 @@ print(tabulate(steps, headers='keys'))
 # ## Set output directory
 
 # +
+# #!mkdir output
+
+# +
 output_dir = "./output"
 
 output_path = os.path.join(output_dir, sample_name)
@@ -84,26 +92,41 @@ image_dir = os.path.join(output_path, 'images')
 ft.create_dir(image_dir)
 
 # Check image histogram
-image = ft.load_image(steps[1]['img path'])
+image = ft.load_image(steps[14]['img path'])
 plt.hist(image.flatten(), bins=100);
 plt.xlabel('intensity value'); plt.ylabel('pixel counts');
 
 # Rescale intensities
-intensity_high = 3900
+intensity_high = 4000#3600
 intensity_low = 100
 
 from strechablescorr import *
 
 # Export images
 for k, info in enumerate(steps):
-    image_filename = f"{k:03d}_{info['stepname']}.tiff"
+    image_filename = f"{k:03d}_{info['stepname']}.png"
     image = ft.load_image(info['img path'])
-    image = colorize_image(image, intensity_low, intensity_high)
+    image = colorize_image(image, intensity_low, intensity_high, cmap='gray')
     image = img_as_uint(image)
     img_path = os.path.join(image_dir, image_filename)
     io.imsave(img_path, image)
     print(f'save {img_path}', ' '*10, end='\r')
 print('done', ' '*40)
+
+# +
+# Export image cube
+cube = []
+for k, info in enumerate(steps):
+    image_filename = f"{k:03d}_{info['stepname']}.tiff"
+    image = ft.load_image(info['img path'])
+    cube.append(image)
+
+cube = np.dstack( cube )
+
+cube_path = os.path.join(output_path, 'cube.npy')
+np.save(cube_path, cube)
+print(cube.shape, ' cube saved:', cube_path)
+# -
 
 # ## Test correlation
 
@@ -113,13 +136,13 @@ info_J = steps[0]
 J = ft.load_image( info_J['img path'] )
 
 # Define the grid
-grid = build_grid(J.shape, margin=100, grid_spacing=25)
+grid = build_grid(J.shape, margin=100, grid_spacing=30)
 x, y = grid[0].flatten(), grid[1].flatten()
 
 I = J
 info_I = info_J
 
-info_J = steps[1]
+info_J = steps[6]
 J = ft.load_image( info_J['img path'] )
 
 # Diff consecutive images
@@ -132,8 +155,11 @@ eps, residuals_x, residuals_y = bilinear_fit(x, y, shift_x, shift_y)
 
 print(eps)
 
-plt.imshow(residuals_y)
-plt.colorbar()
+plt.imshow(errors);
+plt.colorbar();
+
+plt.imshow(shift_y);
+plt.colorbar();
 
 
 def graph_field(ax, field, name):
@@ -141,12 +167,12 @@ def graph_field(ax, field, name):
     ax.imshow(field.reshape(grid[0].shape),
               cmap='bwr',
               clim=(-color_limits, +color_limits));
-    #ax.colorbar();
+    #plt.colorbar();
     ax.set_title(name);
 
 
 ax = plt.subplot(1, 1, 1)
-graph_field(ax, shift_x, 'x')
+graph_field(ax, shift_y, 'y')
 
 # ## Loop
 
@@ -156,7 +182,7 @@ info_J = steps[0]
 J = ft.load_image( info_J['img path'] )
 
 # Define the grid
-grid = build_grid(J.shape, margin=100, grid_spacing=50)
+grid = build_grid(J.shape, margin=100, grid_spacing=30)
 x, y = grid[0].flatten(), grid[1].flatten()
 
 output_data = []
@@ -212,7 +238,15 @@ plt.ylabel('eps_xx (%)');
 # ## Create figures
 
 output_dir = os.path.join(output_path, 'displacement')
-create_dir(output_dir)
+ft.create_dir(output_dir)
+
+grid[0].shape
+
+residuals.shape
+
+residuals = output_data[1]['residuals_y']
+pcm = plt.pcolormesh(*grid, residuals.reshape(grid[0].shape),
+                     cmap='Reds');
 
 for k, data in enumerate(output_data):
     displacement_graph(grid, data, number=k,
@@ -267,12 +301,13 @@ $\\varepsilon_{{xy}}$ = {data['eps'][2]*100:.3f}%"""
         ax3.text(.1, .4, text, fontsize=14)
         ax3.axis('off')
 
-        residuals = np.sqrt( data['residuals_x']**2 + data['residuals_y']**2 )
-        color_limits = np.std(residuals)*4
-        ax4.set_title(f'norm of residual displacement (px)  max:{np.max(residuals):.1f}px')
+        residuals = data['residuals_y']
+        #np.sqrt( data['residuals_x']**2 + data['residuals_y']**2 )
+        color_limits = np.std(residuals)*2
+        ax4.set_title(f'residual Y displacement (px)  max:{np.max(residuals):.1f}px')
         pcm = ax4.pcolormesh(*grid, residuals.reshape(grid[0].shape),
-                             cmap='Reds',
-                             vmin=0, vmax=+color_limits);
+                             cmap='bwr',
+                             vmin=-color_limits, vmax=+color_limits);
         fig.colorbar(pcm, ax=ax4);
         ax4.set_xlabel("x (px)"); ax4.set_ylabel("y (px)");
         ax4.set_ylim(ax4.get_ylim()[::-1]); # reverse axis
@@ -292,3 +327,5 @@ $\\varepsilon_{{xy}}$ = {data['eps'][2]*100:.3f}%"""
         fig.savefig(output_path)
         
         plt.close()
+
+
