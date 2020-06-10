@@ -1,14 +1,23 @@
 # stretchable corr
 
-Digital Image Correlation in Python for mechanical test
+Digital Image Correlation (DIC) in Python for mechanical test
 
-- based on cross-correlation computation (FFT)
+- Displacemenent field between images is obtained using local cross-correlation computation (FFT)
 i.e. looking for the argmax of the inverse FT of the product of FT of images I anf J
 
-in particular using the `register_translation` algo: ... uses cross-correlation in Fourier space, optionally employing an upsampled matrix-multiplication DFT to achieve arbitrary subpixel precision [1].
-
+in particular using the function [`phase-cross-correlation`](https://scikit-image.org/docs/stable/api/skimage.registration.html#phase-cross-correlation) from skimage. Sub-pixel precision is obtained employing an upsampled matrix-multiplication DFT [1].
 
 [1] Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup, “Efficient subpixel image registration algorithms,” Optics Letters 33, 156-158 (2008). DOI:10.1364/OL.33.000156
 
 
+- Load image from given directory, sort by alphabetical order
+- construct a regulr grid (provide spacing margin )
+
 - Error estimation using Likelihood approach --> 
+
+
+
+- notes: xy is transposed relatively to ij
+
+    array first dimension corresponds to y
+    array second dimension corresponds to x

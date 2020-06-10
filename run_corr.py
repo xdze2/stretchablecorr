@@ -7,12 +7,15 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.4
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
+
+# %load_ext autoreload
+# %autoreload 2
 
 # # Strechable Corr
 
@@ -20,15 +23,14 @@ import numpy as np
 import matplotlib.pylab as plt
 from skimage import io
 from skimage import img_as_uint
+from strechablescorr import *
 
 # +
 # #!pip install scikit-image
 # -
 
-# ## Search and select images
+# ## Search and select images
 
-# %load_ext autoreload
-# %autoreload 2
 import filetools as ft
 import os
 from tabulate import tabulate
@@ -73,7 +75,9 @@ print(' sample name:', sample_name)
 print(tabulate(steps, headers='keys'))
 # -
 
-# ## Set output directory
+print( [(k,s['stepname']) for k, s in enumerate(steps)] )
+
+# ## Set output directory
 
 # +
 # #!mkdir output
@@ -85,7 +89,7 @@ output_path = os.path.join(output_dir, sample_name)
 ft.create_dir(output_path)
 
 # + [markdown] toc-hr-collapsed=false
-# ## Export selected images
+# ## Export selected images
 # -
 
 image_dir = os.path.join(output_path, 'images')
@@ -100,16 +104,14 @@ plt.xlabel('intensity value'); plt.ylabel('pixel counts');
 intensity_high = 4000#3600
 intensity_low = 100
 
-from strechablescorr import *
-
 # Export images
 for k, info in enumerate(steps):
     image_filename = f"{k:03d}_{info['stepname']}.png"
     image = ft.load_image(info['img path'])
-    image = colorize_image(image, intensity_low, intensity_high, cmap='gray')
+    image = colorize_image(image, intensity_low, intensity_high, cmap='viridis')
     image = img_as_uint(image)
     img_path = os.path.join(image_dir, image_filename)
-    io.imsave(img_path, image)
+    io.imsave(img_path, image[:, :, 0:3])
     print(f'save {img_path}', ' '*10, end='\r')
 print('done', ' '*40)
 
@@ -128,38 +130,171 @@ np.save(cube_path, cube)
 print(cube.shape, ' cube saved:', cube_path)
 # -
 
-# ## Test correlation
+# ## v2
+
+# +
+# Load image cube
+cube = []
+for k, info in enumerate(steps):
+    image = load_image(info['img path'], verbose=False)
+    cube.append(image)
+    
+cube = np.dstack( cube )
+print('cube shape:', cube.shape, f'{cube.nbytes // 1024**2}Mo')
+# -
+
+plt.figure(); plt.title('cube std');
+plt.imshow(np.std(cube, axis=2));
+plt.savefig(os.path.join(output_path, '01_cube_std.png'));
+
+# +
+# Define the grid
+reference_image = 6
+
+grid = build_grid(cube.shape, margin=100, spacing=300)
+x_flat, y_flat = grid[0].flatten(), grid[1].flatten()
+
+# Graph the grid
+plt.figure();
+plt.imshow(cube[:, :, reference_image]); plt.title(f'grille - image {reference_image}');
+plt.plot(*grid, 'o', color='white', markersize=3);
+
+for k, (x, y) in enumerate(zip(x_flat, y_flat)):
+    text_offset = 10.0
+    plt.text(x+text_offset, y+text_offset,
+             str(k), fontsize=7, color='white')
+       
+plt.savefig(os.path.join(output_path, '02_grille.png'));
+# -
+
+point_idx = 10
+x, y = x_flat[point_idx], y_flat[point_idx]
+print(x, y)
+I = cube[:, :, reference_image]
+
+# +
+window_half_size = 70
+offsets = np.zeros((cube.shape[2], 2))
+step1 = np.zeros((cube.shape[2], 2))
+
+# go forward, image_by_image
+dx_ref, dy_ref = 0, 0
+for k in range(reference_image+1, cube.shape[2]):
+    J = cube[:, :, k]
+    try:
+        dx_ref, dy_ref, error = get_shifts(I, J, x, y,
+                                   offset=(dx_ref, dy_ref),
+                                   window_half_size=window_half_size,
+                                   upsample_factor=20)
+        offsets[k] = [dx_ref, dy_ref]
+
+        previous = cube[:, :, k-1]
+        dx1, dy1, error = get_shifts(previous, J, x+dx_ref, y+dy_ref,
+                                       offset=(0, 0),
+                                       window_half_size=window_half_size,
+                                       upsample_factor=20)
+        step1[k] = [dx1, dy1]
+    except ValueError:
+        print('out of limits', k)
+        step1[k] = [np.NaN, np.NaN]
+        
+# go backward, image_by_image
+dx, dy = 0, 0
+for k in range(0, reference_image)[::-1]:
+    J = cube[:, :, k]
+    dx, dy, error = get_shifts(I, J, x, y,
+                               offset=(dx, dy),
+                               window_half_size=window_half_size,
+                               upsample_factor=20)
+    offsets[k] = [dx, dy]
+    
+# -
+
+plt.figure(figsize=(4, 4)); plt.title('trajectoire')
+plt.plot( *offsets[:15].T, '-o', label='ref. -> k' );
+plt.plot( *np.cumsum(step1[:15], axis=0).T, '-xr', label='k-1 -> k' );
+plt.axis('equal'); plt.legend();
+plt.plot(0, 0, 's'); plt.xlabel('x'); plt.ylabel('y');
+
+plt.figure(figsize=(4, 4)); plt.title('trajectoire')
+plt.plot( *offsets.T, '-o', label='ref. -> k' );
+plt.plot( *np.cumsum(step1, axis=0).T, '-or', label='k-1 -> k ' );
+plt.axis('equal');
+plt.plot(0, 0, 's'); plt.xlabel('x'); plt.ylabel('y');
+
+# +
+offsets = np.zeros((*grid[0].shape, cube.shape[2], 2))
+
+# go forward, image_by_image
+
+for ij in range(x_flat):
+    dx_ref, dy_ref = 0, 0
+    for k in range(reference_image+1, cube.shape[2]):
+        J = cube[:, :, k]
+        dx_ref, dy_ref, error = get_shifts(I, J, x, y,
+                                   offset=(dx_ref, dy_ref),
+                                   window_half_size=35,
+                                   upsample_factor=10)
+        
+        i, j = np.unravel_index(ij, grid_x.shape)
+        offsets[i, j, k, :] = [dx_ref, dy_ref]
+
+# -
+
+# ## Test correlation
 
 # +
 # init the loop
-info_J = steps[0]
+info_J = steps[3]
 J = ft.load_image( info_J['img path'] )
 
 # Define the grid
-grid = build_grid(J.shape, margin=100, grid_spacing=30)
+grid = build_grid(J.shape, margin=100, spacing=25)
 x, y = grid[0].flatten(), grid[1].flatten()
 
 I = J
 info_I = info_J
 
-info_J = steps[6]
+info_J = steps[8]
 J = ft.load_image( info_J['img path'] )
 
 # Diff consecutive images
 shift_x, shift_y, errors = compute_shifts(I, J, grid, 
-                                          window_half_size=45)
+                                          window_half_size=50)
 
 # Fit
 eps, residuals_x, residuals_y = bilinear_fit(x, y, shift_x, shift_y)
 # -
 
-print(eps)
+plt.imshow(I);plt.colorbar();
 
-plt.imshow(errors);
-plt.colorbar();
-
+# +
 plt.imshow(shift_y);
-plt.colorbar();
+plt.colorbar(); #plt.clim([1, 14])
+plt.title('hpr1 - dy entre 0.8 et 0%');
+plt.xlabel('i'); plt.ylabel('j');
+
+plt.figure();
+plt.imshow(residuals_y, cmap='Spectral');
+c_lim = 3*np.std(residuals_y)
+plt.colorbar(); plt.clim([-c_lim, +c_lim])
+plt.title('hpr1 - dy entre 0.8 et 0% - résidu fit linéaire');
+plt.xlabel('i'); plt.ylabel('j');
+# -
+
+plt.title('hpr1 - dy entre 0.8 et 0% - profils');
+plt.plot(shift_y[:, 19], label='i=19')  # pour hs2  x=15
+plt.plot(shift_y[:, 35], label='i=35')
+plt.xlabel('j'); plt.ylabel('dy (px)'); plt.legend();
+
+plt.plot(shift_y[:, 15])
+plt.plot(shift_y[:, 25])
+
+
+
+plt.imshow(residuals_y, cmap='Spectral');
+c_lim = 3*np.std(residuals_y)
+plt.colorbar(); plt.clim([-c_lim, +c_lim])
 
 
 def graph_field(ax, field, name):

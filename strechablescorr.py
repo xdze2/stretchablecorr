@@ -1,13 +1,39 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pylab as plt
 
 from skimage import io
-from skimage.feature import register_translation
+from skimage.color import rgb2gray
+
+try:
+    from skimage.registration import phase_cross_correlation
+except ImportError:
+    print('Warning: scikit-image not up-to-date')
+    from skimage.feature import register_translation as phase_cross_correlation
+
+
+def load_image(path, verbose=True):
+    """Load the image at the given path
+         returns 2d array (float)
+         convert to grayscale if needed
+    """
+    try:
+        I = io.imread(path)
+        # Convert to grayscale if needed:
+        I = rgb2gray(I) if I.ndim == 3 else I
+        I = I.astype(np.float)
+        if verbose:
+            print(f'load "{path}"', f"size={I.shape}")
+    except FileNotFoundError:
+        print("File %s Not Found" % path)
+        I = None
+
+    return I
 
 
 def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
-    """ Convert intensity values to color using a colormap
-        rescale values between (intensity_low, intensity_high)
+    """Convert intensity values to color using a colormap
+       rescale values between (intensity_low, intensity_high)
     """
     image_normalized = (image.astype(np.float) - intensity_low)/(intensity_high - intensity_low)
 
@@ -18,47 +44,102 @@ def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
     return colored_image
 
 
-def crop(I, ij_center, window_half_size):
-    """Return the centered square at the position"""
+def crop(I, xy_center, half_size):
+    """Return the centered square at the position xy 
+    
+    Args:
+        I: input image (2D array)
+        xy_center: tuple of float
+        half_size: half of the size of the crop
+        
+    Returns:
+        cropped image array
+        indices of the center
+        
+        
+    >>> from skimage.data import rocket
+    >>> x, y = (322, 150)
+    >>> plt.imshow(rocket());
+    >>> print(rocket().shape)
+    >>> plt.plot(x, y, 'sr');
+    >>> plt.imshow(crop(rocket(), (x, y), 50)[0]);
+    
+    # todo: unit test using hash for image
+    # https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
+    """
 
-    ij_center = np.around(ij_center).astype(np.int)
-    i, j = ij_center
-    i_slicing = np.s_[i - window_half_size:i + window_half_size + 1]
-    j_slicing = np.s_[j - window_half_size:j + window_half_size + 1]
+    j, i = np.around(xy_center).astype(np.int)
+    i_slicing = np.s_[i - half_size:i + half_size + 1]
+    j_slicing = np.s_[j - half_size:j + half_size + 1]
 
-    return I[i_slicing, j_slicing]
+    return I[i_slicing, j_slicing], (i, j)
 
 
 def get_shifts(I, J, x, y,
+               offset=(0.0, 0.0),
                window_half_size=15,
                upsample_factor=20):
-    """
-    Cross-correlation between images I and J,
-    at the position (x, y) using a windows of size 2*window_half_size + 1
+    """Cross-correlation between images I and J,
+        at the position (x, y) using a windows of size 2*window_half_size + 1
 
-    see `register_translation` from skimage
+    see `phase_cross_correlation` from skimage
     # https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
+    
+    Args:
+      I, J: input images
+      x, y: point coordinates arround which shift is evaluated
+      offset: tuple (dx, dy) pre-computed displacement of J relative to I
+    
+    Returns:
+        dx, dy: displacements
+        error: scalar correlation error
+        
+    >>> from skimage.data import camera
+    >>> dx, dy = 10, 15
+    >>> I = camera()[dy:, dx:]
+    >>> J = camera()[:-dy, :-dx]
+    >>> plt.imshow(I+J);
+    >>> print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
+    >>> print( get_shifts(I, J, 250, 250,
+                      window_half_size=150,
+                      upsample_factor=1,
+                      offset=(4.5, 14.2)) )
     """
-    source = crop(I, (x, y), window_half_size)
-    target = crop(J, (x, y), window_half_size)
+    dx, dy = offset
 
-    shifts, error, _ = register_translation(source, target,
-                                            upsample_factor=upsample_factor)
+    source, ij_src = crop(I, (x, y), window_half_size)
+    target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
+    
+    shifts, error, _ = phase_cross_correlation(source, target,
+                                               upsample_factor=upsample_factor)
     shifts = -shifts  # displacement = -registration = dst - src
-    return shifts[1], shifts[0], error
+    
+    dx = shifts[1] + (ij_tgt[1] - ij_src[1])
+    dy = shifts[0] + (ij_tgt[0] - ij_src[0])
+    return dx, dy, error
 
 
-def build_grid(img_shape, margin, grid_spacing):
+def build_grid(img_shape, margin, spacing):
+    """Build a regular grid
+    
+    Args:
+        img_shape: tuple shape of the image (Int, Int)
+        margin: size of the margin in px
+        spacing: spacing in px between points
+        
+    Returns:
+        x_grid, y_grid: 2d arrays of coordinates
     """
-    Build a regular grid
-        img_shape from I.shape i.e. (Int, Int)
-        margin in px
-        grid_spacing in px
-    """
-    x_span = np.arange(margin, img_shape[1]-margin, grid_spacing)
-    y_span = np.arange(margin, img_shape[0]-margin, grid_spacing)
-    x_grid, y_grid = np.meshgrid(x_span, y_span)
-  
+    margin = int(np.ceil(margin))
+    spacing = int(np.ceil(spacing))
+    x_span = np.arange(0, img_shape[1]-2*margin, spacing)
+    y_span = np.arange(0, img_shape[0]-2*margin, spacing)
+    
+    x_offset = int( (img_shape[1] - x_span[-1])/2 )
+    y_offset = int( (img_shape[0] - y_span[-1])/2 )    
+    
+    x_grid, y_grid = np.meshgrid(x_span + x_offset, y_span + y_offset)
+    
     print("grid size:", "%ix%i" % (len(x_span), len(y_span)))
     print(" i.e.", len(x_span)*len(y_span), "points")
 
@@ -66,18 +147,23 @@ def build_grid(img_shape, margin, grid_spacing):
 
 
 # Compute shifts
-def compute_shifts(I, J, grid, **kargs):
-    """
-    Compute the shift for each point of the grid
+def compute_shifts(I, J, points, **kargs):
+    """Compute shifts for each point
     
-    returns shift_x, shift_y, corr_errors (flatten)
+    Args:
+        I, J: input images (2D arrays) 
+        points: tuple of (x_coord, y_coord)
+        **kargs: passed to get_shifts(), window_half_size, upsample_factor
+         
+    Returns:
+        shift_x, shift_y, corr_errors (flatten)
     """
-    x_grid, y_grid = grid
+    x_grid, y_grid = points
     
     shift_x, shift_y, corr_errors = [], [], []
     
     for (xi, yi) in zip(x_grid.flatten(), y_grid.flatten()):
-        sx, sy, er = get_shifts(I, J, yi, xi, **kargs)
+        sx, sy, er = get_shifts(I, J, xi, yi, **kargs)
         shift_x.append(sx)
         shift_y.append(sy)
         corr_errors.append(er)
@@ -85,14 +171,14 @@ def compute_shifts(I, J, grid, **kargs):
 
     print('done', ' '*40, end='\r')
 
-    shift_x = np.array(shift_x).reshape(grid[0].shape)
-    shift_y = np.array(shift_y).reshape(grid[0].shape)
-    corr_errors = np.array(corr_errors).reshape(grid[0].shape)
+    shift_x = np.array(shift_x).reshape(points[0].shape)
+    shift_y = np.array(shift_y).reshape(points[1].shape)
+    corr_errors = np.array(corr_errors).reshape(points[0].shape)
     return shift_x, shift_y, corr_errors
 
 
 def bilinear_fit(x, y, shift_x, shift_y):
-    """ Least square bilinear fit (a*x + b*y + c) on entire grid
+    """Least square bilinear fit (a*x + b*y + c) on entire grid
     returns strains (eps_x, eps_y, eps_xy) and local residuals
     
     x, y               2D arrays
@@ -120,3 +206,10 @@ def bilinear_fit(x, y, shift_x, shift_y):
     residuals_y = uy_fit.reshape(shift_y.shape) - shift_y
     
     return (eps_x, eps_y, eps_xy), residuals_x, residuals_y
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
+
+
