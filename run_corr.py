@@ -7,460 +7,277 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.3.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# %load_ext autoreload
-# %autoreload 2
-
-# # Strechable Corr
-
 import numpy as np
 import matplotlib.pylab as plt
 from skimage import io
 from skimage import img_as_uint
 from strechablescorr import *
-
-# +
 # #!pip install scikit-image
-# -
+
+import filetools as ft
+import os, imghdr
+
+# %load_ext autoreload
+# %autoreload 2
+
+# # Strechable Corr
 
 # ## Search and select images
 
-import filetools as ft
-import os
-from tabulate import tabulate
+# Available samples list
+input_data_dir = "./images/"
+samples = os.listdir(input_data_dir)
+print('Available samples')
+print('=================')
+ft.print_numbered_list(samples)
+print(' ')
 
-#data_dir = "./images"
-data_dir = "/media/etienne/Transcend/20200127_SOLEIL_DIFFABS/images"
+# Select a sample:
+sample_name = 'PDMS_Amazon_18juin'
 
-# Sample list
-samples = os.listdir(data_dir)
-print(', '.join(samples))
-
-# +
-# Select a sample
-sample_name = 'HS2'
-
-# List, select and sort loading steps
-sample_dir = os.path.join(data_dir, sample_name)
-steps = os.listdir(sample_dir)
-
-stepsinfo = [ft.parse_step_dir(step) for step in steps]
-
-steps = [info for info in stepsinfo
-         if info['direction'] == 'loading'
-         and not info['tag']]
-
-steps.sort(key=lambda x: x['strain'])
-
-# Get image path list
-
-def pick_onefile(path):
-    filename = os.listdir(path)[0]
-    return os.path.join(path, filename)
-
-image_list = [pick_onefile(os.path.join(sample_dir, step['stepname']))
-              for step in steps]
-
-steps = [{**info, 'img path': p}
-         for info, p in zip(steps, image_list)]
-
-# Print table
-print(' sample name:', sample_name)
-print(tabulate(steps, headers='keys'))
-# -
-
-print( [(k,s['stepname']) for k, s in enumerate(steps)] )
-
-# ## Set output directory
 
 # +
-# #!mkdir output
-
-# +
-output_dir = "./output"
-
-output_path = os.path.join(output_dir, sample_name)
-ft.create_dir(output_path)
-
-# + [markdown] toc-hr-collapsed=false
-# ## Export selected images
-# -
-
-image_dir = os.path.join(output_path, 'images')
-ft.create_dir(image_dir)
-
-# Check image histogram
-image = ft.load_image(steps[14]['img path'])
-plt.hist(image.flatten(), bins=100);
-plt.xlabel('intensity value'); plt.ylabel('pixel counts');
-
-# Rescale intensities
-intensity_high = 4000#3600
-intensity_low = 100
-
-# Export images
-for k, info in enumerate(steps):
-    image_filename = f"{k:03d}_{info['stepname']}.png"
-    image = ft.load_image(info['img path'])
-    image = colorize_image(image, intensity_low, intensity_high, cmap='viridis')
-    image = img_as_uint(image)
-    img_path = os.path.join(image_dir, image_filename)
-    io.imsave(img_path, image[:, :, 0:3])
-    print(f'save {img_path}', ' '*10, end='\r')
-print('done', ' '*40)
-
-# +
-# Export image cube
-cube = []
-for k, info in enumerate(steps):
-    image_filename = f"{k:03d}_{info['stepname']}.tiff"
-    image = ft.load_image(info['img path'])
-    cube.append(image)
-
-cube = np.dstack( cube )
-
-cube_path = os.path.join(output_path, 'cube.npy')
-np.save(cube_path, cube)
-print(cube.shape, ' cube saved:', cube_path)
-# -
-
-# ## v2
-
-# +
-# Load image cube
-cube = []
-for k, info in enumerate(steps):
-    image = load_image(info['img path'], verbose=False)
-    cube.append(image)
+def list_images(path):
+    """list and sort image present in the directory,
+    returns full path
+    """
     
-cube = np.dstack( cube )
-print('cube shape:', cube.shape, f'{cube.nbytes // 1024**2}Mo')
-# -
+    images = sorted( os.listdir(path) )
+    # remove non-image file :
+    images = [os.path.join(path, filename) for filename in images
+              if imghdr.what(os.path.join(path, filename))]
+    return images
 
-plt.figure(); plt.title('cube std');
-plt.imshow(np.std(cube, axis=2));
-plt.savefig(os.path.join(output_path, '01_cube_std.png'));
+
+def load_images(images, verbose=True):
+    """Load given list of image path and return a 3d array
+    """
+    cube = [load_image(img_path, verbose=False)
+            for img_path in images]
+      
+    cube = np.dstack( cube )
+    
+    if verbose:
+        print('Image cube:' + ' '*20)
+        print(f' {cube.shape[0]}*{cube.shape[1]} pixels - {cube.shape[2]} frames') 
+        print(f' memory size: {cube.nbytes // 1024**2} Mo')
+        
+    return cube
+
 
 # +
-# Define the grid
-reference_image = 6
+# ==================
+#  Load image cube
+# ==================
+print(' ')
+print('Loading image cube...', end='\r')
 
-grid = build_grid(cube.shape, margin=100, spacing=300)
-x_flat, y_flat = grid[0].flatten(), grid[1].flatten()
+# List, select and sort images
+sample_input_dir = os.path.join(input_data_dir, sample_name)
+print(f'Load "{sample_name}" from {sample_input_dir}')
+
+cube = load_images(list_images(sample_input_dir))
+# -
+
+# Create output directory
+output_dir = './output/'
+ft.create_dir(output_dir)
+sample_output_path = os.path.join(output_dir, sample_name)
+ft.create_dir(sample_output_path)
+print('create outpur directory:', sample_output_path)
+
+plt.figure(); plt.title(f'cube std - {sample_name}');
+plt.imshow(np.std(cube, axis=2));
+plt.savefig(os.path.join(sample_output_path, '01_cube_std.png'));
+
+# +
+# ==================
+#  Define the grid
+# ==================
+
+window_half_size = 80
+upsample_factor = 20
+
+grid_spacing = 80
+grid_margin = 120
+
+reference_image = 0
+
+# ----
+grid = build_grid(cube.shape, margin=grid_margin, spacing=grid_spacing)
+points = np.vstack( [grid[0].flatten(), grid[1].flatten()] ).T
 
 # Graph the grid
 plt.figure();
-plt.imshow(cube[:, :, reference_image]); plt.title(f'grille - image {reference_image}');
+plt.imshow(cube[:, :, reference_image]);
+plt.title(f'Grid - image #{reference_image:02d}');
 plt.plot(*grid, 'o', color='white', markersize=3);
 
-for k, (x, y) in enumerate(zip(x_flat, y_flat)):
+for k, (x, y) in enumerate(points):
+    if len(points) > 10 and k % 5 != 0:
+        continue
     text_offset = 10.0
     plt.text(x+text_offset, y+text_offset,
-             str(k), fontsize=7, color='white')
-       
-plt.savefig(os.path.join(output_path, '02_grille.png'));
-# -
-
-point_idx = 10
-x, y = x_flat[point_idx], y_flat[point_idx]
-print(x, y)
-I = cube[:, :, reference_image]
-
-# +
-window_half_size = 70
-offsets = np.zeros((cube.shape[2], 2))
-step1 = np.zeros((cube.shape[2], 2))
-
-# go forward, image_by_image
-dx_ref, dy_ref = 0, 0
-for k in range(reference_image+1, cube.shape[2]):
-    J = cube[:, :, k]
-    try:
-        dx_ref, dy_ref, error = get_shifts(I, J, x, y,
-                                   offset=(dx_ref, dy_ref),
-                                   window_half_size=window_half_size,
-                                   upsample_factor=20)
-        offsets[k] = [dx_ref, dy_ref]
-
-        previous = cube[:, :, k-1]
-        dx1, dy1, error = get_shifts(previous, J, x+dx_ref, y+dy_ref,
-                                       offset=(0, 0),
-                                       window_half_size=window_half_size,
-                                       upsample_factor=20)
-        step1[k] = [dx1, dy1]
-    except ValueError:
-        print('out of limits', k)
-        step1[k] = [np.NaN, np.NaN]
-        
-# go backward, image_by_image
-dx, dy = 0, 0
-for k in range(0, reference_image)[::-1]:
-    J = cube[:, :, k]
-    dx, dy, error = get_shifts(I, J, x, y,
-                               offset=(dx, dy),
-                               window_half_size=window_half_size,
-                               upsample_factor=20)
-    offsets[k] = [dx, dy]
+             str(k), fontsize=8, color='white')
     
-# -
+# graph one of the ROI
+box = np.array([[-1, 1, 1, -1, -1], [-1, -1, 1, 1, -1]])*(window_half_size + 1)
+middle_point = tuple(np.array(grid[0].shape) // 2 - 1)
+plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
+         color='white', linewidth=1)
 
-plt.figure(figsize=(4, 4)); plt.title('trajectoire')
-plt.plot( *offsets[:15].T, '-o', label='ref. -> k' );
-plt.plot( *np.cumsum(step1[:15], axis=0).T, '-xr', label='k-1 -> k' );
-plt.axis('equal'); plt.legend();
-plt.plot(0, 0, 's'); plt.xlabel('x'); plt.ylabel('y');
-
-plt.figure(figsize=(4, 4)); plt.title('trajectoire')
-plt.plot( *offsets.T, '-o', label='ref. -> k' );
-plt.plot( *np.cumsum(step1, axis=0).T, '-or', label='k-1 -> k ' );
-plt.axis('equal');
-plt.plot(0, 0, 's'); plt.xlabel('x'); plt.ylabel('y');
+plt.savefig(os.path.join(sample_output_path, '02_grid.png'));
 
 # +
-offsets = np.zeros((*grid[0].shape, cube.shape[2], 2))
-
-# go forward, image_by_image
-
-for ij in range(x_flat):
-    dx_ref, dy_ref = 0, 0
-    for k in range(reference_image+1, cube.shape[2]):
-        J = cube[:, :, k]
-        dx_ref, dy_ref, error = get_shifts(I, J, x, y,
-                                   offset=(dx_ref, dy_ref),
-                                   window_half_size=35,
-                                   upsample_factor=10)
+# ============================================
+#  Compute image to image displacement field
+# ============================================
+print(' ')
+print('Compute image to image displacement field:')
+# shape: (Nbr points, 2, nbr_frames)
+displacements = np.zeros((*points.shape, cube.shape[2]))
+for k, (x, y) in enumerate(points):
+    print(f'{k: 4d}/{len(points)}', end='\r')
+    disp_from_prev = get_displacement_from_previous(cube, x, y, 
+                                          window_half_size, upsample_factor,
+                                          verbose=False)
+    displacements[k, :, :] = disp_from_prev.T
         
-        i, j = np.unravel_index(ij, grid_x.shape)
-        offsets[i, j, k, :] = [dx_ref, dy_ref]
+print('done', ' '*30)
+
 
 # -
 
-# ## Test correlation
+def plot_vector_field(displacements, view_factor=None):
+    amplitudes = np.sqrt(np.sum( displacements**2, axis=1 )) # disp. amplitude
+
+    plt.imshow(cube[:, :, image_id]);
+    plt.quiver(*points.T, *displacements.T,
+               angles='xy', color='white',
+               scale_units='xy',
+               scale=1/view_factor if view_factor else None,
+               minlength=1e-4);
+    #plt.title(f'champ de déplacement - image {reference_image}->{image_id} \n d_max={np.nanmax(amplitudes):.2f}px');
+    plt.text(20.1, 50.1,
+             f'd_max={np.nanmax(amplitudes):.2f}px', fontsize=8, color='white')
+
 
 # +
-# init the loop
-info_J = steps[3]
-J = ft.load_image( info_J['img path'] )
+# ===============
+#  Bilinear Fit
+# ===============
 
-# Define the grid
-grid = build_grid(J.shape, margin=100, spacing=25)
-x, y = grid[0].flatten(), grid[1].flatten()
+def bilinear_fit(points, displacements):
+    # Least Square
+    u, v = displacements.T
+    mask = ~np.isnan(u) & ~np.isnan(v) 
+    u, v = u[mask], v[mask]
 
-I = J
-info_I = info_J
+    x, y = points[mask, :].T
 
-info_J = steps[8]
-J = ft.load_image( info_J['img path'] )
+    ones = np.ones_like(x)
+    M = np.vstack([x, y, ones]).T
 
-# Diff consecutive images
-shift_x, shift_y, errors = compute_shifts(I, J, grid, 
-                                          window_half_size=50)
+    p_ux, residual_x, rank, s = np.linalg.lstsq(M, u, rcond=None)
+    p_uy, residual_y, rank, s = np.linalg.lstsq(M, v, rcond=None)
 
-# Fit
-eps, residuals_x, residuals_y = bilinear_fit(x, y, shift_x, shift_y)
+    p = np.vstack([p_ux, p_uy])
+    # np.linalg.inv(np.matmul(M.T, M))
+
+    # unbiased estimator variance (see p47 T. Hastie)
+    sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
+    sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
+
+    # Residus 
+    u_linear = np.matmul( M, p_ux )
+    v_linear = np.matmul( M, p_uy )
+
+    residus_x = u - u_linear
+    residus_y = v - v_linear
+
+    residus_xy = np.vstack([residus_x, residus_y])
+    
+    return p, residus_xy#(sigma_hat_x, sigma_hat_y)
 # -
 
-plt.imshow(I);plt.colorbar();
+
 
 # +
-plt.imshow(shift_y);
-plt.colorbar(); #plt.clim([1, 14])
-plt.title('hpr1 - dy entre 0.8 et 0%');
-plt.xlabel('i'); plt.ylabel('j');
+# Quiver Graph
+output_dir = 'frame_to_frame_disp'
+save_path = os.path.join(sample_output_path, output_dir)
+ft.create_dir(save_path)
+
+for image_id in range(displacements.shape[-1]):
+    disp_k = displacements[:, :, image_id]
+    # Champ de déplacement
+    plt.figure();
+    disp_k_ss_translation = disp_k - np.mean(disp_k, axis=0)
+    plot_vector_field(disp_k_ss_translation, view_factor=None)
+    plt.title(f'champ de déplacement - image {image_id-1}->{image_id}');
+    filename = f'disp_field_{image_id:04d}.png'
+    plt.savefig(os.path.join(save_path, filename));
+    print(f'figure saved: {filename}')
+    plt.close()
+    
+    # fit
+    p, residus = bilinear_fit(points, disp_k)
+    amplitudes = np.sqrt(np.sum( residus**2, axis=1 )) # disp. amplitude
+    view_factor = None
+    plt.figure();
+    plt.title(f'résidus après fit linéaire - image {image_id-1}->{image_id}');
+    plt.imshow(cube[:, :, image_id]);
+    plt.quiver(*points.T, *residus,
+               angles='xy', color='red',
+               scale_units='xy',
+               scale=1/view_factor if view_factor else None,
+               minlength=1e-4);
+    plt.text(20.1, 50.1,
+             f'max={np.nanmax(amplitudes):.2f}px',
+             fontsize=8, color='red')
+    filename = f'residuals_{image_id:04d}.png'  
+    plt.savefig(os.path.join(save_path, filename));
+    plt.close()
+# -
+
+disp_k_ss_translation = disp_k - np.mean(disp_k, axis=0)
+
+disp_k_ss_translation
+
+# +
+print('')
+print('bilinear regression for each frame')
+p_sigma = [ bilinear_fit(points, displacements[:, :, k]) for k in range(cube.shape[2])]
+
+eps_xx = np.array([p[0, 0] for p, sig in p_sigma])
+eps_yy = np.array([p[1, 1] for p, sig in p_sigma])
+sigma_hat_x = np.array([sig[0] for p, sig in p_sigma])
+sigma_hat_y = np.array([sig[1] for p, sig in p_sigma])
 
 plt.figure();
-plt.imshow(residuals_y, cmap='Spectral');
-c_lim = 3*np.std(residuals_y)
-plt.colorbar(); plt.clim([-c_lim, +c_lim])
-plt.title('hpr1 - dy entre 0.8 et 0% - résidu fit linéaire');
-plt.xlabel('i'); plt.ylabel('j');
+plt.plot(eps_xx*100, 'o-', label='$\Delta \epsilon_{xx}$')
+plt.plot(eps_yy*100, 'o-', label='$\Delta \epsilon_{yy}$')
+plt.xlabel('frame id'); plt.title('frame to frame strain')
+plt.ylabel('frame to frame strain (%)'); plt.legend();
+
+plt.savefig(os.path.join(sample_output_path, f'frame_to_frame_strain.png'));
+print(' save frame_to_frame_strain.png')
 # -
 
-plt.title('hpr1 - dy entre 0.8 et 0% - profils');
-plt.plot(shift_y[:, 19], label='i=19')  # pour hs2  x=15
-plt.plot(shift_y[:, 35], label='i=35')
-plt.xlabel('j'); plt.ylabel('dy (px)'); plt.legend();
-
-plt.plot(shift_y[:, 15])
-plt.plot(shift_y[:, 25])
-
-
-
-plt.imshow(residuals_y, cmap='Spectral');
-c_lim = 3*np.std(residuals_y)
-plt.colorbar(); plt.clim([-c_lim, +c_lim])
-
-
-def graph_field(ax, field, name):
-    color_limits = np.std(field)*5.
-    ax.imshow(field.reshape(grid[0].shape),
-              cmap='bwr',
-              clim=(-color_limits, +color_limits));
-    #plt.colorbar();
-    ax.set_title(name);
-
-
-ax = plt.subplot(1, 1, 1)
-graph_field(ax, shift_y, 'y')
-
-# ## Loop
-
-# +
-# init the loop
-info_J = steps[0]
-J = ft.load_image( info_J['img path'] )
-
-# Define the grid
-grid = build_grid(J.shape, margin=100, grid_spacing=30)
-x, y = grid[0].flatten(), grid[1].flatten()
-
-output_data = []
-
-# loop
-for k in range(1, len(steps)):
-    I = J
-    info_I = info_J
-    info_J = steps[k]
-    J = ft.load_image( info_J['img path'] )
-    img_name = info_J['stepname']
-    print(f"image {img_name}", end='\n')
-    
-    # Diff consecutive images
-    shift_x, shift_y, errors = compute_shifts(I, J, grid, 
-                                              window_half_size=45)
-    
-    
-    # Fit
-    eps, residuals_x, residuals_y = bilinear_fit(x, y, shift_x, shift_y)
-    
-    data_dict = {'eps':eps,
-                 'shift_x':shift_x,
-                 'shift_y':shift_y,
-                 'shift_error':errors,
-                 'residuals_x':residuals_x,
-                 'residuals_y':residuals_y,
-                 'info_I':info_I,
-                 'info_J':info_J
-                }
-    output_data.append(data_dict)
-    
-print('..done..')
-
-# +
-applied_strain = [step['strain'] for step in steps[1:]]
-
-delta_eps_x = np.array([d['eps'][0] for d in output_data])
-eps_x = np.cumsum(delta_eps_x)*100 # %
-delta_eps_y = np.array([d['eps'][1] for d in output_data])
-eps_y = np.cumsum(delta_eps_y)*100 # %
-
-plt.plot(applied_strain, eps_y, '-o');
-plt.xlabel('applied strain (%)');
-plt.ylabel('eps_yy (%)');
+cube.dtype
 
 plt.figure();
-plt.plot(applied_strain, eps_x, '-o');
-plt.xlabel('applied strain (%)');
-plt.ylabel('eps_xx (%)');
-# -
-
-# ## Create figures
-
-output_dir = os.path.join(output_path, 'displacement')
-ft.create_dir(output_dir)
-
-grid[0].shape
-
-residuals.shape
-
-residuals = output_data[1]['residuals_y']
-pcm = plt.pcolormesh(*grid, residuals.reshape(grid[0].shape),
-                     cmap='Reds');
-
-for k, data in enumerate(output_data):
-    displacement_graph(grid, data, number=k,
-                       samplename=sample_name, fit=True,
-                       save=True, save_dir=output_dir)
-
-
-def displacement_graph(grid, data, samplename='',
-                       save=False, number=None, tag=None, fit=False,
-                       save_dir=None):
-
-    
-    if fit:
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 10))
-    else:
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 5))
-
-    tagstr = f" ({tag})" if tag else ''
-    numberstr = f'#{number:03d}' + ' '*5 if number is not None else ''
-    samplenamestr = 'sample: '+ samplename + ' '*5 if samplename else ''
-    title = f"{samplenamestr}{numberstr}{data['info_I']['stepname']} → {data['info_J']['stepname']} {tagstr}"
-    fig.suptitle(title, fontsize=16)
-
-    # displacement X
-    ax1.set_title('displacement x')
-    color_limits = np.std(data['shift_x'])*2.5
-    pcm = ax1.pcolormesh(*grid, data['shift_x'].reshape(grid[0].shape),
-                         cmap='bwr',
-                         vmin=-color_limits, vmax=+color_limits);
-    ax1.set_ylim(ax1.get_ylim()[::-1]);
-    ax1.set_xlabel("x (px)"); ax1.set_ylabel("y (px)");
-    ax1.set_aspect('equal');
-    fig.colorbar(pcm, ax=ax1)
-    
-    # displacement Y
-    color_limits = np.std(data['shift_y'])*2.5
-    ax2.set_title('displacement y')
-    ax2.pcolormesh(*grid, data['shift_y'].reshape(grid[0].shape),
-                   cmap='bwr',
-                   vmin=-color_limits, vmax=+color_limits);
-    fig.colorbar(pcm, ax=ax2);
-    ax2.set_aspect('equal');
-    ax2.set_xlabel("x (px)"); ax2.set_ylabel("y (px)");
-    ax2.set_ylim(ax2.get_ylim()[::-1]); # reverse axis
-    
-    # Fit
-    if fit:
-        text = f"""Least-square fit with a plane \n
-$\\varepsilon_{{xx}}$ = {data['eps'][0]*100:.3f}%
-$\\varepsilon_{{yy}}$ = {data['eps'][1]*100:.3f}%
-$\\varepsilon_{{xy}}$ = {data['eps'][2]*100:.3f}%"""
-        ax3.text(.1, .4, text, fontsize=14)
-        ax3.axis('off')
-
-        residuals = data['residuals_y']
-        #np.sqrt( data['residuals_x']**2 + data['residuals_y']**2 )
-        color_limits = np.std(residuals)*2
-        ax4.set_title(f'residual Y displacement (px)  max:{np.max(residuals):.1f}px')
-        pcm = ax4.pcolormesh(*grid, residuals.reshape(grid[0].shape),
-                             cmap='bwr',
-                             vmin=-color_limits, vmax=+color_limits);
-        fig.colorbar(pcm, ax=ax4);
-        ax4.set_xlabel("x (px)"); ax4.set_ylabel("y (px)");
-        ax4.set_ylim(ax4.get_ylim()[::-1]); # reverse axis
-    
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-    
-    # Save
-    if save:
-        assert save_dir is not None
-        numberstr = f'{number:03d}' if number is not None else ''
-        tagstr = f"{tag}_" if tag else '_'
-        figfilename = f"{numberstr}{tagstr}{data['info_I']['stepname']}-{data['info_J']['stepname']}.png"
-        
-        output_path = os.path.join(save_dir, figfilename)
-        print(figfilename, "saved in", output_path)
-
-        fig.savefig(output_path)
-        
-        plt.close()
+plt.plot(sigma_hat_x[:-1], 's-')
+plt.plot(sigma_hat_y[:-1], 's-')
+plt.xlabel('frame id'); plt.ylabel('std residuals (px)'); plt.title('residuals');
+plt.savefig(os.path.join(sample_output_path, f'frame_to_frame_residuals.png'));
+print(' save frame_to_frame_residuals.png')
 
 
