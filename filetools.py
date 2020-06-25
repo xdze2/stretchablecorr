@@ -21,6 +21,11 @@ def extract_digits(string):
     return int(''.join(filter(str.isdigit, string)))
 
 
+def print_numbered_list(name_list):
+    """Pretty print id: name\n"""
+    print('\n'.join([f'{k} - {n}' for k, n in enumerate(name_list)]))
+    
+
 def parse_step_dir(stepname):
     """Parse the step name
     
@@ -130,7 +135,7 @@ def create_dir(path):
     """Create the dir if doesn't exist"""
     if not os.path.isdir(path):
         os.mkdir(path)
-        print("create", path)
+        print("make dir", path)
     else:
         print('dir:', path)
 
