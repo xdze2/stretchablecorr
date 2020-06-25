@@ -1,6 +1,7 @@
 # +
 from glob import glob
 import os, re
+import imghdr
 import doctest
 
 import numpy as np
@@ -24,34 +25,9 @@ def extract_digits(string):
 def print_numbered_list(name_list):
     """Pretty print id: name\n"""
     print('\n'.join([f'{k} - {n}' for k, n in enumerate(name_list)]))
-    
-
-def parse_step_dir(stepname):
-    """Parse the step name
-    
-    >>> parse_step_dir('7p1u')
-    defaultdict(<class 'str'>, {'stepname': '7p1u', 'strain': 7.1, 'direction': 'unloading', 'tag': ''})
-    >>> parse_step_dir('10p5')
-    defaultdict(<class 'str'>, {'stepname': '10p5', 'strain': 10.5, 'direction': 'loading', 'tag': ''})
-    >>> parse_step_dir('1P1night')
-    defaultdict(<class 'str'>, {'stepname': '1P1night', 'strain': 1.1, 'direction': 'loading', 'tag': 'night'})
-    """
-    step_pattern = re.compile( r"(\d{1,2})(?:p|P)(\d)(u?)(\w*)" )
-    matchs = re.findall(step_pattern, stepname)
-    info = defaultdict(str)
-    info['stepname'] = stepname
-    if matchs and len(matchs) == 1:
-        m = matchs[0]
-        info['strain'] = int(m[0]) + int(m[1])/10
-        info['direction'] = 'unloading' if m[2].lower() == 'u' else 'loading'
-        info['tag'] = m[3]
-    else:
-        info['msg'] = 'error parsing stepname'
-        
-    return info
 
 
-doctest.testmod(verbose=False)
+
 
 
 def load_image(path):
@@ -71,6 +47,47 @@ def load_image(path):
     return I
 
 
+
+def list_images(path):
+    """list and sort image present in the directory,
+    returns full path
+    """
+    images = sorted( os.listdir(path) )
+    # remove non-image file :
+    images = [os.path.join(path, filename) for filename in images
+              if imghdr.what(os.path.join(path, filename))]
+    return images
+
+
+def load_images(images, verbose=True):
+    """Load given list of image path and return a 3d array
+    """
+    cube = [load_image(img_path)
+            for img_path in images]
+
+    cube = np.dstack(cube)
+
+    if verbose:
+        print('Image cube:' + ' '*20)
+        print(f' {cube.shape[0]}*{cube.shape[1]} pixels - {cube.shape[2]} frames') 
+        print(f' memory size: {cube.nbytes // 1024**2} Mo')
+
+    return cube
+
+
+
+def create_dir(path):
+    """Create the dir if doesn't exist"""
+    if not os.path.isdir(path):
+        os.mkdir(path)
+        print("make dir", path)
+    else:
+        print('dir:', path)
+
+
+# =================================
+#  Specific for nested dir struc.
+# =================================
 def parse_path(img_path, DATA_DIR, IMAGE_EXT, verbose=False):
     info = defaultdict(str)
     info['path'] = img_path
@@ -131,12 +148,32 @@ def parse_path(img_path, DATA_DIR, IMAGE_EXT, verbose=False):
     return info
 
 
-def create_dir(path):
-    """Create the dir if doesn't exist"""
-    if not os.path.isdir(path):
-        os.mkdir(path)
-        print("make dir", path)
+def parse_step_dir(stepname):
+    """Parse the step name
+    
+    >>> parse_step_dir('7p1u')
+    defaultdict(<class 'str'>, {'stepname': '7p1u', 'strain': 7.1, 'direction': 'unloading', 'tag': ''})
+    >>> parse_step_dir('10p5')
+    defaultdict(<class 'str'>, {'stepname': '10p5', 'strain': 10.5, 'direction': 'loading', 'tag': ''})
+    >>> parse_step_dir('1P1night')
+    defaultdict(<class 'str'>, {'stepname': '1P1night', 'strain': 1.1, 'direction': 'loading', 'tag': 'night'})
+    """
+    step_pattern = re.compile( r"(\d{1,2})(?:p|P)(\d)(u?)(\w*)" )
+    matchs = re.findall(step_pattern, stepname)
+    info = defaultdict(str)
+    info['stepname'] = stepname
+    if matchs and len(matchs) == 1:
+        m = matchs[0]
+        info['strain'] = int(m[0]) + int(m[1])/10
+        info['direction'] = 'unloading' if m[2].lower() == 'u' else 'loading'
+        info['tag'] = m[3]
     else:
-        print('dir:', path)
+        info['msg'] = 'error parsing stepname'
+        
+    return info
+
+
+doctest.testmod(verbose=False)
+
 
 

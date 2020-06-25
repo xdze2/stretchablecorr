@@ -40,36 +40,8 @@ ft.print_numbered_list(samples)
 print(' ')
 
 # Select a sample:
-sample_name = 'PDMS_Amazon_18juin'
+sample_name = 'gris_e_zoom8'
 
-
-# +
-def list_images(path):
-    """list and sort image present in the directory,
-    returns full path
-    """
-    
-    images = sorted( os.listdir(path) )
-    # remove non-image file :
-    images = [os.path.join(path, filename) for filename in images
-              if imghdr.what(os.path.join(path, filename))]
-    return images
-
-
-def load_images(images, verbose=True):
-    """Load given list of image path and return a 3d array
-    """
-    cube = [load_image(img_path, verbose=False)
-            for img_path in images]
-      
-    cube = np.dstack( cube )
-    
-    if verbose:
-        print('Image cube:' + ' '*20)
-        print(f' {cube.shape[0]}*{cube.shape[1]} pixels - {cube.shape[2]} frames') 
-        print(f' memory size: {cube.nbytes // 1024**2} Mo')
-        
-    return cube
 
 
 # +
@@ -83,7 +55,7 @@ print('Loading image cube...', end='\r')
 sample_input_dir = os.path.join(input_data_dir, sample_name)
 print(f'Load "{sample_name}" from {sample_input_dir}')
 
-cube = load_images(list_images(sample_input_dir))
+cube = ft.load_images(ft.list_images(sample_input_dir))
 # -
 
 # Create output directory
@@ -102,11 +74,11 @@ plt.savefig(os.path.join(sample_output_path, '01_cube_std.png'));
 #  Define the grid
 # ==================
 
-window_half_size = 80
+window_half_size = 120
 upsample_factor = 20
 
-grid_spacing = 80
-grid_margin = 120
+grid_spacing = 280
+grid_margin = 350
 
 reference_image = 0
 
@@ -219,7 +191,7 @@ for image_id in range(displacements.shape[-1]):
     disp_k = displacements[:, :, image_id]
     # Champ de déplacement
     plt.figure();
-    disp_k_ss_translation = disp_k - np.mean(disp_k, axis=0)
+    disp_k_ss_translation = disp_k - np.nanmean(disp_k, axis=0)
     plot_vector_field(disp_k_ss_translation, view_factor=None)
     plt.title(f'champ de déplacement - image {image_id-1}->{image_id}');
     filename = f'disp_field_{image_id:04d}.png'
@@ -229,7 +201,7 @@ for image_id in range(displacements.shape[-1]):
     
     # fit
     p, residus = bilinear_fit(points, disp_k)
-    amplitudes = np.sqrt(np.sum( residus**2, axis=1 )) # disp. amplitude
+    amplitudes = np.sqrt(np.nansum( residus**2, axis=1 )) # disp. amplitude
     view_factor = None
     plt.figure();
     plt.title(f'résidus après fit linéaire - image {image_id-1}->{image_id}');
@@ -248,8 +220,6 @@ for image_id in range(displacements.shape[-1]):
 # -
 
 disp_k_ss_translation = disp_k - np.mean(disp_k, axis=0)
-
-disp_k_ss_translation
 
 # +
 print('')

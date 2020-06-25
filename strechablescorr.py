@@ -18,17 +18,17 @@ def load_image(path, verbose=True):
          convert to grayscale if needed
     """
     try:
-        I = io.imread(path)
+        image = io.imread(path)
         # Convert to grayscale if needed:
-        I = rgb2gray(I) if I.ndim == 3 else I
-        I = I.astype(np.float)
+        image = rgb2gray(image) if image.ndim == 3 else image
+        image = image.astype(np.float)
         if verbose:
-            print(f'load "{path}"', f"size={I.shape}")
+            print(f'load "{path}"', f"size={image.shape}")
     except FileNotFoundError:
         print("File %s Not Found" % path)
-        I = None
+        image = None
 
-    return I
+    return image
 
 
 def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
@@ -45,18 +45,18 @@ def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
 
 
 def crop(I, xy_center, half_size):
-    """Return the centered square at the position xy 
-    
+    """Return the centered square at the position xy
+
     Args:
         I: input image (2D array)
         xy_center: tuple of float
         half_size: half of the size of the crop
-        
+
     Returns:
         cropped image array
         indices of the center
-        
-        
+
+
     >>> from skimage.data import rocket
     >>> x, y = (322, 150)
     >>> plt.imshow(rocket());
@@ -109,11 +109,11 @@ def get_shifts(I, J, x, y,
 
     source, ij_src = crop(I, (x, y), window_half_size)
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
-    
+  
     shifts, error, _ = phase_cross_correlation(source, target,
                                                upsample_factor=upsample_factor)
     shifts = -shifts  # displacement = -registration = dst - src
-    
+
     dx = shifts[1] + (ij_tgt[1] - ij_src[1])
     dy = shifts[0] + (ij_tgt[0] - ij_src[0])
     return dx, dy, error
@@ -146,7 +146,6 @@ def build_grid(img_shape, margin, spacing):
     return x_grid, y_grid
 
 
-# Compute shifts
 def compute_shifts(I, J, points, **kargs):
     """Compute shifts for each point
     
@@ -162,12 +161,12 @@ def compute_shifts(I, J, points, **kargs):
     
     shift_x, shift_y, corr_errors = [], [], []
     
-    for (xi, yi) in zip(x_grid.flatten(), y_grid.flatten()):
+    for k, (xi, yi) in enumerate(zip(x_grid.flatten(), y_grid.flatten())):
         sx, sy, er = get_shifts(I, J, xi, yi, **kargs)
         shift_x.append(sx)
         shift_y.append(sy)
         corr_errors.append(er)
-        print(f"{xi: 5d}, {yi: 5d}: error {er}", end='\r')
+        print(f" {k: 4d}/{len(x_grid.flatten())}:  {sx:.2f} {sy:.2f}  error {er}", end='\r')
 
     print('done', ' '*40, end='\r')
 
@@ -177,7 +176,89 @@ def compute_shifts(I, J, points, **kargs):
     return shift_x, shift_y, corr_errors
 
 
-def bilinear_fit(x, y, shift_x, shift_y):
+def get_displacement_from_ref(cube, x, y, reference_image,
+                            window_half_size, upsample_factor,
+                            verbose=True):
+    """Find displacement for each images relative to the reference frame
+        starting from the point (x, y) in the reference frame
+        
+        (Lagrangian)
+    """
+    I_ref = cube[:, :, reference_image]
+    disp_to_ref = np.zeros((cube.shape[2], 2))
+    
+    # use the previous estimated position as offset
+    # Forward, image_by_image
+    dx_ref, dy_ref = 0, 0
+    for k in range(reference_image+1, cube.shape[2]):
+        J = cube[:, :, k]
+        try:
+            dx_ref, dy_ref, error = get_shifts(I_ref, J, x, y,
+                                       offset=(dx_ref, dy_ref),
+                                       window_half_size=window_half_size,
+                                       upsample_factor=upsample_factor)
+            disp_to_ref[k] = [dx_ref, dy_ref]
+
+            #previous = cube[:, :, k-1]
+            #dx1, dy1, error = get_shifts(previous, J, x+dx_ref, y+dy_ref,
+            #                               offset=(0, 0),
+            #                               window_half_size=window_half_size,
+            #                               upsample_factor=upsample_factor)
+            #step1[k] = [dx1, dy1]
+        except ValueError:
+            if verbose:
+                print('out of limits for image', k)
+            disp_to_ref[k] = [np.NaN, np.NaN]
+
+    # Backward, image_by_image
+    dx_ref, dy_ref = 0, 0
+    for k in range(0, reference_image)[::-1]:
+        J = cube[:, :, k]
+        try:
+            dx_ref, dy_ref, error = get_shifts(I_ref, J, x, y,
+                                               offset=(dx_ref, dy_ref),
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor)
+            disp_to_ref[k] = [dx_ref, dy_ref]
+        except ValueError:
+            print('out of limits for image', k)
+            step1[k] = [np.NaN, np.NaN]
+            
+    return disp_to_ref
+
+
+def get_displacement_from_previous(cube, x, y,
+                                    window_half_size, upsample_factor,
+                                    verbose=True):
+    """Find displacement for each images relative to the previous frame
+        at the point (x, y) in the camera reference frame
+        
+        (Eulerian)
+    """
+    I_ref = cube[:, :, 0]
+    disp_to_previous = np.zeros((cube.shape[2], 2))
+    
+    dx_ref, dy_ref = 0, 0
+    for k in range(1, cube.shape[2]):
+        J = cube[:, :, k]
+        try:
+            dx_ref, dy_ref, error = get_shifts(I_ref, J, x, y,
+                                       offset=(dx_ref, dy_ref),
+                                       window_half_size=window_half_size,
+                                       upsample_factor=upsample_factor)
+            disp_to_previous[k] = [dx_ref, dy_ref]
+
+        except ValueError:
+            if verbose:
+                print('out of limits for image', k)
+            disp_to_previous[k] = [np.NaN, np.NaN]
+            
+        I_ref = J
+            
+    return disp_to_previous
+
+
+def bilinear_fit_old(x, y, shift_x, shift_y):
     """Least square bilinear fit (a*x + b*y + c) on entire grid
     returns strains (eps_x, eps_y, eps_xy) and local residuals
     
@@ -206,6 +287,45 @@ def bilinear_fit(x, y, shift_x, shift_y):
     residuals_y = uy_fit.reshape(shift_y.shape) - shift_y
     
     return (eps_x, eps_y, eps_xy), residuals_x, residuals_y
+
+
+def bilinear_fit(points, displacements):
+    """Least square bilinear fit (a*x + b*y + c) on displacement field
+    returns strains and transalation and local residuals
+
+    points             2D arrays
+    displacements      2D arrays
+    """
+    u, v = displacements.T
+    mask = ~np.isnan(u) & ~np.isnan(v) 
+    u, v = u[mask], v[mask]
+
+    x, y = points[mask, :].T
+
+    ones = np.ones_like(x)
+    M = np.vstack([x, y, ones]).T
+
+    p_ux, residual_x, rank, s = np.linalg.lstsq(M, u, rcond=None)
+    p_uy, residual_y, rank, s = np.linalg.lstsq(M, v, rcond=None)
+
+    p = np.vstack([p_ux, p_uy])
+    # np.linalg.inv(np.matmul(M.T, M))
+
+    # unbiased estimator variance (see p47 T. Hastie)
+    #sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
+    #sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
+
+    # Residus
+    u_linear = np.matmul(M, p_ux)
+    v_linear = np.matmul(M, p_uy)
+
+    residus_x = u - u_linear
+    residus_y = v - v_linear
+
+    residus_xy = np.vstack([residus_x, residus_y])
+    
+    return p, residus_xy #(sigma_hat_x, sigma_hat_y)
+
 
 
 if __name__ == "__main__":
