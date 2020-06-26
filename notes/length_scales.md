@@ -1,16 +1,10 @@
 Different size are involved:
-
-- Pixel
-
-- Camera resolution and noise
-
-- Sample displacement between each image
-
-- Pattern (speckle) to track
-
-- Cross-correlation window size (computed using FFT)
-
-- "subpixel" registration
+    - Pixel
+    - Camera resolution and noise
+    - Sample displacement between each image
+    - Pattern (speckle) to track
+    - Cross-correlation window size (computed using FFT)
+    - "subpixel" registration
 
 
 
