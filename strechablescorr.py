@@ -228,8 +228,9 @@ def get_displacement_from_ref(cube, x, y, reference_image,
 
 
 def get_displacement_from_previous(cube, x, y,
-                                    window_half_size, upsample_factor,
-                                    verbose=True):
+                                   window_half_size, upsample_factor,
+                                   offsets = None,
+                                   verbose=True):
     """Find displacement for each images relative to the previous frame
         at the point (x, y) in the camera reference frame
         
@@ -237,24 +238,34 @@ def get_displacement_from_previous(cube, x, y,
     """
     I_ref = cube[:, :, 0]
     disp_to_previous = np.zeros((cube.shape[2], 2))
-    
-    dx_ref, dy_ref = 0, 0
+
+    if offsets is not None:
+        dx_ref, dy_ref = offsets[0, :]
+    else:
+        dx_ref, dy_ref = 0, 0
+
     for k in range(1, cube.shape[2]):
         J = cube[:, :, k]
         try:
+            if offsets is not None:
+                dx_guess = dx_ref - offsets[k-1, 0] + offsets[k, 0]
+                dy_guess = dy_ref - offsets[k-1, 1] + offsets[k, 1]
+            else:
+                dx_guess, dy_guess = dx_ref, dy_ref
+
             dx_ref, dy_ref, error = get_shifts(I_ref, J, x, y,
-                                       offset=(dx_ref, dy_ref),
-                                       window_half_size=window_half_size,
-                                       upsample_factor=upsample_factor)
+                                               offset=(dx_guess, dy_guess),
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor)
             disp_to_previous[k] = [dx_ref, dy_ref]
 
         except ValueError:
             if verbose:
                 print('out of limits for image', k)
             disp_to_previous[k] = [np.NaN, np.NaN]
-            
+
         I_ref = J
-            
+
     return disp_to_previous
 
 
@@ -289,13 +300,12 @@ def bilinear_fit_old(x, y, shift_x, shift_y):
     return (eps_x, eps_y, eps_xy), residuals_x, residuals_y
 
 
-def bilinear_fit(points, displacements):
-    """Least square bilinear fit (a*x + b*y + c) on displacement field
-    returns strains and transalation and local residuals
+# ===============
+#  Bilinear Fit
+# ===============
 
-    points             2D arrays
-    displacements      2D arrays
-    """
+def bilinear_fit(points, displacements):
+    # Least Square
     u, v = displacements.T
     mask = ~np.isnan(u) & ~np.isnan(v) 
     u, v = u[mask], v[mask]
@@ -312,19 +322,21 @@ def bilinear_fit(points, displacements):
     # np.linalg.inv(np.matmul(M.T, M))
 
     # unbiased estimator variance (see p47 T. Hastie)
-    #sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
-    #sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
+    sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
+    sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
 
-    # Residus
-    u_linear = np.matmul(M, p_ux)
-    v_linear = np.matmul(M, p_uy)
+    # Residus 
+    u_linear = np.matmul( M, p_ux )
+    v_linear = np.matmul( M, p_uy )
 
     residus_x = u - u_linear
     residus_y = v - v_linear
 
-    residus_xy = np.vstack([residus_x, residus_y])
+    residus_xy = np.vstack([residus_x, residus_y]).T
     
-    return p, residus_xy #(sigma_hat_x, sigma_hat_y)
+    a = np.full(displacements.shape, np.nan)
+    a[mask, :] = residus_xy
+    return p, a  #(sigma_hat_x, sigma_hat_y)
 
 
 
