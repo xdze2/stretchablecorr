@@ -82,6 +82,7 @@ upsample_factor = 100
 
 reference_image = 0
 
+
 # ----
 grid = build_grid(cube.shape, margin=grid_margin, spacing=grid_spacing)
 points = np.vstack( [grid[0].flatten(), grid[1].flatten()] ).T
