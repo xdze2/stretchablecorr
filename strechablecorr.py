@@ -235,21 +235,42 @@ def get_displacement_from_previous(cube, x, y,
         at the point (x, y) in the camera reference frame
 
         (Eulerian)
-        note: transpose error
+
+    Parameters
+    ----------
+    cube : [type]
+        [description]
+    x : [type]
+        [description]
+    y : [type]
+        [description]
+    window_half_size : [type]
+        [description]
+    upsample_factor : [type]
+        [description]
+    offsets : [type], optional
+        [description], by default None
+    verbose : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     nbr_images = cube.shape[0]
-   
+
     disp_to_previous = np.zeros((nbr_images-1, 2))
 
     if offsets is None:
         offsets = np.zeros((nbr_images-1, 2))
-    
+
     dx_ref, dy_ref = offsets[0, :]
     I = cube[0]
     for k, J in enumerate(cube[1:], start=1):
         try:
-            dy_guess = dy_ref - offsets[k-2, 1] + offsets[k-1, 1]
             dx_guess = dx_ref - offsets[k-2, 0] + offsets[k-1, 0]
+            dy_guess = dy_ref - offsets[k-2, 1] + offsets[k-1, 1]
 
             dx_ref, dy_ref, _error = get_shifts(I, J, x, y,
                                                 offset=(dx_guess, dy_guess),
@@ -268,74 +289,66 @@ def get_displacement_from_previous(cube, x, y,
     return disp_to_previous
 
 
-def bilinear_fit_old(x, y, shift_x, shift_y):
-    """Least square bilinear fit (a*x + b*y + c) on entire grid
-    returns strains (eps_x, eps_y, eps_xy) and local residuals
-
-    x, y               2D arrays
-    shift_x, shift_y   2D arrays
-    """
-    x_flat, y_flat, shift_x_flat, shift_y_flat = [u.flatten()
-                                                  for u in (x, y, shift_x, shift_y)]
-
-    # Least Square
-    ones = np.ones_like(shift_x_flat)
-    M = np.vstack([ones, x_flat, y_flat]).T
-
-    p_ux, _residual_x, rank, s = np.linalg.lstsq(M, shift_x_flat, rcond=None)
-    p_uy, _residual_y, rank, s = np.linalg.lstsq(M, shift_y_flat, rcond=None)
-
-    # Strain
-    eps_x = p_ux[1]
-    eps_y = p_uy[2]
-    eps_xy = p_ux[2] + p_uy[1]
-
-    # Residuals
-    ux_fit = np.matmul(M, p_ux)
-    uy_fit = np.matmul(M, p_uy)
-    residuals_x = ux_fit.reshape(shift_x.shape) - shift_x
-    residuals_y = uy_fit.reshape(shift_y.shape) - shift_y
-
-    return (eps_x, eps_y, eps_xy), residuals_x, residuals_y
-
-
 # ===============
 #  Bilinear Fit
 # ===============
 
 def bilinear_fit(points, displacements):
-    # Least Square
+    """Performs a bilinear fit on the displacements field
+
+    Solve the equation:
+                         ⎛x⎞
+    ⎛u⎞   ⎛a11 a12 tx⎞   ⎜ ⎟
+    ⎜ ⎟ = ⎜          ⎟ * ⎜y⎟
+    ⎝v⎠   ⎝a21 a22 ty⎠   ⎜ ⎟
+                         ⎝1⎠
+
+    Parameters
+    ----------
+    points : nd-array (nbr_points, 2)
+        coordinates of points (x, y)
+    displacements : nd-array (nbr_points, 2)
+        displacement for each point (u, v)
+        could include NaN
+
+    Returns
+    -------
+    nd-array (2, 3)
+        coefficients matrix (affine transformation + translation)
+    nd-array (nbr_points, 2)
+        residuals for each points
+    """
     u, v = displacements.T
     mask = ~np.isnan(u) & ~np.isnan(v)
     u, v = u[mask], v[mask]
-
     x, y = points[mask, :].T
 
     ones = np.ones_like(x)
     M = np.vstack([x, y, ones]).T
 
-    p_ux, residual_x, rank, s = np.linalg.lstsq(M, u, rcond=None)
-    p_uy, residual_y, rank, s = np.linalg.lstsq(M, v, rcond=None)
+    p_uy, _residual_y, _rank, _s = np.linalg.lstsq(M, v, rcond=None)
+    p_ux, _residual_x, _rank, _s = np.linalg.lstsq(M, u, rcond=None)
 
-    p = np.vstack([p_ux, p_uy])
-    # np.linalg.inv(np.matmul(M.T, M))
+    coefficients = np.vstack([p_ux, p_uy])
 
-    # unbiased estimator variance (see p47 T. Hastie)
-    sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
-    sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
+    ## Unbiased estimator variance (see p47 T. Hastie)
+    #sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
+    #sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
 
-    # Residus
+    # Residuals:
     u_linear = np.matmul( M, p_ux )
     v_linear = np.matmul( M, p_uy )
 
-    residus_x = u - u_linear
-    residus_y = v - v_linear
+    residuals_x = u - u_linear
+    residuals_y = v - v_linear
 
-    residus_xy = np.vstack([residus_x, residus_y]).T
+    residuals_xy = np.vstack([residuals_x, residuals_y]).T
 
-    a = np.full(displacements.shape, np.nan)
-    a[mask, :] = residus_xy
-    return p, a  #(sigma_hat_x, sigma_hat_y)
+    # Merge with ignored NaN values:
+    residuals_NaN = np.full(displacements.shape, np.nan)
+    residuals_NaN[mask, :] = residuals_xy
+
+    return coefficients, residuals_NaN
 
 
 
