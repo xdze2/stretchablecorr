@@ -74,7 +74,7 @@ plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
 
 window_half_size = 60
 
-grid_spacing = 200 //3
+grid_spacing = 150 //3
 grid_margin = 350 //3
 
 upsample_factor = 100
@@ -237,11 +237,49 @@ print('done', ' '*40)
 # ===============================
 ## Graph macro_strain Eulerian ?
 # ===============================
+# -
+
+a_11 = linear_def_from_previous[1:, 0, 0]
+a_22 = linear_def_from_previous[1:, 1, 1]
+nu = -a_22/a_11
+
+plt.plot( nu, label='coeff. Poisson' );
+plt.xlabel('frame id');
+
+plt.plot( linear_def_from_previous[:, 0, 0], "-o",label='eps_xx' )
+plt.plot( linear_def_from_previous[:, 1, 1], label='eps_yy' )
+plt.plot( linear_def_from_previous[:, 1, 0], label='eps_xy' )
+plt.plot( linear_def_from_previous[:, 0, 1], label='eps_yx' )
+plt.legend();
+plt.xlabel('frame id'); plt.title('frame to frame strain')
+plt.ylabel('frame to frame strain (%)'); plt.legend();
+
+plt.plot(np.cumsum(a_11), '-o')
+
+nu = -linear_def_from_previous[1:, 1, 1]/linear_def_from_previous[1:, 0, 0]
+plt.plot( nu, label='eps_yy' );
+plt.xlabel('frame id');
+
+from scipy.linalg import solve
+
+# +
+def_centers = []
+for coeffs in linear_def_from_previous:
+    a = coeffs[0:2, 0:2]
+    b = coeffs[:, 2]
+
+    # solve a x = b
+    def_centers.append( solve(a, -b) )
+
+def_centers = np.stack(def_centers)
+# -
+
+plt.imshow(cube[0]);
+plt.plot(*def_centers[1:12].T)
 
 # +
 print('')
 print('bilinear regression for each frame')
-p_sigma = [ bilinear_fit(points, displacements[:, :, k]) for k in range(cube.shape[2])]
 
 eps_xx = np.array([p[0, 0] for p, sig in p_sigma])
 eps_yy = np.array([p[1, 1] for p, sig in p_sigma])

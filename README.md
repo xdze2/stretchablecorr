@@ -32,13 +32,16 @@ There are 3 modules:
     _note: ij convention instead of xy_
 
 * `points` : 2D array of floats with shape (nbr_points, 2)  
-    Coordinates of points (could be unstructured, i.e. not a grid).
+    Coordinates of points (could be unstructured, i.e. not a grid).  
+    (x, y) order
 
 * `offsets` : 2D array of floats with shape (nbr_images - 1, 2)   
-    image-to-image overall displacement
+    image-to-image overall displacement  
+    could include NaNs
 
 * `displ_from_previous` : 3D array of floats with shape (nbr_points, 2, nbr_images - 1)  
-    image-to-image displacements for each points (Eulerian)
+    image-to-image displacements for each points (Eulerian)  
+    could include NaNs
 
 ## pseudo multi-scale approach for robust processing
 
@@ -53,8 +56,8 @@ There are 3 modules:
         ...
 
 * first, run correlation image-to-image on a large ROI (i.e. the central part of the image) → obtain `offsets` values
-* second, run correlation image-to-image for all points of the grid, (using the offsets) → obtain `displacemenents` values 
-    - run bilinear fit to get sample-scale Eulerian image-to-image deformations (`p` and residuals)
+* second, run correlation image-to-image for all points of the grid, (using the offsets) → obtain `displ_from_previous` values 
+    - run bilinear fit to get sample-scale Eulerian image-to-image deformations (`lin_def_from_previous` and `residuals`)
 * third, re-run correlation tracking points: get Lagrangian (attached to the surface) 
     - for this we need an image range -> it defines a the sample surface area visible from start to finish. Problems: it will be not necessaryly stay a regular and nice grid 
 
