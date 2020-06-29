@@ -65,11 +65,12 @@ def load_images(images, verbose=True):
     cube = [load_image(img_path)
             for img_path in images]
 
-    cube = np.dstack(cube)
+    cube = np.stack(cube, axis=0)
 
     if verbose:
-        print('Image cube:' + ' '*20)
-        print(f' {cube.shape[0]}*{cube.shape[1]} pixels - {cube.shape[2]} frames') 
+        print('Image sequence:')
+        print(f' {cube.shape[0]} frames') 
+        print(f' {cube.shape[2]}*{cube.shape[1]} pixels') 
         print(f' memory size: {cube.nbytes // 1024**2} Mo')
 
     return cube

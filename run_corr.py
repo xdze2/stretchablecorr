@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pylab as plt
 from skimage import io
 from skimage import img_as_uint
-from strechablescorr import *
+from strechablecorr import *
 # #!pip install scikit-image
 
 import filetools as ft
@@ -39,7 +39,8 @@ print('=================')
 ft.print_numbered_list(samples)
 
 # Select a sample:
-sample_name = samples[2]
+sample_id = input('Select an image directory:')
+sample_name = samples[int(sample_id)]
 print(sample_name)
 
 # +
@@ -63,7 +64,7 @@ ft.create_dir(sample_output_path)
 print('create outpur directory:', sample_output_path)
 
 plt.figure(); plt.title(f'cube std - {sample_name}');
-plt.imshow(np.std(cube, axis=2));
+plt.imshow(np.std(cube, axis=0));
 plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
 
 # +
@@ -71,28 +72,25 @@ plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
 #  Define the grid
 # ==================
 
-window_half_size = 120
+window_half_size = 60
 
-grid_spacing = 200 #//3
-grid_margin = 350 #//3
-
+grid_spacing = 200 //3
+grid_margin = 350 //3
 
 upsample_factor = 100
 
-
 reference_image = 0
 
-
 # ----
-grid = build_grid(cube.shape, margin=grid_margin, spacing=grid_spacing)
+grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
 points = np.vstack( [grid[0].flatten(), grid[1].flatten()] ).T
 
 # Graph the grid
 show_pts_number = False
-show_window = False
+show_window = True
 
 plt.figure();
-plt.imshow(cube[:, :, reference_image]);
+plt.imshow(cube[reference_image, :, :]);
 plt.title(f'Grille - D={grid_spacing}px - {points.shape[0]} points');
 plt.plot(*grid, 'o', color='white', markersize=3);
 
@@ -117,23 +115,46 @@ plt.savefig(os.path.join(sample_output_path, '02_grid.svg'));
 # ============================================
 #  Compute image to image displacement field
 # ============================================
-print('Compute image to image displacement field:')
-# shape: (Nbr points, 2, nbr_frames)
 
-offsets = get_displacement_from_previous(cube, cube.shape[0]//2, cube.shape[1]//2, 
-                                          min(cube.shape[0]//2, cube.shape[1]//2)//2,
-                                upsample_factor=1,
-                                verbose=False)
+# 1. get image-to-image offsets
+xy_center = cube.shape[1]//2, cube.shape[2]//2
+central_window_halfsize = min(cube.shape[1]//3, cube.shape[2]//2) // 2
+offsets = get_displacement_from_previous(cube, *xy_center, central_window_halfsize,
+                                         upsample_factor=1,
+                                         verbose=False)
 
-displacements = np.zeros((*points.shape, cube.shape[2]))
-for k, (x, y) in enumerate(points):
-    print(f'{k: 4d}/{len(points)}', end='\r')
-    disp_from_prev = get_displacement_from_previous(cube, x, y, 
-                                          window_half_size, upsample_factor, offsets=offsets,
-                                          verbose=False)
-    displacements[k, :, :] = disp_from_prev.T
-        
-print('done', ' '*30)
+print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px')
+
+# +
+# 2. get image-to-image displacements
+    # shape: (Nbr points, 2, nbr_frames-1)
+upsample_factor = 1
+displ_from_previous = np.zeros((points.shape[0], cube.shape[0]-1, 2))
+for point_id, coords in enumerate(points):
+    print('Compute image-to-image displacement field:',
+          f'{point_id: 4d}/{len(points)}',
+          end='\r')
+    displ_from_previous[point_id] = get_displacement_from_previous(cube, *coords, 
+                                                                  window_half_size,
+                                                                  upsample_factor,
+                                                                  offsets=offsets,
+                                                                  verbose=False)
+
+# set dim order to (image_id, point_id, uv)
+displ_from_previous = displ_from_previous.swapaxes(0, 1)
+print('Compute image-to-image displacement field:',
+      'done', ' '*10)
+
+# +
+all_coeffs = []
+all_residuals = []
+for displ_field in displ_from_previous:
+    coeffs, residuals = bilinear_fit(points, displ_field)
+    all_coeffs.append(coeffs)
+    all_residuals.append(residuals)
+
+linear_def_from_previous = np.stack(all_coeffs, axis=0)
+residuals_from_previous = np.stack(all_residuals, axis=0)
 
 
 # -
@@ -149,7 +170,7 @@ def plot_vector_field(points, displacements,
                scale_units='xy',
                scale=1/view_factor if view_factor else None,
                minlength=1e-4);
-    #plt.title(f'champ de déplacement - image {reference_image}->{image_id} \n d_max={np.nanmax(amplitudes):.2f}px');
+    
     plt.text(10., 10.,
              f'max(|u|)={np.nanmax(amplitudes):.2f}px  mean(|u|)={np.nanmean(amplitudes):.2f}px',
              fontsize=12, color=color,
@@ -157,54 +178,65 @@ def plot_vector_field(points, displacements,
 
 
 # +
-# Quiver Graph
+# =========
+#  Graphs
+# =========
 output_dir = f'frame_to_frame_window{window_half_size}px'
 image_ext = "svg"
 
+# --
 save_path = os.path.join(sample_output_path, output_dir)
 ft.create_dir(save_path)
-for image_id in range(1, displacements.shape[-1]):
-    
-    # 1. Champ de déplacement
-    disp_k = displacements[:, :, image_id]
-    
+
+# +
+# 1. Champ de déplacement
+for image_id, displ in enumerate(displ_from_previous):
     plt.figure();
-    plt.imshow(cube[:, :, image_id]);
-    plot_vector_field(points, disp_k, view_factor=None)
-    plt.title(f'champ de déplacement - images {image_id-1}→{image_id} - fenêtre:{window_half_size*2+1}px');
+    plt.imshow(cube[image_id]);
+    plot_vector_field(points, displ, view_factor=None)
+    plt.title(f'champ de déplacement - images {image_id}→{image_id+1} - fenêtre:{window_half_size*2+1}px');
     filename = f'disp_field_{image_id:04d}.{image_ext}'
     plt.savefig(os.path.join(save_path, filename));
-    print(f'figure saved: {filename}')
+    print(f'figure saved: {filename}', end='\r')
     plt.close()
     
-    # 2. Sans la translation
-    disp_k_ss_translation = disp_k - np.nanmean(disp_k, axis=0)
+print('done', ' '*40)
+
+# +
+# 2. Champ de déplacement Sans la translation
+for image_id, displ in enumerate(displ_from_previous):
+    displ = displ - np.nanmean(displ, axis=0)
     
     plt.figure();
-    plt.imshow(cube[:, :, image_id]);
-    plot_vector_field(points, disp_k_ss_translation, view_factor=None)
-    plt.title(f'sans la translation - images {image_id-1}→{image_id} - fenêtre:{window_half_size*2+1}px');
+    plt.imshow(cube[image_id]);
+    plot_vector_field(points, displ, view_factor=None)
+    plt.title(f'sans la translation - images {image_id}→{image_id+1} - fenêtre:{window_half_size*2+1}px');
     filename = f'without_translation_{image_id:04d}.{image_ext}'
     plt.savefig(os.path.join(save_path, filename));
-    print(f'figure saved: {filename}')
+    print(f'figure saved: {filename}', end='\r')
     plt.close()
     
-    # 3. fit bilineaire
-    p, residus = bilinear_fit(points, disp_k)
-    #amplitudes = np.sqrt(np.nansum( residus**2, axis=0 )) # disp. amplitude
-    view_factor = None
-    
+print('done', ' '*40)
+
+# +
+# 3. fit bilineaire
+for image_id, residuals in enumerate(residuals_from_previous):
+    view_factor = None  
     plt.figure();
-    plt.title(f'résidus après fit linéaire - images {image_id-1}→{image_id} - fenêtre:{window_half_size*2+1}px');
-    plt.imshow(cube[:, :, image_id]);
-    plot_vector_field(points, residus, view_factor=None, color='red')
+    plt.title(f'résidus après fit linéaire - images {image_id}→{image_id+1} - fenêtre:{window_half_size*2+1}px');
+    plt.imshow(cube[image_id]);
+    plot_vector_field(points, residuals, view_factor=None, color='red')
     filename = f'residuals_{image_id:04d}.{image_ext}'  
     plt.savefig(os.path.join(save_path, filename));
-    print(f'figure saved: {filename}')
+    print(f'figure saved: {filename}', end='\r')
     plt.close()
-# -
+    
+print('done', ' '*40)
 
-p
+# +
+# ===============================
+## Graph macro_strain Eulerian ?
+# ===============================
 
 # +
 print('')
