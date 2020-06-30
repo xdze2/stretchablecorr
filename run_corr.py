@@ -279,29 +279,6 @@ interp(-100, 0)
 
 plt.plot(trajectory[:, 0, :], trajectory[:, 1, :]);
 
-# # plt.imshow(grid[1])
-
-displ.shape
-
-# +
-# ===============================
-## Graph macro_strain Eulerian ?
-# ===============================
-# -
-
-
-
-plt.plot( nu, label='coeff. Poisson' );
-plt.xlabel('frame id');
-
-
-
-filename = f'coeffs_bilinear_fit.csv'
-save_path = os.path.join(sample_output_path, filename)
-plt.savefig(os.path.join(save_path, filename));
-print(f'figure saved: {filename}', end='\r')
-numpy.savetxt("foo.csv", a, delimiter=",")
-
 # +
 plt.plot( linear_def_from_previous[:, 0, 0], "-o",label='eps_xx' )
 plt.plot( linear_def_from_previous[:, 1, 1], label='eps_yy' )
@@ -337,58 +314,30 @@ x_0 = 10 # mm
 x_i = np.arange(1, len(a_11)+1)*dt*v
 eps_app = x_i / x_0
 
-eps_app
-
-plt.plot(eps_app, np.cumsum(a_11), '-o')
-plt.plot([0, 0.4], [0, 0.4])
+plt.plot(eps_app*100, 100*np.cumsum(a_11), '-o');
+plt.plot([0, 30], [0, 30], '-k');
+plt.xlabel('applied strain (%)'); #plt.title('image to image strain')
+plt.ylabel('DIC measured strain (%)'); #plt.legend();
 
 nu = -linear_def_from_previous[1:, 1, 1]/linear_def_from_previous[1:, 0, 0]
-plt.plot( nu, label='eps_yy' );
-plt.xlabel('frame id');
+plt.plot( nu, '-o' ); plt.title('Coefficient de Poisson')
+plt.xlabel('image id'); plt.ylabel('nu = -a11 / a11');
 
-from scipy.linalg import solve
-
-# +
-def_centers = []
-for coeffs in linear_def_from_previous:
-    a = coeffs[0:2, 0:2]
-    b = coeffs[:, 2]
-
-    # solve a x = b
-    def_centers.append( solve(a, -b) )
-
-def_centers = np.stack(def_centers)
+# + active=""
+# from scipy.linalg import solve
+#
+# def_centers = []
+# for coeffs in linear_def_from_previous:
+#     a = coeffs[0:2, 0:2]
+#     b = coeffs[:, 2]
+#
+#     # solve a x = b
+#     def_centers.append( solve(a, -b) )
+#
+# def_centers = np.stack(def_centers)
+#
+# plt.imshow(cube[0]);
+# plt.plot(*def_centers[1:12].T)
 # -
-
-plt.imshow(cube[0]);
-plt.plot(*def_centers[1:12].T)
-
-# +
-print('')
-print('bilinear regression for each frame')
-
-eps_xx = np.array([p[0, 0] for p, sig in p_sigma])
-eps_yy = np.array([p[1, 1] for p, sig in p_sigma])
-sigma_hat_x = np.array([sig[0] for p, sig in p_sigma])
-sigma_hat_y = np.array([sig[1] for p, sig in p_sigma])
-
-plt.figure();
-plt.plot(eps_xx*100, 'o-', label='$\Delta \epsilon_{xx}$')
-plt.plot(eps_yy*100, 'o-', label='$\Delta \epsilon_{yy}$')
-plt.xlabel('frame id'); plt.title('frame to frame strain')
-plt.ylabel('frame to frame strain (%)'); plt.legend();
-
-plt.savefig(os.path.join(sample_output_path, f'frame_to_frame_strain.png'));
-print(' save frame_to_frame_strain.png')
-# -
-
-cube.dtype
-
-plt.figure();
-plt.plot(sigma_hat_x[:-1], 's-')
-plt.plot(sigma_hat_y[:-1], 's-')
-plt.xlabel('frame id'); plt.ylabel('std residuals (px)'); plt.title('residuals');
-plt.savefig(os.path.join(sample_output_path, f'frame_to_frame_residuals.png'));
-print(' save frame_to_frame_residuals.png')
 
 
