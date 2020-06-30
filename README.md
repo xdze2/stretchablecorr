@@ -10,9 +10,9 @@ a Python code for Digital Image Correlation (DIC)
 ## Code structure
 
 There are 3 modules:
-- filetools
-- stretchablecorr
-- graphtools
+- filetools: functions used to load and sort images
+- stretchablecorr: main set of function performing the processing
+- graphtools: post-processing functions
 
 
 ## Workflow
