@@ -122,14 +122,24 @@ def get_shifts(I, J, x, y,
 def build_grid(img_shape, margin, spacing):
     """Build a regular grid
 
-    Args:
-        img_shape: tuple shape of the image (Int, Int)
-        margin: size of the margin in px
-        spacing: spacing in px between points
+    note: as given by `np.meshgrid`
 
-    Returns:
-        x_grid, y_grid: 2d arrays of coordinates
+    Parameters
+    ----------
+    img_shape : tuple (height, width)
+        size of the image for which the grid will be used
+    margin : Int or Float
+        minimal distance to image edges without points
+    spacing : Int or Float
+        distance in pixel between points
+
+    Returns
+    -------
+    3D nd-array of floats, shape (2, nbr pts height, width)
+       grid[0]: X coordinates of grid points
+       grid[1]: Y coordinates of grid points
     """
+
     margin = int(np.ceil(margin))
     spacing = int(np.ceil(spacing))
     x_span = np.arange(0, img_shape[1]-2*margin, spacing)
@@ -143,7 +153,7 @@ def build_grid(img_shape, margin, spacing):
     print("grid size:", "%ix%i" % (len(x_span), len(y_span)))
     print(" i.e.", len(x_span)*len(y_span), "points")
 
-    return x_grid, y_grid
+    return np.stack((x_grid, y_grid))
 
 
 def compute_shifts(I, J, points, **kargs):

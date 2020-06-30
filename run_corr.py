@@ -67,6 +67,10 @@ plt.figure(); plt.title(f'cube std - {sample_name}');
 plt.imshow(np.std(cube, axis=0));
 plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
 
+cube.shape
+
+
+
 # +
 # ==================
 #  Define the grid
@@ -83,7 +87,7 @@ reference_image = 0
 
 # ----
 grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
-points = np.vstack( [grid[0].flatten(), grid[1].flatten()] ).T
+points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 
 # Graph the grid
 show_pts_number = False
@@ -234,27 +238,109 @@ for image_id, residuals in enumerate(residuals_from_previous):
 print('done', ' '*40)
 
 # +
+from scipy.interpolate import RectBivariateSpline
+
+def field_interpolation(grid, vector_field):
+    u = vector_field[:, 0].reshape(grid[0].shape)
+    v = vector_field[:, 1].reshape(grid[0].shape)
+    
+    interp_u = RectBivariateSpline(x_span, y_span, u.T)
+    interp_v = RectBivariateSpline(x_span, y_span, v.T)
+    
+    return lambda x, y: np.stack((interp_u(x, y, grid=False),
+                                  interp_v(x, y, grid=False)), axis=0)
+
+
+# -
+
+displ[:, 0].reshape(grid[0].shape).shape
+
+grid.shape
+
+displ_interpolators = [field_interpolation(grid, displ)
+                       for displ in displ_from_previous]
+
+u_prime = interp_u(grid[0], grid[1], grid=False)
+
+plt.imshow(u-u_prime); plt.colorbar();
+
+# +
+starting_points = points.T
+trajectory =  [starting_points, ]
+
+for interp in displ_interpolators:
+    uv = interp( *trajectory[-1] )
+    trajectory.append(trajectory[-1] + uv)
+    
+trajectory = np.stack(trajectory)
+# -
+
+interp(-100, 0)
+
+plt.plot(trajectory[:, 0, :], trajectory[:, 1, :]);
+
+# # plt.imshow(grid[1])
+
+displ.shape
+
+# +
 # ===============================
 ## Graph macro_strain Eulerian ?
 # ===============================
 # -
 
-a_11 = linear_def_from_previous[1:, 0, 0]
-a_22 = linear_def_from_previous[1:, 1, 1]
-nu = -a_22/a_11
+
 
 plt.plot( nu, label='coeff. Poisson' );
 plt.xlabel('frame id');
 
+
+
+filename = f'coeffs_bilinear_fit.csv'
+save_path = os.path.join(sample_output_path, filename)
+plt.savefig(os.path.join(save_path, filename));
+print(f'figure saved: {filename}', end='\r')
+numpy.savetxt("foo.csv", a, delimiter=",")
+
+# +
 plt.plot( linear_def_from_previous[:, 0, 0], "-o",label='eps_xx' )
 plt.plot( linear_def_from_previous[:, 1, 1], label='eps_yy' )
-plt.plot( linear_def_from_previous[:, 1, 0], label='eps_xy' )
-plt.plot( linear_def_from_previous[:, 0, 1], label='eps_yx' )
+plt.plot( linear_def_from_previous[:, 1, 0], label='a_12' )
+plt.plot( linear_def_from_previous[:, 0, 1], label='a_21' )
 plt.legend();
-plt.xlabel('frame id'); plt.title('frame to frame strain')
-plt.ylabel('frame to frame strain (%)'); plt.legend();
+plt.xlabel('image id'); plt.title('image to image strain')
+plt.ylabel('image to image strain (%)'); plt.legend();
 
-plt.plot(np.cumsum(a_11), '-o')
+
+filename = f'image_to_image_coefficients_window{window_half_size}px.{image_ext}'
+plt.savefig(os.path.join(sample_output_path, filename));
+print(f'figure saved: {filename}', end='\r')
+
+
+a_11 = linear_def_from_previous[1:, 0, 0]
+a_22 = linear_def_from_previous[1:, 1, 1]
+a_12 = linear_def_from_previous[1:, 0, 1]
+a_21 = linear_def_from_previous[1:, 1, 0]
+
+nu = -a_22/a_11
+
+data = np.vstack([a_11, a_22, a_12, a_21]).T
+filename = f'image_to_image_coeffs_bilinear_fit_window{window_half_size}px.csv'
+np.savetxt(os.path.join(sample_output_path, filename), data,
+           delimiter=",", header='a11, a22, a12, a21')
+print(f'data saved: {filename}', end='\r')
+# -
+
+dt = 10   # s
+v = 2/60  # mm/s
+x_0 = 10 # mm
+x_i = np.arange(1, len(a_11)+1)*dt*v
+eps_app = x_i / x_0
+
+eps_app
+
+plt.plot(eps_app, np.cumsum(a_11), '-o')
+plt.plot([0, 0.4], [0, 0.4])
 
 nu = -linear_def_from_previous[1:, 1, 1]/linear_def_from_previous[1:, 0, 0]
 plt.plot( nu, label='eps_yy' );

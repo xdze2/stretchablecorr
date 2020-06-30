@@ -14,6 +14,7 @@ There are 3 modules:
 - stretchablecorr: main set of function performing the processing
 - graphtools: post-processing functions
 
+_note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
 
 ## Workflow
 
