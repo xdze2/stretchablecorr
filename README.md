@@ -58,7 +58,7 @@ There are 3 modules:
 * first, run correlation image-to-image on a large ROI (i.e. the central part of the image) → obtain `offsets` values
 * second, run correlation image-to-image for all points of the grid, (using the offsets) → obtain `displ_from_previous` values 
     - run bilinear fit to get sample-scale Eulerian image-to-image deformations (`lin_def_from_previous` and `residuals`)
-* third, re-run correlation tracking points: get Lagrangian (attached to the surface) 
+* third, re-run correlation now by tracking individuals points: get Lagrangian (attached to the surface) deformation field 
     - for this we need an image range -> it defines a the sample surface area visible from start to finish. Problems: it will be not necessaryly stay a regular and nice grid 
 
 
