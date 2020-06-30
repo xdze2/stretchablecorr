@@ -67,10 +67,6 @@ plt.figure(); plt.title(f'cube std - {sample_name}');
 plt.imshow(np.std(cube, axis=0));
 plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
 
-cube.shape
-
-
-
 # +
 # ==================
 #  Define the grid
@@ -132,17 +128,16 @@ print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px
 # +
 # 2. get image-to-image displacements
     # shape: (Nbr points, 2, nbr_frames-1)
-upsample_factor = 1
 displ_from_previous = np.zeros((points.shape[0], cube.shape[0]-1, 2))
 for point_id, coords in enumerate(points):
     print('Compute image-to-image displacement field:',
           f'{point_id: 4d}/{len(points)}',
           end='\r')
     displ_from_previous[point_id] = get_displacement_from_previous(cube, *coords, 
-                                                                  window_half_size,
-                                                                  upsample_factor,
-                                                                  offsets=offsets,
-                                                                  verbose=False)
+                                                                   window_half_size,
+                                                                   upsample_factor,
+                                                                   offsets=offsets,
+                                                                   verbose=False)
 
 # set dim order to (image_id, point_id, uv)
 displ_from_previous = displ_from_previous.swapaxes(0, 1)
@@ -150,6 +145,7 @@ print('Compute image-to-image displacement field:',
       'done', ' '*10)
 
 # +
+print('Do bilinear fits')
 all_coeffs = []
 all_residuals = []
 for displ_field in displ_from_previous:
@@ -160,26 +156,54 @@ for displ_field in displ_from_previous:
 linear_def_from_previous = np.stack(all_coeffs, axis=0)
 residuals_from_previous = np.stack(all_residuals, axis=0)
 
+# +
+# 4. Displacement field relative to the reference image
 
+displ_from_ref = np.zeros((points.shape[0], cube.shape[0]-1, 2))
+for point_id, coords in enumerate(points):
+    print('Compute displacement field from ref. image:',
+          f'{point_id: 4d}/{len(points)}',
+          end='\r')
+    displ_from_ref[point_id] = get_displacement_from_ref(cube, *coords, 
+                                                                  window_half_size,
+                                                                  upsample_factor,
+                                                                  verbose=False)
+# set dim order to (image_id, point_id, uv)
+displ_from_ref = displ_from_ref.swapaxes(0, 1)
+print('Compute displacement field from ref. image:',
+      'done', ' '*10)
 # -
 
-def plot_vector_field(points, displacements,
-                      view_factor=None, color='white'):
-    amplitudes = np.sqrt(np.nansum( displacements**2, axis=1 )) # disp. amplitude
+positions = displ_from_ref[15] + points
 
-    mask = ~np.any( np.isnan(displacements), axis=1, keepdims=False )
-    
-    plt.quiver(*points[mask, :].T, *displacements[mask, :].T,
-               angles='xy', color=color,
-               scale_units='xy',
-               scale=1/view_factor if view_factor else None,
-               minlength=1e-4);
-    
-    plt.text(10., 10.,
-             f'max(|u|)={np.nanmax(amplitudes):.2f}px  mean(|u|)={np.nanmean(amplitudes):.2f}px',
-             fontsize=12, color=color,
-             verticalalignment='top')
+vector_field = positions
+x_prime = vector_field[:, 0].reshape(grid[0].shape)
+y_prime = vector_field[:, 1].reshape(grid[0].shape)
 
+positions_grid = positions.reshape((2, *grid[0].T.shape))
+
+plt.pcolor(x_prime, y_prime, x_prime, edgecolors='black');
+plt.pcolor(x_prime, y_prime, x_prime, edgecolors='black');
+plt.axis('equal');
+
+
+
+# def plot_vector_field(points, displacements,
+#                       view_factor=None, color='white'):
+#     amplitudes = np.sqrt(np.nansum( displacements**2, axis=1 )) # disp. amplitude
+#
+#     mask = ~np.any( np.isnan(displacements), axis=1, keepdims=False )
+#     
+#     plt.quiver(*points[mask, :].T, *displacements[mask, :].T,
+#                angles='xy', color=color,
+#                scale_units='xy',
+#                scale=1/view_factor if view_factor else None,
+#                minlength=1e-4);
+#     
+#     plt.text(10., 10.,
+#              f'max(|u|)={np.nanmax(amplitudes):.2f}px  mean(|u|)={np.nanmean(amplitudes):.2f}px',
+#              fontsize=12, color=color,
+#              verticalalignment='top')
 
 # +
 # =========
@@ -236,62 +260,73 @@ for image_id, residuals in enumerate(residuals_from_previous):
     plt.close()
     
 print('done', ' '*40)
-
-# +
-from scipy.interpolate import RectBivariateSpline
-
-def field_interpolation(grid, vector_field):
-    u = vector_field[:, 0].reshape(grid[0].shape)
-    v = vector_field[:, 1].reshape(grid[0].shape)
-    
-    interp_u = RectBivariateSpline(x_span, y_span, u.T)
-    interp_v = RectBivariateSpline(x_span, y_span, v.T)
-    
-    return lambda x, y: np.stack((interp_u(x, y, grid=False),
-                                  interp_v(x, y, grid=False)), axis=0)
-
-
 # -
 
-displ[:, 0].reshape(grid[0].shape).shape
 
-grid.shape
 
-displ_interpolators = [field_interpolation(grid, displ)
-                       for displ in displ_from_previous]
+# + active=""
+# from scipy.interpolate import RectBivariateSpline
+#
+# def field_interpolation(grid, vector_field):
+#     u = vector_field[:, 0].reshape(grid[0].shape)
+#     v = vector_field[:, 1].reshape(grid[0].shape)
+#     
+#     x_span = grid[0][0, :]
+#     y_span = grid[0][:, 0]
+#     
+#     interp_u = RectBivariateSpline(x_span, y_span, u.T)
+#     interp_v = RectBivariateSpline(x_span, y_span, v.T)
+#     
+#     return lambda x, y: np.stack((interp_u(x, y, grid=False),
+#                                   interp_v(x, y, grid=False)), axis=0)
+#
+# displ_interpolators = [field_interpolation(grid, displ)
+#                        for displ in displ_from_previous]
+#
+# u_prime = interp_u(grid[0], grid[1], grid=False)
+#
+# plt.imshow(u-u_prime); plt.colorbar();
 
-u_prime = interp_u(grid[0], grid[1], grid=False)
-
-plt.imshow(u-u_prime); plt.colorbar();
+# + active=""
+# starting_points = points.T
+# trajectory =  [starting_points, ]
+#
+# for interp in displ_interpolators:
+#     uv = interp( *trajectory[-1] )
+#     trajectory.append(trajectory[-1] + uv)
+#     
+# trajectory = np.stack(trajectory)
+#
+# interp(-100, 0)
+#
+# plt.plot(trajectory[:, 0, :], trajectory[:, 1, :]);
 
 # +
-starting_points = points.T
-trajectory =  [starting_points, ]
+# =======================
+#  Data post processing
+# =======================
 
-for interp in displ_interpolators:
-    uv = interp( *trajectory[-1] )
-    trajectory.append(trajectory[-1] + uv)
-    
-trajectory = np.stack(trajectory)
-# -
-
-interp(-100, 0)
-
-plt.plot(trajectory[:, 0, :], trajectory[:, 1, :]);
+# Mechanical test parameters:
+dt = 10   # s - time between each images
+v = 2/60  # mm/s - Deben speed
+x_0 = 10 # mm - starting position
+x_i = np.arange(1, len(linear_def_from_previous)+1)*dt*v  # mm
+eps_app = x_i / x_0
 
 # +
-plt.plot( linear_def_from_previous[:, 0, 0], "-o",label='eps_xx' )
-plt.plot( linear_def_from_previous[:, 1, 1], label='eps_yy' )
-plt.plot( linear_def_from_previous[:, 1, 0], label='a_12' )
-plt.plot( linear_def_from_previous[:, 0, 1], label='a_21' )
-plt.legend();
-plt.xlabel('image id'); plt.title('image to image strain')
-plt.ylabel('image to image strain (%)'); plt.legend();
+plt.figure();
+plt.plot(eps_app*100, linear_def_from_previous[:, 0, 0], "-o",label='eps_xx' )
+plt.plot(eps_app*100, linear_def_from_previous[:, 1, 1], label='eps_yy' )
+plt.plot(eps_app*100, 0.5*(linear_def_from_previous[:, 1, 0]+linear_def_from_previous[:, 0, 1]), label='eps_xy' )
+plt.legend();  plt.xlim([0, np.max(eps_app[1:]*100)])
+plt.xlabel('déformation appliquée (%)');
+plt.title("variation de déformation\n d'image à image (%)")
+plt.ylabel("variation de déformation\n d'image à image (%)"); plt.legend();
 
 
 filename = f'image_to_image_coefficients_window{window_half_size}px.{image_ext}'
 plt.savefig(os.path.join(sample_output_path, filename));
-print(f'figure saved: {filename}', end='\r')
+print(f'graph saved: {filename}')
 
 
 a_11 = linear_def_from_previous[1:, 0, 0]
@@ -305,23 +340,28 @@ data = np.vstack([a_11, a_22, a_12, a_21]).T
 filename = f'image_to_image_coeffs_bilinear_fit_window{window_half_size}px.csv'
 np.savetxt(os.path.join(sample_output_path, filename), data,
            delimiter=",", header='a11, a22, a12, a21')
-print(f'data saved: {filename}', end='\r')
-# -
+print(f'data saved: {filename}')
 
-dt = 10   # s
-v = 2/60  # mm/s
-x_0 = 10 # mm
-x_i = np.arange(1, len(a_11)+1)*dt*v
-eps_app = x_i / x_0
-
-plt.plot(eps_app*100, 100*np.cumsum(a_11), '-o');
+# +
+plt.figure();
+plt.plot(eps_app[:-1]*100, 100*np.cumsum(a_11), '-o');
 plt.plot([0, 30], [0, 30], '-k');
-plt.xlabel('applied strain (%)'); #plt.title('image to image strain')
+plt.xlabel('déformation appliquée (%)'); #plt.title('image to image strain')
 plt.ylabel('DIC measured strain (%)'); #plt.legend();
 
+filename = f'naive_strain_integration_{window_half_size}px.{image_ext}'
+plt.savefig(os.path.join(sample_output_path, filename));
+print(f'graph saved: {filename}')
+# -
+
 nu = -linear_def_from_previous[1:, 1, 1]/linear_def_from_previous[1:, 0, 0]
-plt.plot( nu, '-o' ); plt.title('Coefficient de Poisson')
-plt.xlabel('image id'); plt.ylabel('nu = -a11 / a11');
+plt.figure();
+plt.plot(eps_app[1:]*100,  nu, '-o' ); plt.title('Estimation du coefficient de Poisson')
+plt.ylabel('nu = -a22 / a11'); 
+plt.xlabel('déformation appliquée (%)'); plt.xlim([0, np.max(eps_app[1:]*100)])
+filename = f'poisson_ratio_graph_{window_half_size}px.{image_ext}'
+plt.savefig(os.path.join(sample_output_path, filename));
+print(f'graph saved: {filename}')
 
 # + active=""
 # from scipy.linalg import solve

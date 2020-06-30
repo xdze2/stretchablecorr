@@ -59,9 +59,13 @@ _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#do
 * first, run correlation image-to-image on a large ROI (i.e. the central part of the image) → obtain `offsets` values
 * second, run correlation image-to-image for all points of the grid, (using the offsets) → obtain `displ_from_previous` values 
     - run bilinear fit to get sample-scale Eulerian image-to-image deformations (`lin_def_from_previous` and `residuals`)
-* third, re-run correlation now by tracking individuals points: get Lagrangian (attached to the surface) deformation field 
-    - for this we need an image range -> it defines a the sample surface area visible from start to finish. Problems: it will be not necessaryly stay a regular and nice grid 
+* third, (re-)run correlation now by tracking individuals points: get Lagrangian (attached to the surface) deformation field 
+    - for this we need an image range -> it defines a the sample surface area visible from start to finish. Problems: it will be not necessaryly stay a regular and nice grid
 
+There are many ways to do this:  
+* sum image-to-image displacement (use previous position as offset)
+* run correlation with ref. image (use previous position as offset)
+* ... mix the two, mix all possible duo of images
 
 ## Next
 
