@@ -16,6 +16,10 @@ There are 3 modules:
 
 _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
 
+docstring to html is done using pdoc
+
+    $ pdoc --html stretchablecorr.py
+
 ## Workflow
 
 - Load images from a given directory, sort by alphabetical order: get an image cube.
@@ -55,6 +59,7 @@ We could think of...
 Similarly to iterative optimisation method where the choice of the initial guess is important. The two images to be correlated have to be similar enough. When large displacement (>>50 pixels, larger the the ROI window size) occurs mutli-step methods are used. 
 
 -> quad-tree decomposition 1, 1/4, 1/16
+
 
 ## Data structures
 
