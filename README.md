@@ -26,6 +26,36 @@ _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#do
 - Post-process, graph and think
 
 
+## Displacement field description 
+
+[Eulerian and Lagragian](https://en.wikipedia.org/wiki/Lagrangian_and_Eulerian_specification_of_the_flow_field) are two different way to describe the displacement field (or flow field) depending on which frame of reference is used:
+- *Eulerian*: the laboratory or the camera field of view is used as reference, i.e. field evaluation points remain fixed on the images.
+- *Lagrangian*: points on the sample surface are tracked. The frame of reference is fixed to the sample surface.
+
+_Eulerian description_ corresponds to the simplest data processing approach, whereas _Lagrangian description__ require more complex data processing. 
+
+similar for small displacement
+
+Another important consideration is related to the choice of the reference state. The displacement field is defined relatively to a non-deformed state. This, usualy, correpsonds to the first image of the sequence. 
+
+Then, each correlation, should be computed between the image `i` and the reference image. However, large displacement or deformation could occur between these two images, leading to a wrong correlation estimation. Performing the correlation image-to-image is more robust albeit leading to the summation of correlation errors.
+
+Thus there are, at least, four different combinaison to estimate the displacement field: either Eulerian or Lagrangian, and image-to-image or image-to-reference correlation.
+
+Only two of the combinaison are used in practice: Eulerian image-to-image, and Lagrangian image-to-reference
+
+--
+High order correlation method (for instance global DIC) are used to reduce the correlation error in the image-to-reference case.
+
+We could think of...
+
+
+
+**Multiscale approachs (pyramids):**
+Similarly to iterative optimisation method where the choice of the initial guess is important. The two images to be correlated have to be similar enough. When large displacement (>>50 pixels, larger the the ROI window size) occurs mutli-step methods are used. 
+
+-> quad-tree decomposition 1, 1/4, 1/16
+
 ## Data structures
 
 * `cube` : 3D array of floats with shape (nbr_images, height, width)  
