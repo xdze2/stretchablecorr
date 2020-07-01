@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pylab as plt
 from skimage import io
 from skimage import img_as_uint
-from strechablecorr import *
+from stretchablecorr import *
 # #!pip install scikit-image
 
 import filetools as ft
@@ -27,7 +27,7 @@ import os, imghdr
 # %load_ext autoreload
 # %autoreload 2
 
-# # Strechable Corr
+# # Stretchable Corr
 
 # ## Search and select images
 
