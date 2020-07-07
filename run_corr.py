@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -81,6 +81,9 @@ upsample_factor = 100
 
 reference_image = 0
 
+print('Correlation window size:', f'{1+window_half_size*2}px')
+print('Upsample factor:', upsample_factor)
+
 # ----
 grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
 points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
@@ -124,6 +127,19 @@ offsets = get_displacement_from_previous(cube, *xy_center, central_window_halfsi
                                          verbose=False)
 
 print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px')
+# -
+
+displ = track_point_img_to_img(cube, 550, 550, 
+                               window_half_size,
+                               upsample_factor,
+                               offsets=offsets,
+                               verbose=True)
+
+np.sqrt(116)
+
+positions = np.cumsum(displ, axis=0) # + points
+
+plt.plot(*positions.T)
 
 # +
 # 2. get image-to-image displacements
@@ -131,7 +147,7 @@ print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px
 displ_from_previous = np.zeros((points.shape[0], cube.shape[0]-1, 2))
 for point_id, coords in enumerate(points):
     print('Compute image-to-image displacement field:',
-          f'{point_id: 4d}/{len(points)}',
+          f'{point_id+1: 4d}/{len(points)}',
           end='\r')
     displ_from_previous[point_id] = get_displacement_from_previous(cube, *coords, 
                                                                    window_half_size,
@@ -164,17 +180,19 @@ for point_id, coords in enumerate(points):
     print('Compute displacement field from ref. image:',
           f'{point_id: 4d}/{len(points)}',
           end='\r')
-    displ_from_ref[point_id] = get_displacement_from_ref(cube, *coords, 
-                                                                  window_half_size,
-                                                                  upsample_factor,
-                                                                  verbose=False)
+    displ_from_ref[point_id] = track_point_img_to_img(cube, *coords, 
+                                                      window_half_size,
+                                                      upsample_factor,
+                                                      verbose=False)
 # set dim order to (image_id, point_id, uv)
 displ_from_ref = displ_from_ref.swapaxes(0, 1)
 print('Compute displacement field from ref. image:',
       'done', ' '*10)
 # -
 
-positions = displ_from_ref[15] + points
+displ_from_ref.shape
+
+positions = np.sum(displ_from_ref[:15], axis=0) + points
 
 vector_field = positions
 x_prime = vector_field[:, 0].reshape(grid[0].shape)

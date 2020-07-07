@@ -36,15 +36,16 @@ docstring to html is done using pdoc
 - *Eulerian*: the laboratory or the camera field of view is used as reference, i.e. field evaluation points remain fixed on the images.
 - *Lagrangian*: points on the sample surface are tracked. The frame of reference is fixed to the sample surface.
 
-_Eulerian description_ corresponds to the simplest data processing approach, whereas _Lagrangian description__ require more complex data processing. 
+_Eulerian description_ corresponds to the simplest data processing approach, whereas _Lagrangian description__ require more complex data processing.
 
 similar for small displacement
 
-Another important consideration is related to the choice of the reference state. The displacement field is defined relatively to a non-deformed state. This, usualy, correpsonds to the first image of the sequence. 
+
+Another important consideration is related to the choice of the reference state. The displacement field is defined relatively to a non-deformed state. This, usualy, correpsonds to the first image of the sequence.
 
 Then, each correlation, should be computed between the image `i` and the reference image. However, large displacement or deformation could occur between these two images, leading to a wrong correlation estimation. Performing the correlation image-to-image is more robust albeit leading to the summation of correlation errors.
 
-Thus there are, at least, four different combinaison to estimate the displacement field: either Eulerian or Lagrangian, and image-to-image or image-to-reference correlation.
+Thus there are, at least, four different combinaison to estimate the displacement field: either Eulerian or Lagrangian, and image-to-image (relative) or image-to-reference (absolute) correlation.
 
 Only two of the combinaison are used in practice: Eulerian image-to-image, and Lagrangian image-to-reference
 
@@ -102,7 +103,29 @@ There are many ways to do this:
 * run correlation with ref. image (use previous position as offset)
 * ... mix the two, mix all possible duo of images
 
+## naming
+
+displacements_img_to_img (Eulerian), get_displacement_from_previous
+-->(img_A, img_B, points, offset)
+
+track_displ_img_to_img
+-->(img_sequence, xy0, offsets) (offsets are relative)
+
+    estimated_xyi = np.cumsum( ... )
+
+track_displ_img_to_ref
+-->(img_sequence, xy0, estimated_xyi)
+
+
+absolute_displ
+displ_from_ref
+
+## Extract images using ffmpeg
+
+    ffmpeg -i test\ 2\ input_file.avi -qscale:v 4  ./output/output_%04d.tiff
+
 ## Next
 
+- allow rescaling: px -> mm/cm
 - Global (high order method)
 - Error estimation using Likelihood approach 

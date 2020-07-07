@@ -283,6 +283,72 @@ def get_displacement_from_previous(cube, x, y,
     return disp_to_previous
 
 
+def track_point_img_to_img(cube, x0, y0,
+                            window_half_size, upsample_factor,
+                            offsets=None,
+                            verbose=True):
+    """Find displacement for each images relative to the previous frame
+        at the point (x, y) in the camera reference frame
+
+        (Lagrangian)
+
+    Parameters
+    ----------
+    cube : [type]
+        [description]
+    x : [type]
+        [description]
+    y : [type]
+        [description]
+    window_half_size : [type]
+        [description]
+    upsample_factor : [type]
+        [description]
+    offsets : [type], optional
+        [description], by default None
+    verbose : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    nbr_images = cube.shape[0]
+    disp_to_previous = np.zeros((nbr_images-1, 2))
+    disp_to_previous[:] = np.NaN
+
+    if offsets is None:
+        offsets = np.zeros((nbr_images-1, 2))
+
+    x, y = x0, y0
+    dx_ref, dy_ref = offsets[0, :]
+    I = cube[0]
+    for k, J in enumerate(cube[1:], start=1):
+        try:
+            dx_guess = 0#dx_ref - offsets[k-2, 0] + offsets[k-1, 0]
+            dy_guess = 0#dy_ref - offsets[k-2, 1] + offsets[k-1, 1]
+
+            dx_ref, dy_ref, _error = get_shifts(I, J, x, y,
+                                                offset=(dx_guess, dy_guess),
+                                                window_half_size=window_half_size,
+                                                upsample_factor=upsample_factor)
+
+            disp_to_previous[k-1] = [dx_ref, dy_ref]
+
+            I = J
+            x += dx_ref
+            y += dy_ref
+        except ValueError:
+            if verbose:
+                print('out of limits for image', k)
+            disp_to_previous[k-1] = [np.NaN, np.NaN]
+            break
+
+    return disp_to_previous
+
+
+
 def get_displ_from_previous_Lagrangian(cube, x, y,
                                    window_half_size, upsample_factor,
                                    offsets=None,
