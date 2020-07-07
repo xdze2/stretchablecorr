@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.3.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -74,7 +74,7 @@ plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
 
 window_half_size = 60
 
-grid_spacing = 450 //3
+grid_spacing = 300 //3
 grid_margin = 350 //3
 
 upsample_factor = 100
@@ -132,14 +132,15 @@ print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px
 # +
 # 2. get image-to-image displacements
     # shape: (nbr_frames-1, Nbr points, 2)
+    
+print('Compute image-to-image displacement field:')
 displ_Euler = displacements_img_to_img(cube, points,
                                        window_half_size,
                                        upsample_factor,
                                        offsets=offsets,
                                        verbose=True)
 
-print('Compute image-to-image displacement field:',
-      'done', ' '*10)
+print('done', ' '*30)
 
 # +
 print('Do bilinear fits')
@@ -158,14 +159,21 @@ displ_Lagrangian = track_displ_img_to_img(cube, points,
                                           window_half_size, upsample_factor,
                                           offsets=offsets)
 
-positions = np.cumsum(displ_Lagrangian, axis=0) + points
+# +
+positions = np.cumsum(displ_Lagrangian, axis=0) + points #- np.mean(displ_Lagrangian, axis=1)[:, np.newaxis, :]
 
 plt.plot(positions[:, :, 0], positions[:, :, 1]);
+# -
+
+# 4. Displacement field relative to the reference image
+displ_Lagrangian_ref = track_displ_img_to_ref(cube, points,
+                                          window_half_size, upsample_factor,
+                                          offsets=offsets)
 
 # +
-# 4. Displacement field relative to the reference image
+positions_ref = np.cumsum(displ_Lagrangian_ref, axis=0) + points
 
-# ...
+plt.plot(positions_ref[:, :, 0], positions_ref[:, :, 1]);
 # -
 
 vector_field = positions

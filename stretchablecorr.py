@@ -225,12 +225,50 @@ def track_displ_img_to_img(images, start_points,
                 xi += sx
                 yi += sy
             except ValueError:
+                #if verbose:
+                #    print('out of limits for image', k)
+                break
+
+    return displ
+
+
+def track_displ_img_to_ref(images, start_points,
+                           window_half_size, upsample_factor,
+                           offsets=None,
+                           verbose=True):
+    params = {'window_half_size':window_half_size,
+              'upsample_factor':upsample_factor}
+
+    if offsets is None:
+        offsets = np.zeros((len(images)-1, 2))
+
+    displ = np.empty((len(images)-1,
+                      len(start_points),
+                      2))
+    displ[:] = np.NaN
+    A = images[0]
+    for i, (x0, y0) in enumerate(start_points):
+        dx, dy = 0, 0
+        for k, B in enumerate(images[1:]):
+
+            if verbose:
+                print(f'image {k}->{k+1}'+
+                      f' point {i}',
+                      end='\r')
+
+            try:
+                sx, sy, er = get_shifts(A, B, x0, y0,
+                                        offset=offsets[k] + np.array([dx, dy]),
+                                        **params)
+
+                displ[k, i, :] = sx, sy
+                dx, dy = sx, sy
+            except ValueError:
                 if verbose:
                     print('out of limits for image', k)
                 break
 
     return displ
-
 
 # ===============
 #  Bilinear Fit
