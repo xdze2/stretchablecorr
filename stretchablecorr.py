@@ -156,258 +156,80 @@ def build_grid(img_shape, margin, spacing):
     return np.stack((x_grid, y_grid))
 
 
-def compute_shifts(I, J, points, **kargs):
-    """Compute shifts for each point
+# ==========================
+#  Loops for displacements
+# ==========================
 
-    Args:
-        I, J: input images (2D arrays)
-        points: tuple of (x_coord, y_coord)
-        **kargs: passed to get_shifts(), window_half_size, upsample_factor
+def displacements_img_to_img(images, points,
+                             window_half_size, upsample_factor,
+                             offsets=None,
+                             verbose=True):
 
-    Returns:
-        shift_x, shift_y, corr_errors (flatten)
-    """
-    x_grid, y_grid = points
-
-    shift_x, shift_y, corr_errors = [], [], []
-
-    for k, (xi, yi) in enumerate(zip(x_grid.flatten(), y_grid.flatten())):
-        sx, sy, er = get_shifts(I, J, xi, yi, **kargs)
-        shift_x.append(sx)
-        shift_y.append(sy)
-        corr_errors.append(er)
-        print(f" {k: 4d}/{len(x_grid.flatten())}:  {sx:.2f} {sy:.2f}  error {er}", end='\r')
-
-    print('done', ' '*40, end='\r')
-
-    shift_x = np.array(shift_x).reshape(points[0].shape)
-    shift_y = np.array(shift_y).reshape(points[1].shape)
-    corr_errors = np.array(corr_errors).reshape(points[0].shape)
-    return shift_x, shift_y, corr_errors
-
-
-def get_displacement_from_ref(cube, x, y,
-                              window_half_size, upsample_factor,
-                              verbose=True):
-    """Find displacement for each images relative to the reference frame
-        starting from the point (x, y) in the reference frame
-
-        first image is use as reference
-        (Lagrangian: tracks points)
-        returns NaN is displacement out of image (point goes out of the field of view)
-        go forward, use previous position as offset
-    """
-    I_ref = cube[0]
-    nbr_images = cube.shape[0]
-    displ_to_ref = np.empty((nbr_images-1, 2))
-    displ_to_ref[:] = np.NaN
-    # use the previous estimated position as offset
-    # Forward, image_by_image
-    dx_ref, dy_ref = 0.0, 0.0
-    for k, J in enumerate(cube[1:]):
-
-        try:
-            dx_ref, dy_ref, _error = get_shifts(I_ref, J, x, y,
-                                                offset=(dx_ref, dy_ref),
-                                                window_half_size=window_half_size,
-                                                upsample_factor=upsample_factor)
-            displ_to_ref[k] = [dx_ref, dy_ref]
-
-        except ValueError:
-            # detect out of limit movements
-            if verbose:
-                print('out of limits for image', k)
-            break
-
-    return displ_to_ref
-
-
-def get_displacement_from_previous(cube, x, y,
-                                   window_half_size, upsample_factor,
-                                   offsets=None,
-                                   verbose=True):
-    """Find displacement for each images relative to the previous frame
-        at the point (x, y) in the camera reference frame
-
-        (Eulerian)
-
-    Parameters
-    ----------
-    cube : [type]
-        [description]
-    x : [type]
-        [description]
-    y : [type]
-        [description]
-    window_half_size : [type]
-        [description]
-    upsample_factor : [type]
-        [description]
-    offsets : [type], optional
-        [description], by default None
-    verbose : bool, optional
-        [description], by default True
-
-    Returns
-    -------
-    [type]
-        [description]
-    """
-    nbr_images = cube.shape[0]
-    disp_to_previous = np.zeros((nbr_images-1, 2))
+    params = {'window_half_size':window_half_size,
+              'upsample_factor':upsample_factor}
 
     if offsets is None:
-        offsets = np.zeros((nbr_images-1, 2))
+        offsets = np.zeros((len(images)-1, 2))
 
-    dx_ref, dy_ref = offsets[0, :]
-    I = cube[0]
-    for k, J in enumerate(cube[1:], start=1):
-        try:
-            dx_guess = dx_ref - offsets[k-2, 0] + offsets[k-1, 0]
-            dy_guess = dy_ref - offsets[k-2, 1] + offsets[k-1, 1]
+    displ = np.empty((len(images)-1,
+                      len(points),
+                      2))
+    displ[:] = np.NaN
 
-            dx_ref, dy_ref, _error = get_shifts(I, J, x, y,
-                                                offset=(dx_guess, dy_guess),
-                                                window_half_size=window_half_size,
-                                                upsample_factor=upsample_factor)
+    for k, (A, B) in enumerate(zip(images, images[1:])):
+        for i, (xi, yi) in enumerate(points):
+            sx, sy, er = get_shifts(A, B, xi, yi,
+                                    offset=offsets[k],
+                                    **params)
 
-            disp_to_previous[k-1] = [dx_ref, dy_ref]
+            displ[k, i, :] = sx, sy
 
-        except ValueError:
             if verbose:
-                print('out of limits for image', k)
-            disp_to_previous[k-1] = [np.NaN, np.NaN]
+                print(f'image {k}->{k+1}'+
+                      f' point {i}',
+                      end='\r')
 
-        I = J
-
-    return disp_to_previous
+    return displ
 
 
-def track_point_img_to_img(cube, x0, y0,
+def track_displ_img_to_img(images, start_points,
                             window_half_size, upsample_factor,
                             offsets=None,
                             verbose=True):
-    """Find displacement for each images relative to the previous frame
-        at the point (x, y) in the camera reference frame
-
-        (Lagrangian)
-
-    Parameters
-    ----------
-    cube : [type]
-        [description]
-    x : [type]
-        [description]
-    y : [type]
-        [description]
-    window_half_size : [type]
-        [description]
-    upsample_factor : [type]
-        [description]
-    offsets : [type], optional
-        [description], by default None
-    verbose : bool, optional
-        [description], by default True
-
-    Returns
-    -------
-    [type]
-        [description]
-    """
-    nbr_images = cube.shape[0]
-    disp_to_previous = np.zeros((nbr_images-1, 2))
-    disp_to_previous[:] = np.NaN
+    params = {'window_half_size':window_half_size,
+              'upsample_factor':upsample_factor}
 
     if offsets is None:
-        offsets = np.zeros((nbr_images-1, 2))
+        offsets = np.zeros((len(images)-1, 2))
 
-    x, y = x0, y0
-    dx_ref, dy_ref = offsets[0, :]
-    I = cube[0]
-    for k, J in enumerate(cube[1:], start=1):
-        try:
-            dx_guess = 0#dx_ref - offsets[k-2, 0] + offsets[k-1, 0]
-            dy_guess = 0#dy_ref - offsets[k-2, 1] + offsets[k-1, 1]
+    displ = np.empty((len(images)-1,
+                      len(start_points),
+                      2))
+    displ[:] = np.NaN
 
-            dx_ref, dy_ref, _error = get_shifts(I, J, x, y,
-                                                offset=(dx_guess, dy_guess),
-                                                window_half_size=window_half_size,
-                                                upsample_factor=upsample_factor)
+    for i, (x0, y0) in enumerate(start_points):
+        xi, yi = x0, y0
+        for k, (A, B) in enumerate(zip(images, images[1:])):
 
-            disp_to_previous[k-1] = [dx_ref, dy_ref]
-
-            I = J
-            x += dx_ref
-            y += dy_ref
-        except ValueError:
             if verbose:
-                print('out of limits for image', k)
-            disp_to_previous[k-1] = [np.NaN, np.NaN]
-            break
+                print(f'image {k}->{k+1}'+
+                      f' point {i}',
+                      end='\r')
 
-    return disp_to_previous
+            try:
+                sx, sy, er = get_shifts(A, B, xi, yi,
+                                        offset=offsets[k],
+                                        **params)
 
+                displ[k, i, :] = sx, sy
+                xi += sx
+                yi += sy
+            except ValueError:
+                if verbose:
+                    print('out of limits for image', k)
+                break
 
-
-def get_displ_from_previous_Lagrangian(cube, x, y,
-                                   window_half_size, upsample_factor,
-                                   offsets=None,
-                                   verbose=True):
-    """Find displacement for each images relative to the previous frame
-        at the point (x, y) in the camera reference frame
-
-        (Lagrangian: track the point)
-
-    Parameters
-    ----------
-    cube : [type]
-        [description]
-    x : [type]
-        [description]
-    y : [type]
-        [description]
-    window_half_size : [type]
-        [description]
-    upsample_factor : [type]
-        [description]
-    offsets : [type], optional
-        [description], by default None
-    verbose : bool, optional
-        [description], by default True
-
-    Returns
-    -------
-    [type]
-        [description]
-    """
-    nbr_images = cube.shape[0]
-    disp_to_previous = np.zeros((nbr_images-1, 2))
-
-    if offsets is None:
-        offsets = np.zeros((nbr_images-1, 2))
-
-    dx_ref, dy_ref = offsets[0, :]
-    I = cube[0]
-    for k, J in enumerate(cube[1:], start=1):
-        try:
-            dx_guess = dx_ref - offsets[k-2, 0] + offsets[k-1, 0]
-            dy_guess = dy_ref - offsets[k-2, 1] + offsets[k-1, 1]
-
-            dx_ref, dy_ref, _error = get_shifts(I, J, x, y,
-                                                offset=(dx_guess, dy_guess),
-                                                window_half_size=window_half_size,
-                                                upsample_factor=upsample_factor)
-
-            disp_to_previous[k-1] = [dx_ref, dy_ref]
-
-        except ValueError:
-            if verbose:
-                print('out of limits for image', k)
-            disp_to_previous[k-1] = [np.NaN, np.NaN]
-
-        I = J
-
-    return disp_to_previous
+    return displ
 
 
 # ===============
@@ -417,12 +239,7 @@ def get_displ_from_previous_Lagrangian(cube, x, y,
 def bilinear_fit(points, displacements):
     """Performs a bilinear fit on the displacements field
 
-    Solve the equation:
-                         ⎛x⎞
-    ⎛u⎞   ⎛a11 a12 tx⎞   ⎜ ⎟
-    ⎜ ⎟ = ⎜          ⎟ * ⎜y⎟
-    ⎝v⎠   ⎝a21 a22 ty⎠   ⎜ ⎟
-                         ⎝1⎠
+    Solve the equation u = A*x + t
 
     Parameters
     ----------

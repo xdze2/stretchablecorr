@@ -7,18 +7,6 @@ a Python code for Digital Image Correlation (DIC)
 [1] Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup, “Efficient subpixel image registration algorithms,” Optics Letters 33, 156-158 (2008). DOI:10.1364/OL.33.000156
 
 
-## Code structure
-
-There are 3 modules:
-- filetools: functions used to load and sort images
-- stretchablecorr: main set of function performing the processing
-- graphtools: post-processing functions
-
-_note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
-
-docstring to html is done using pdoc
-
-    $ pdoc --html stretchablecorr.py
 
 ## Workflow
 
@@ -105,15 +93,15 @@ There are many ways to do this:
 
 ## naming
 
-displacements_img_to_img (Eulerian), get_displacement_from_previous
+**displacements_img_to_img** (Eulerian), get_displacement_from_previous
 -->(img_A, img_B, points, offset)
 
-track_displ_img_to_img
+**track_displ_img_to_img**
 -->(img_sequence, xy0, offsets) (offsets are relative)
 
     estimated_xyi = np.cumsum( ... )
 
-track_displ_img_to_ref
+**track_displ_img_to_ref**
 -->(img_sequence, xy0, estimated_xyi)
 
 
@@ -124,8 +112,29 @@ displ_from_ref
 
     ffmpeg -i test\ 2\ input_file.avi -qscale:v 4  ./output/output_%04d.tiff
 
+
+## Code structure & dev
+
+There are 3 modules:
+- filetools: functions used to load and sort images
+- stretchablecorr: main set of function performing the processing
+- graphtools: post-processing functions
+
+
+### Documention
+
+
+_note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
+
+docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
+
+    $ pdoc --html stretchablecorr.py
+
+
 ## Next
 
 - allow rescaling: px -> mm/cm
 - Global (high order method)
 - Error estimation using Likelihood approach 
+
+

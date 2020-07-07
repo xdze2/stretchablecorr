@@ -74,7 +74,7 @@ plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
 
 window_half_size = 60
 
-grid_spacing = 150 //3
+grid_spacing = 450 //3
 grid_margin = 350 //3
 
 upsample_factor = 100
@@ -119,44 +119,25 @@ plt.savefig(os.path.join(sample_output_path, '02_grid.svg'));
 #  Compute image to image displacement field
 # ============================================
 
-# 1. get image-to-image offsets
-xy_center = cube.shape[1]//2, cube.shape[2]//2
+# 1. get image offsets
+xy_center = [[cube.shape[1]//2, cube.shape[2]//2], ]
 central_window_halfsize = min(cube.shape[1]//3, cube.shape[2]//2) // 2
-offsets = get_displacement_from_previous(cube, *xy_center, central_window_halfsize,
-                                         upsample_factor=1,
-                                         verbose=False)
-
+offsets = displacements_img_to_img(cube, xy_center,
+                                   central_window_halfsize,
+                                   upsample_factor=1,
+                                   verbose=True)
+offsets = np.squeeze(offsets)
 print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px')
-# -
-
-displ = track_point_img_to_img(cube, 550, 550, 
-                               window_half_size,
-                               upsample_factor,
-                               offsets=offsets,
-                               verbose=True)
-
-np.sqrt(116)
-
-positions = np.cumsum(displ, axis=0) # + points
-
-plt.plot(*positions.T)
 
 # +
 # 2. get image-to-image displacements
-    # shape: (Nbr points, 2, nbr_frames-1)
-displ_from_previous = np.zeros((points.shape[0], cube.shape[0]-1, 2))
-for point_id, coords in enumerate(points):
-    print('Compute image-to-image displacement field:',
-          f'{point_id+1: 4d}/{len(points)}',
-          end='\r')
-    displ_from_previous[point_id] = get_displacement_from_previous(cube, *coords, 
-                                                                   window_half_size,
-                                                                   upsample_factor,
-                                                                   offsets=offsets,
-                                                                   verbose=False)
+    # shape: (nbr_frames-1, Nbr points, 2)
+displ_Euler = displacements_img_to_img(cube, points,
+                                       window_half_size,
+                                       upsample_factor,
+                                       offsets=offsets,
+                                       verbose=True)
 
-# set dim order to (image_id, point_id, uv)
-displ_from_previous = displ_from_previous.swapaxes(0, 1)
 print('Compute image-to-image displacement field:',
       'done', ' '*10)
 
@@ -164,35 +145,28 @@ print('Compute image-to-image displacement field:',
 print('Do bilinear fits')
 all_coeffs = []
 all_residuals = []
-for displ_field in displ_from_previous:
+for displ_field in displ_Euler:
     coeffs, residuals = bilinear_fit(points, displ_field)
     all_coeffs.append(coeffs)
     all_residuals.append(residuals)
 
 linear_def_from_previous = np.stack(all_coeffs, axis=0)
 residuals_from_previous = np.stack(all_residuals, axis=0)
+# -
+
+displ_Lagrangian = track_displ_img_to_img(cube, points,
+                                          window_half_size, upsample_factor,
+                                          offsets=offsets)
+
+positions = np.cumsum(displ_Lagrangian, axis=0) + points
+
+plt.plot(positions[:, :, 0], positions[:, :, 1]);
 
 # +
 # 4. Displacement field relative to the reference image
 
-displ_from_ref = np.zeros((points.shape[0], cube.shape[0]-1, 2))
-for point_id, coords in enumerate(points):
-    print('Compute displacement field from ref. image:',
-          f'{point_id: 4d}/{len(points)}',
-          end='\r')
-    displ_from_ref[point_id] = track_point_img_to_img(cube, *coords, 
-                                                      window_half_size,
-                                                      upsample_factor,
-                                                      verbose=False)
-# set dim order to (image_id, point_id, uv)
-displ_from_ref = displ_from_ref.swapaxes(0, 1)
-print('Compute displacement field from ref. image:',
-      'done', ' '*10)
+# ...
 # -
-
-displ_from_ref.shape
-
-positions = np.sum(displ_from_ref[:15], axis=0) + points
 
 vector_field = positions
 x_prime = vector_field[:, 0].reshape(grid[0].shape)
@@ -203,8 +177,6 @@ positions_grid = positions.reshape((2, *grid[0].T.shape))
 plt.pcolor(x_prime, y_prime, x_prime, edgecolors='black');
 plt.pcolor(x_prime, y_prime, x_prime, edgecolors='black');
 plt.axis('equal');
-
-
 
 # def plot_vector_field(points, displacements,
 #                       view_factor=None, color='white'):
@@ -234,9 +206,31 @@ image_ext = "svg"
 save_path = os.path.join(sample_output_path, output_dir)
 ft.create_dir(save_path)
 
+
+# -
+
+def plot_vector_field(points, displacements,
+                      view_factor=None, color='white'):
+    amplitudes = np.sqrt(np.nansum( displacements**2, axis=1 )) # disp. amplitude
+
+    mask = ~np.any( np.isnan(displacements), axis=1, keepdims=False )
+    
+    plt.quiver(*points[mask, :].T, *displacements[mask, :].T,
+               angles='xy', color=color,
+               scale_units='xy',
+               scale=1/view_factor if view_factor else None,
+               minlength=1e-4);
+    
+    plt.text(10., 10.,
+             f'max(|u|)={np.nanmax(amplitudes):.2f}px  mean(|u|)={np.nanmean(amplitudes):.2f}px',
+             fontsize=12, color=color,
+             verticalalignment='top')
+
+
+
 # +
 # 1. Champ de déplacement
-for image_id, displ in enumerate(displ_from_previous):
+for image_id, displ in enumerate(displ_Euler):
     plt.figure();
     plt.imshow(cube[image_id]);
     plot_vector_field(points, displ, view_factor=None)
@@ -250,7 +244,7 @@ print('done', ' '*40)
 
 # +
 # 2. Champ de déplacement Sans la translation
-for image_id, displ in enumerate(displ_from_previous):
+for image_id, displ in enumerate(displ_Euler):
     displ = displ - np.nanmean(displ, axis=0)
     
     plt.figure();
