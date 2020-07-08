@@ -6,6 +6,7 @@ import doctest
 
 import numpy as np
 from skimage import io
+from skimage.color import rgb2gray
 
 from collections import defaultdict
 
@@ -15,7 +16,7 @@ from collections import defaultdict
 def extract_digits(string):
     '''Extract all digits from given string
        used to sort images by name
-       
+
        >>> extract_digits("a1b2cd34")
        1234
     '''
@@ -27,41 +28,51 @@ def print_numbered_list(name_list):
     print('\n'.join([f'{k} - {n}' for k, n in enumerate(name_list)]))
 
 
-
-
-
 def load_image(path):
-    """ Load the image at the given path
-         returns 2d array (float)
-         convert to grayscale if needed
-    """
+    """Load the image at the given path
+    using scikit-image `io.imread`
+    convert to grayscale if needed
+
+    Returns
+    -------
+    2D array (float)
+        grayscale image
+    """    
     try:
-        I = io.imread(path)
+        image = io.imread(path)
         # Convert to grayscale if needed:
-        I = I.mean(axis=2) if I.ndim == 3 else I
-        I = I.astype(np.float)
+        image = rgb2gray(image) if image.ndim == 3 else image
+        image = image.astype(np.float)
+
     except FileNotFoundError:
-        print("File %s Not Found" % path)
-        I = None
+        print(f"File {path} Not Found")
+        image = None
 
-    return I
-
+    return image
 
 
 def list_images(path):
     """list and sort image present in the directory,
     returns full path
     """
-    images = sorted( os.listdir(path) )
+    images = sorted(os.listdir(path))
     # remove non-image file :
-    images = [os.path.join(path, filename) for filename in images
-              if imghdr.what(os.path.join(path, filename))]
+    images = [os.path.join(path, filename) for filename in images]
+    images = [filename for filename in images
+              if not os.path.isdir(filename) and imghdr.what(filename)]
     return images
 
 
-def load_images(images, verbose=True):
-    """Load given list of image path and return a 3d array
-    """
+def load_image_sequence(directory, verbose=True):
+    """Load all images in directoy
+
+    Returns
+    -------
+    3D array of shape (nbr of images, height, width)       
+    """    
+
+    images = list_images(directory)
+
     cube = [load_image(img_path)
             for img_path in images]
 
@@ -73,8 +84,7 @@ def load_images(images, verbose=True):
         print(f' {cube.shape[2]}*{cube.shape[1]} pixels') 
         print(f' memory size: {cube.nbytes // 1024**2} Mo')
 
-    return cube
-
+    return cube, [os.path.basename(p) for p in images]
 
 
 def create_dir(path):
@@ -86,7 +96,8 @@ def create_dir(path):
         print('dir:', path)
 
 
-# =================================
+# 
+# =================================
 #  Specific for nested dir struc.
 # =================================
 def parse_path(img_path, DATA_DIR, IMAGE_EXT, verbose=False):
@@ -175,6 +186,3 @@ def parse_step_dir(stepname):
 
 
 doctest.testmod(verbose=False)
-
-
-

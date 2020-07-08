@@ -2,8 +2,6 @@
 import numpy as np
 import matplotlib.pylab as plt
 
-from skimage import io
-from skimage.color import rgb2gray
 
 try:
     from skimage.registration import phase_cross_correlation
@@ -12,23 +10,6 @@ except ImportError:
     from skimage.feature import register_translation as phase_cross_correlation
 
 
-def load_image(path, verbose=True):
-    """Load the image at the given path
-         returns 2d array (float)
-         convert to grayscale if needed
-    """
-    try:
-        image = io.imread(path)
-        # Convert to grayscale if needed:
-        image = rgb2gray(image) if image.ndim == 3 else image
-        image = image.astype(np.float)
-        if verbose:
-            print(f'load "{path}"', f"size={image.shape}")
-    except FileNotFoundError:
-        print("File %s Not Found" % path)
-        image = None
-
-    return image
 
 
 def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
@@ -176,19 +157,25 @@ def displacements_img_to_img(images, points,
                       2))
     displ[:] = np.NaN
 
+    N = (len(images) - 1)*len(points)
     for k, (A, B) in enumerate(zip(images, images[1:])):
         for i, xyi in enumerate(points):
-            sx, sy, _err = get_shifts(A, B, *xyi,
-                                      offset=offsets[k],
-                                      **params)
+            try:
+                sx, sy, _err = get_shifts(A, B, *xyi,
+                                        offset=offsets[k],
+                                        **params)
 
-            displ[k, i, :] = sx, sy
+                displ[k, i, :] = sx, sy
+            except ValueError:
+                pass
 
             if verbose:
-                print(f'image {k}->{k+1}'+
-                      f' point {i}',
+                print(f'{int(100*(k*len(points)+i))//N: 3d}%'+
+                      f'  images:{k:02d}→{k+1:02d}'+
+                      f'  point:{i: 4d} ...',
                       end='\r')
 
+    print('done', ' '*30)
     return displ
 
 
@@ -207,13 +194,15 @@ def track_displ_img_to_img(images, start_points,
                       2))
     displ[:] = np.NaN
 
+    N = (len(images) - 1)*len(start_points)
     for i, (x0, y0) in enumerate(start_points):
         xi, yi = x0, y0
         for k, (A, B) in enumerate(zip(images, images[1:])):
 
             if verbose:
-                print(f'image {k}->{k+1}'+
-                      f' point {i}',
+                print(f'{int(100*(i*(len(images)-1)+k))//N: 3d}%'+
+                      f'  images:{k:02d}→{k+1:02d}'+
+                      f'  point:{i: 4d} ...',
                       end='\r')
 
             try:
@@ -228,7 +217,8 @@ def track_displ_img_to_img(images, start_points,
                 #if verbose:
                 #    print('out of limits for image', k)
                 break
-
+            
+    print('done', ' '*30)
     return displ
 
 
@@ -268,6 +258,7 @@ def track_displ_img_to_ref(images, start_points,
                     print('out of limits for image', k)
                 break
 
+    print('done', ' '*30)
     return displ
 
 
@@ -296,7 +287,7 @@ def bilinear_fit(points, displacements):
         residuals for each points
     """
     u, v = displacements.T
-    mask = ~np.isnan(u) & ~np.isnan(v)
+    mask = np.logical_not(np.logical_or(np.isnan(u), np.isnan(v)))
     u, v = u[mask], v[mask]
     x, y = points[mask, :].T
 

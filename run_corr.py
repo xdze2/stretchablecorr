@@ -31,7 +31,8 @@ import os, imghdr
 
 # ## Search and select images
 
-# Available samples list
+# +
+#### Available samples list
 input_data_dir = "./images/"
 samples = os.listdir(input_data_dir)
 print('Available samples')
@@ -39,7 +40,7 @@ print('=================')
 ft.print_numbered_list(samples)
 
 # Select a sample:
-sample_id = input('Select an image directory:')
+sample_id = input('> Select an image directory:')
 sample_name = samples[int(sample_id)]
 print(sample_name)
 
@@ -53,28 +54,59 @@ print('Loading image cube...', end='\r')
 sample_input_dir = os.path.join(input_data_dir, sample_name)
 print(f'Load "{sample_name}" from {sample_input_dir}')
 
-cube = ft.load_images(ft.list_images(sample_input_dir))
+cube, image_names = ft.load_image_sequence(sample_input_dir)
 # -
 
+image_names
+
+# +
+from shutil import copyfile
+
+path = sample_input_dir
+dirs = sorted(os.listdir(path))
+# remove non-image file :
+dirs = [os.path.join(path, d) for d in dirs
+        if os.path.isdir(os.path.join(path, d))]
+
+for d in dirs:
+    images = sorted(os.listdir(d))
+    print(images[0])
+    copyfile(os.path.join(d, images[0]), os.path.join(path, images[0].replace('hs2', '')))
+
+# +
 # Create output directory
 output_dir = './output/'
+image_ext = "svg"
 ft.create_dir(output_dir)
 sample_output_path = os.path.join(output_dir, sample_name)
 ft.create_dir(sample_output_path)
-print('create outpur directory:', sample_output_path)
+print('create output directory:', sample_output_path)
 
-plt.figure(); plt.title(f'cube std - {sample_name}');
+def save_fig(fig_name, image_ext=image_ext, close=False):
+    filename = f"{fig_name}.{image_ext.strip('. ')}"
+    path = os.path.join(sample_output_path, filename)
+    plt.savefig(path);
+    print(f'figure saved: {path}', end='\r')
+    if close:
+        plt.close()
+
+
+# -
+
+plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
 plt.imshow(np.std(cube, axis=0));
-plt.savefig(os.path.join(sample_output_path, '01_cube_std.svg'));
+save_fig('01_cube_std')
+
+
 
 # +
 # ==================
 #  Define the grid
 # ==================
 
-window_half_size = 60
+window_half_size = 30
 
-grid_spacing = 300 //3
+grid_spacing = 200 //3
 grid_margin = 350 //3
 
 upsample_factor = 100
@@ -112,7 +144,7 @@ if show_window:
     plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
              color='white', linewidth=1)
 
-plt.savefig(os.path.join(sample_output_path, '02_grid.svg'));
+save_fig('02_grid')
 
 # +
 # ============================================
@@ -140,7 +172,7 @@ displ_Euler = displacements_img_to_img(cube, points,
                                        offsets=offsets,
                                        verbose=True)
 
-print('done', ' '*30)
+
 
 # +
 print('Do bilinear fits')
@@ -155,15 +187,29 @@ linear_def_from_previous = np.stack(all_coeffs, axis=0)
 residuals_from_previous = np.stack(all_residuals, axis=0)
 # -
 
+print('Compute image-to-image Lagrangian displacement field:')
 displ_Lagrangian = track_displ_img_to_img(cube, points,
                                           window_half_size, upsample_factor,
                                           offsets=offsets)
 
-# +
-positions = np.cumsum(displ_Lagrangian, axis=0) + points #- np.mean(displ_Lagrangian, axis=1)[:, np.newaxis, :]
+from scipy.integrate import cumtrapz#(y, x=None, dx=1.0, axis=- 1, initial=None)[source]
 
-plt.plot(positions[:, :, 0], positions[:, :, 1]);
+# +
+positions = cumtrapz(displ_Lagrangian, axis=0, initial=0) + points
+
+# keep only enterely visible path
+mask = ~np.any(np.isnan(displ_Lagrangian), axis=(0, 2))
 # -
+
+color = 'white'
+plt.figure();
+plt.imshow(cube[reference_image, :, :]);
+plt.plot(positions[0, np.logical_not(mask), 0], positions[0, np.logical_not(mask), 1], 's',
+         markersize=1, color='red', alpha=0.7);
+plt.plot(positions[:, np.logical_not(mask), 0], positions[:, np.logical_not(mask), 1],
+         color='red', alpha=0.5, linewidth=1);
+plt.plot(positions[0, mask, 0], positions[0, mask, 1], 's', markersize=2, color=color);
+plt.plot(positions[:, mask, 0], positions[:, mask, 1], color=color, linewidth=1);
 
 # 4. Displacement field relative to the reference image
 displ_Lagrangian_ref = track_displ_img_to_ref(cube, points,
@@ -208,7 +254,6 @@ plt.axis('equal');
 #  Graphs
 # =========
 output_dir = f'frame_to_frame_window{window_half_size}px'
-image_ext = "svg"
 
 # --
 save_path = os.path.join(sample_output_path, output_dir)
