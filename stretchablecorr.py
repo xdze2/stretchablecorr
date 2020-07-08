@@ -177,10 +177,10 @@ def displacements_img_to_img(images, points,
     displ[:] = np.NaN
 
     for k, (A, B) in enumerate(zip(images, images[1:])):
-        for i, (xi, yi) in enumerate(points):
-            sx, sy, er = get_shifts(A, B, xi, yi,
-                                    offset=offsets[k],
-                                    **params)
+        for i, xyi in enumerate(points):
+            sx, sy, _err = get_shifts(A, B, *xyi,
+                                      offset=offsets[k],
+                                      **params)
 
             displ[k, i, :] = sx, sy
 
@@ -217,9 +217,9 @@ def track_displ_img_to_img(images, start_points,
                       end='\r')
 
             try:
-                sx, sy, er = get_shifts(A, B, xi, yi,
-                                        offset=offsets[k],
-                                        **params)
+                sx, sy, _err = get_shifts(A, B, xi, yi,
+                                          offset=offsets[k],
+                                          **params)
 
                 displ[k, i, :] = sx, sy
                 xi += sx
@@ -269,6 +269,7 @@ def track_displ_img_to_ref(images, start_points,
                 break
 
     return displ
+
 
 # ===============
 #  Bilinear Fit
