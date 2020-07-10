@@ -18,6 +18,15 @@ a Python code for Digital Image Correlation (DIC)
 - Post-process, graph and think
 
 
+## Tips 
+
+- Extract images using ffmpeg:
+
+    ffmpeg -i test\ 2\ input_file.avi -qscale:v 4  ./output/output_%04d.tiff
+
+- use padding (0001, 0002, ...etc) for naming images to keep the correct order
+
+
 ## Displacement field description 
 
 [Eulerian and Lagragian](https://en.wikipedia.org/wiki/Lagrangian_and_Eulerian_specification_of_the_flow_field) are two different way to describe the displacement field (or flow field) depending on which frame of reference is used:
@@ -91,7 +100,7 @@ There are many ways to do this:
 * run correlation with ref. image (use previous position as offset)
 * ... mix the two, mix all possible duo of images
 
-## naming
+## function names
 
 **displacements_img_to_img** (Eulerian), get_displacement_from_previous
 -->(img_A, img_B, points, offset)
@@ -108,9 +117,7 @@ There are many ways to do this:
 absolute_displ
 displ_from_ref
 
-## Extract images using ffmpeg
 
-    ffmpeg -i test\ 2\ input_file.avi -qscale:v 4  ./output/output_%04d.tiff
 
 
 ## Code structure & dev

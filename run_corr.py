@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -57,45 +57,12 @@ print(f'Load "{sample_name}" from {sample_input_dir}')
 cube, image_names = ft.load_image_sequence(sample_input_dir)
 # -
 
-image_names
-
-# +
-from shutil import copyfile
-
-path = sample_input_dir
-dirs = sorted(os.listdir(path))
-# remove non-image file :
-dirs = [os.path.join(path, d) for d in dirs
-        if os.path.isdir(os.path.join(path, d))]
-
-for d in dirs:
-    images = sorted(os.listdir(d))
-    print(images[0])
-    copyfile(os.path.join(d, images[0]), os.path.join(path, images[0].replace('hs2', '')))
-
-# +
-# Create output directory
-output_dir = './output/'
-image_ext = "svg"
-ft.create_dir(output_dir)
-sample_output_path = os.path.join(output_dir, sample_name)
-ft.create_dir(sample_output_path)
-print('create output directory:', sample_output_path)
-
-def save_fig(fig_name, image_ext=image_ext, close=False):
-    filename = f"{fig_name}.{image_ext.strip('. ')}"
-    path = os.path.join(sample_output_path, filename)
-    plt.savefig(path);
-    print(f'figure saved: {path}', end='\r')
-    if close:
-        plt.close()
-
-
-# -
+print(', '.join(image_names))
 
 plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
-plt.imshow(np.std(cube, axis=0));
-save_fig('01_cube_std')
+plt.imshow(np.std(cube, axis=0), cmap='viridis');
+ft.save_fig('01_cube_std', sample_name)
+
 
 
 
@@ -104,13 +71,13 @@ save_fig('01_cube_std')
 #  Define the grid
 # ==================
 
-window_half_size = 30
+window_half_size = 70
 
-grid_spacing = 200 //3
-grid_margin = 350 //3
+grid_spacing = 100 #//3
+grid_margin = 2*window_half_size  #//3
 
+# default:
 upsample_factor = 100
-
 reference_image = 0
 
 print('Correlation window size:', f'{1+window_half_size*2}px')
@@ -144,7 +111,7 @@ if show_window:
     plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
              color='white', linewidth=1)
 
-save_fig('02_grid')
+save_fig('02_grid', sample_name)
 
 # +
 # ============================================
@@ -165,14 +132,45 @@ print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px
 # 2. get image-to-image displacements
     # shape: (nbr_frames-1, Nbr points, 2)
     
+window_half_size = 100
+upsample_factor = 1
 print('Compute image-to-image displacement field:')
-displ_Euler = displacements_img_to_img(cube, points,
+displ_Euler_coarse = displacements_img_to_img(cube, points,
                                        window_half_size,
                                        upsample_factor,
                                        offsets=offsets,
                                        verbose=True)
+# -
 
 
+window_half_size = 30
+upsample_factor = 50
+displ_Euler = displacements_img_to_img(cube, points,
+                                       window_half_size,
+                                       upsample_factor,
+                                       offsets=displ_Euler_coarse,
+                                       verbose=True)
+
+# +
+# graphs 1. Champ de déplacement
+for image_id, displ in enumerate(displ_Euler):
+    plt.figure();
+    plt.imshow(cube[image_id]);
+    ft.plot_vector_field(points, displ, view_factor=None)
+    plt.title(f'displacement field - {image_id}→{image_id+1} - window:{window_half_size*2+1}px');
+    figname = f'disp_field_{image_id:04d}'
+    save_fig(figname, sample_name, 'img_to_img', close=True)
+    
+    
+    without_translation = displ - np.nanmean(displ, axis=0)
+    plt.figure();
+    plt.imshow(cube[image_id]);
+    ft.plot_vector_field(points, without_translation, view_factor=None)
+    plt.title(f'displ. field (w/o translation) - {image_id}→{image_id+1} - window:{window_half_size*2+1}px');
+    figname = f'disp_field_woTr_{image_id:04d}'
+    save_fig(figname, sample_name, 'img_to_img', close=True)
+    
+print('done', ' '*40)
 
 # +
 print('Do bilinear fits')
@@ -189,8 +187,14 @@ residuals_from_previous = np.stack(all_residuals, axis=0)
 
 print('Compute image-to-image Lagrangian displacement field:')
 displ_Lagrangian = track_displ_img_to_img(cube, points,
-                                          window_half_size, upsample_factor,
+                                          100, 1,
                                           offsets=offsets)
+# what about NaN in offsets... ?
+
+print('Compute image-to-image Lagrangian displacement field:')
+displ_Lagrangian = track_displ_img_to_img(cube, points,
+                                          35, 50,
+                                          offsets=displ_Lagrangian)
 
 from scipy.integrate import cumtrapz#(y, x=None, dx=1.0, axis=- 1, initial=None)[source]
 
@@ -203,13 +207,26 @@ mask = ~np.any(np.isnan(displ_Lagrangian), axis=(0, 2))
 
 color = 'white'
 plt.figure();
-plt.imshow(cube[reference_image, :, :]);
+#plt.imshow(cube[reference_image, :, :]);
+plt.imshow(np.std(cube, axis=0), cmap='viridis');
 plt.plot(positions[0, np.logical_not(mask), 0], positions[0, np.logical_not(mask), 1], 's',
          markersize=1, color='red', alpha=0.7);
 plt.plot(positions[:, np.logical_not(mask), 0], positions[:, np.logical_not(mask), 1],
          color='red', alpha=0.5, linewidth=1);
 plt.plot(positions[0, mask, 0], positions[0, mask, 1], 's', markersize=2, color=color);
 plt.plot(positions[:, mask, 0], positions[:, mask, 1], color=color, linewidth=1);
+
+# +
+image_id = 12
+view_factor = 20
+positions = cumtrapz(displ_Lagrangian, axis=0, initial=0)*view_factor + points
+x = positions[image_id, :, 0].reshape(grid[0].shape)
+y = positions[image_id, :, 1].reshape(grid[1].shape)
+
+plt.pcolor(x, y, x,
+           edgecolors='black', linewidth=1, antialiased=True);
+plt.axis('equal');
+# -
 
 # 4. Displacement field relative to the reference image
 displ_Lagrangian_ref = track_displ_img_to_ref(cube, points,
@@ -258,43 +275,6 @@ output_dir = f'frame_to_frame_window{window_half_size}px'
 # --
 save_path = os.path.join(sample_output_path, output_dir)
 ft.create_dir(save_path)
-
-
-# -
-
-def plot_vector_field(points, displacements,
-                      view_factor=None, color='white'):
-    amplitudes = np.sqrt(np.nansum( displacements**2, axis=1 )) # disp. amplitude
-
-    mask = ~np.any( np.isnan(displacements), axis=1, keepdims=False )
-    
-    plt.quiver(*points[mask, :].T, *displacements[mask, :].T,
-               angles='xy', color=color,
-               scale_units='xy',
-               scale=1/view_factor if view_factor else None,
-               minlength=1e-4);
-    
-    plt.text(10., 10.,
-             f'max(|u|)={np.nanmax(amplitudes):.2f}px  mean(|u|)={np.nanmean(amplitudes):.2f}px',
-             fontsize=12, color=color,
-             verticalalignment='top')
-
-
-
-# +
-# 1. Champ de déplacement
-for image_id, displ in enumerate(displ_Euler):
-    plt.figure();
-    plt.imshow(cube[image_id]);
-    plot_vector_field(points, displ, view_factor=None)
-    plt.title(f'champ de déplacement - images {image_id}→{image_id+1} - fenêtre:{window_half_size*2+1}px');
-    filename = f'disp_field_{image_id:04d}.{image_ext}'
-    plt.savefig(os.path.join(save_path, filename));
-    print(f'figure saved: {filename}', end='\r')
-    plt.close()
-    
-print('done', ' '*40)
-
 # +
 # 2. Champ de déplacement Sans la translation
 for image_id, displ in enumerate(displ_Euler):

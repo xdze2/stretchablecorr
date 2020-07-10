@@ -145,12 +145,41 @@ def displacements_img_to_img(images, points,
                              window_half_size, upsample_factor,
                              offsets=None,
                              verbose=True):
+    """[summary]
+
+    Parameters
+    ----------
+    images : [type]
+        [description]
+    points : [type]
+        [description]
+    window_half_size : [type]
+        [description]
+    upsample_factor : [type]
+        [description]
+    offsets : [type], optional
+        could be an 2D array (nbr_images-1, 2)
+        of a 3D array (nbr_images-1, nbr_points, 2)
+        by default zeros (None)
+    verbose : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    3d array of shape (nbr_images-1, nbr_points, 2)
+        displacement vector
+        NaN if an error occured (often because ROI out of image)
+    """
+
 
     params = {'window_half_size':window_half_size,
               'upsample_factor':upsample_factor}
 
     if offsets is None:
-        offsets = np.zeros((len(images)-1, 2))
+        offsets = np.zeros((len(images)-1, len(points), 2))
+    elif len(offsets.shape)==2:
+        offsets = np.tile(offsets[:, np.newaxis, :], (1, len(points), 1))
+        print(offsets.shape)
 
     displ = np.empty((len(images)-1,
                       len(points),
@@ -162,7 +191,7 @@ def displacements_img_to_img(images, points,
         for i, xyi in enumerate(points):
             try:
                 sx, sy, _err = get_shifts(A, B, *xyi,
-                                        offset=offsets[k],
+                                        offset=offsets[k, i, :],
                                         **params)
 
                 displ[k, i, :] = sx, sy
@@ -187,7 +216,10 @@ def track_displ_img_to_img(images, start_points,
               'upsample_factor':upsample_factor}
 
     if offsets is None:
-        offsets = np.zeros((len(images)-1, 2))
+        offsets = np.zeros((len(images)-1, len(start_points), 2))
+    elif len(offsets.shape)==2:
+        offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
+        print(offsets.shape)
 
     displ = np.empty((len(images)-1,
                       len(start_points),
@@ -207,7 +239,7 @@ def track_displ_img_to_img(images, start_points,
 
             try:
                 sx, sy, _err = get_shifts(A, B, xi, yi,
-                                          offset=offsets[k],
+                                          offset=offsets[k, i, :],
                                           **params)
 
                 displ[k, i, :] = sx, sy
@@ -217,11 +249,11 @@ def track_displ_img_to_img(images, start_points,
                 #if verbose:
                 #    print('out of limits for image', k)
                 break
-            
+
     print('done', ' '*30)
     return displ
 
-
+# broken:
 def track_displ_img_to_ref(images, start_points,
                            window_half_size, upsample_factor,
                            offsets=None,

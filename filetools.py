@@ -5,6 +5,7 @@ import imghdr
 import doctest
 
 import numpy as np
+import matplotlib.pylab as plt
 from skimage import io
 from skimage.color import rgb2gray
 
@@ -24,7 +25,7 @@ def extract_digits(string):
 
 
 def print_numbered_list(name_list):
-    """Pretty print id: name\n"""
+    """Pretty print id: name"""
     print('\n'.join([f'{k} - {n}' for k, n in enumerate(name_list)]))
 
 
@@ -37,7 +38,7 @@ def load_image(path):
     -------
     2D array (float)
         grayscale image
-    """    
+    """
     try:
         image = io.imread(path)
         # Convert to grayscale if needed:
@@ -68,8 +69,8 @@ def load_image_sequence(directory, verbose=True):
 
     Returns
     -------
-    3D array of shape (nbr of images, height, width)       
-    """    
+    3D array of shape (nbr of images, height, width)
+    """
 
     images = list_images(directory)
 
@@ -80,23 +81,81 @@ def load_image_sequence(directory, verbose=True):
 
     if verbose:
         print('Image sequence:')
-        print(f' {cube.shape[0]} frames') 
-        print(f' {cube.shape[2]}*{cube.shape[1]} pixels') 
+        print(f' {cube.shape[0]} frames')
+        print(f' {cube.shape[2]}*{cube.shape[1]} pixels')
         print(f' memory size: {cube.nbytes // 1024**2} Mo')
 
     return cube, [os.path.basename(p) for p in images]
 
 
-def create_dir(path):
-    """Create the dir if doesn't exist"""
+def create_dir(path, verbose=True):
+    """Create the directory if doesn't exist"""
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.makedirs(path)
         print("make dir", path)
-    else:
+    elif verbose:
         print('dir:', path)
 
 
-# 
+def save_fig(fig_name, *subdirs,
+             image_ext='svg',
+             output_dir='./output/',
+             close=False):
+    """Save the current figure (using matplotlib savefig)
+    construct the needed directories
+
+    Parameters
+    ----------
+    fig_name : str
+        name of the file (without extension)
+    *subdirs : str
+        possible sub-directories
+    image_ext : str, optional
+        wanted figure format, by default 'svg'
+    output_dir : str, optional
+        base directory to output results, by default './output/'
+    close : bool, optional
+        close the figure after saving, by default False
+        to use when saving many figures in a loop
+    """
+    path = os.path.join(output_dir, *subdirs)
+    create_dir(path, verbose=False)
+    filename = f"{fig_name}.{image_ext.strip('. ')}"
+    path = os.path.join(path, filename)
+    plt.savefig(path);
+    print(f'figure saved at {path}', end='\r')
+    if close:
+        plt.close()
+
+
+
+def plot_vector_field(points, displacements,
+                      view_factor=None, color='white'):
+    amplitudes = np.sqrt(np.nansum( displacements**2, axis=1 )) # disp. amplitude
+
+    mask = ~np.any( np.isnan(displacements), axis=1, keepdims=False )
+
+    plt.quiver(*points[mask, :].T, *displacements[mask, :].T,
+               angles='xy', color='white',
+               scale_units='xy',
+               units='dots',
+               width=1,
+               headwidth=3,
+               headlength=4, headaxislength=3,
+               scale=1/view_factor if view_factor else None,
+               minlength=1e-4);
+
+    plt.text(10., 10.,
+             f'max(|u|)={np.nanmax(amplitudes):.2f}px  mean(|u|)={np.nanmean(amplitudes):.2f}px',
+             fontsize=12, color=color,
+             verticalalignment='top')
+
+    # plot NaN points
+    plt.plot(points[np.logical_not(mask), 0], points[np.logical_not(mask), 1], 's',
+         markersize=1, color='yellow', alpha=0.7);
+
+
+#
 # =================================
 #  Specific for nested dir struc.
 # =================================
@@ -115,7 +174,7 @@ def parse_path(img_path, DATA_DIR, IMAGE_EXT, verbose=False):
             print("dir structure error:", parts)
         info['msg'] += "dir structure error "
         return info
-    
+
     parts = [s.lower() for s in parts]
     sample_name, step_name, image_name = parts
 
@@ -126,18 +185,18 @@ def parse_path(img_path, DATA_DIR, IMAGE_EXT, verbose=False):
         if verbose:
             print('warning: no in prefix in filename', parts)
         info['msg'] += "warning: no in prefix in filename "
-    
+
     if 'u' in step_name:
         info['direction'] = "unloading"
     else:
         info['direction'] = 'loading'
-    
+
     strain = step_name.replace('u', '').replace('p', '.')
     try:
         info['applied_strain'] = float(strain)
     except ValueError:
         info['applied_strain'] = None
-        
+
     image_name = image_name.replace(sample_name, '')
     image_name = image_name.replace(step_name, '')
 
@@ -162,7 +221,7 @@ def parse_path(img_path, DATA_DIR, IMAGE_EXT, verbose=False):
 
 def parse_step_dir(stepname):
     """Parse the step name
-    
+
     >>> parse_step_dir('7p1u')
     defaultdict(<class 'str'>, {'stepname': '7p1u', 'strain': 7.1, 'direction': 'unloading', 'tag': ''})
     >>> parse_step_dir('10p5')
@@ -181,8 +240,24 @@ def parse_step_dir(stepname):
         info['tag'] = m[3]
     else:
         info['msg'] = 'error parsing stepname'
-        
+
     return info
 
 
 doctest.testmod(verbose=False)
+
+
+
+## Extract one of the images inside sub-directories
+# from shutil import copyfile
+
+# path = sample_input_dir
+# dirs = sorted(os.listdir(path))
+# # remove non-image file :
+# dirs = [os.path.join(path, d) for d in dirs
+#         if os.path.isdir(os.path.join(path, d))]
+
+# for d in dirs:
+#     images = sorted(os.listdir(d))
+#     print(images[0])
+#     copyfile(os.path.join(d, images[0]), os.path.join(path, images[0].replace('hs2', '')))
