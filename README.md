@@ -20,11 +20,11 @@ a Python code for Digital Image Correlation (DIC)
 
 ## Tips 
 
-- Extract images using ffmpeg:
+- Extract images using [`ffmpeg`](https://ffmpeg.org/):
 
     ffmpeg -i test\ 2\ input_file.avi -qscale:v 4  ./output/output_%04d.tiff
 
-- use padding (0001, 0002, ...etc) for naming images to keep the correct order
+- use number padding (0001, 0002, ...etc) in image filenames to keep the correct order (use alphabetical sort)
 
 
 ## Displacement field description 

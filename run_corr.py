@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.3.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -111,7 +111,7 @@ if show_window:
     plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
              color='white', linewidth=1)
 
-save_fig('02_grid', sample_name)
+ft.save_fig('02_grid', sample_name)
 
 # +
 # ============================================
