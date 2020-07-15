@@ -100,7 +100,7 @@ There are many ways to do this:
 * run correlation with ref. image (use previous position as offset)
 * ... mix the two, mix all possible duo of images
 
-## function names
+## Function names
 
 **displacements_img_to_img** (Eulerian), get_displacement_from_previous
 -->(img_A, img_B, points, offset)
@@ -114,13 +114,10 @@ There are many ways to do this:
 -->(img_sequence, xy0, estimated_xyi)
 
 
-absolute_displ
-displ_from_ref
 
 
 
-
-## Code structure & dev
+## Development & code structure
 
 There are 3 modules:
 - filetools: functions used to load and sort images
@@ -140,8 +137,10 @@ docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 
 ## Next
 
-- allow rescaling: px -> mm/cm
+- Allow rescaling: px -> mm/cm
+- Error estimation
+- Length scales estimation (PSD): ROI size choice
 - Global (high order method)
-- Error estimation using Likelihood approach 
+ 
 
 
