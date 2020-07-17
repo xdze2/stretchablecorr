@@ -6,13 +6,16 @@ a Python code for Digital Image Correlation (DIC)
 
 [1] Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup, “Efficient subpixel image registration algorithms,” Optics Letters 33, 156-158 (2008). DOI:10.1364/OL.33.000156
 
-
+The method used here corresponds to the figure (d) below:
 ![deformation order](./schema/def_states.png)
 
 ## Workflow
 
-- Load images from a given directory, sort by alphabetical order: get an image cube.
-- Construct a regular grid (provide spacing & margin)
+- Load an images sequence by choosing a directory,
+    -  images are sorted by alphabetical order.
+- Construct a regular grid of points. 
+    - the main parameter are the grid point spacing and margin
+- Evaluate image-scale translation between images. -> `offsets`
 - Run the cross-correlation for every points:
     - Lagragian (surface) vs Eulerian (lab.) ref. frame ?
     - tinkering to obtain more robust machinery

@@ -101,7 +101,7 @@ def get_shifts(I, J, x, y,
 
 
 def build_grid(img_shape, margin, spacing):
-    """Build a regular grid
+    """Build a centered regular grid
 
     note: as given by `np.meshgrid`
 
