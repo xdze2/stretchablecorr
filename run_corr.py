@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -27,7 +27,9 @@ import os, imghdr
 # %load_ext autoreload
 # %autoreload 2
 
-# # Stretchable Corr
+from scipy.integrate import cumtrapz
+
+# # Stretchable Corr - correlations
 
 # ## Search and select images
 
@@ -63,55 +65,38 @@ plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
 plt.imshow(np.std(cube, axis=0), cmap='viridis');
 ft.save_fig('01_cube_std', sample_name)
 
-
-
-
 # +
 # ==================
 #  Define the grid
 # ==================
 
-window_half_size = 70
+window_half_size = 40
 
 grid_spacing = 100 #//3
-grid_margin = 2*window_half_size  #//3
+grid_margin = window_half_size * 3//2
 
 # default:
-upsample_factor = 100
 reference_image = 0
 
 print('Correlation window size:', f'{1+window_half_size*2}px')
-print('Upsample factor:', upsample_factor)
 
 # ----
 grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
-points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 
 # Graph the grid
-show_pts_number = False
-show_window = True
-
 plt.figure();
-plt.imshow(cube[reference_image, :, :]);
 plt.title(f'Grille - D={grid_spacing}px - {points.shape[0]} points');
-plt.plot(*grid, 'o', color='white', markersize=3);
-
-if show_pts_number:
-    for k, (x, y) in enumerate(points):
-        if len(points) > 10 and k % 5 != 0:
-            continue
-        text_offset = 10.0
-        plt.text(x+text_offset, y+text_offset,
-                 str(k), fontsize=8, color='white')
-    
-if show_window:
-    # graph one of the ROI
-    box = np.array([[-1, 1, 1, -1, -1], [-1, -1, 1, 1, -1]])*(window_half_size + 1)
-    middle_point = tuple(np.array(grid[0].shape) // 2 - 1)
-    plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
-             color='white', linewidth=1)
-
+ft.plot_grid_points(grid, background=cube[0],
+                    color='white', markersize=3,
+                    window_half_size=window_half_size)
 ft.save_fig('02_grid', sample_name)
+
+# +
+#output_dir = f'frame_to_frame_window{window_half_size}px'
+#
+# --
+#save_path = os.path.join(sample_output_path, output_dir)
+#ft.create_dir(save_path)
 
 # +
 # ============================================
@@ -127,6 +112,11 @@ offsets = displacements_img_to_img(cube, xy_center,
                                    verbose=True)
 offsets = np.squeeze(offsets)
 print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px')
+# -
+
+# ## 1. Eulerian displacement field
+
+points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 
 # +
 # 2. get image-to-image displacements
@@ -140,66 +130,62 @@ displ_Euler_coarse = displacements_img_to_img(cube, points,
                                        upsample_factor,
                                        offsets=offsets,
                                        verbose=True)
-# -
 
 
+# +
 window_half_size = 30
-upsample_factor = 50
+upsample_factor = 100
 displ_Euler = displacements_img_to_img(cube, points,
                                        window_half_size,
                                        upsample_factor,
                                        offsets=displ_Euler_coarse,
                                        verbose=True)
 
-# +
-# graphs 1. Champ de déplacement
-for image_id, displ in enumerate(displ_Euler):
-    plt.figure();
-    plt.imshow(cube[image_id]);
-    ft.plot_vector_field(points, displ, view_factor=None)
-    plt.title(f'displacement field - {image_id}→{image_id+1} - window:{window_half_size*2+1}px');
-    figname = f'disp_field_{image_id:04d}'
-    save_fig(figname, sample_name, 'img_to_img', close=True)
-    
-    
-    without_translation = displ - np.nanmean(displ, axis=0)
-    plt.figure();
-    plt.imshow(cube[image_id]);
-    ft.plot_vector_field(points, without_translation, view_factor=None)
-    plt.title(f'displ. field (w/o translation) - {image_id}→{image_id+1} - window:{window_half_size*2+1}px');
-    figname = f'disp_field_woTr_{image_id:04d}'
-    save_fig(figname, sample_name, 'img_to_img', close=True)
-    
-print('done', ' '*40)
+meta = {'window_half_size':window_half_size,
+        'upsample_factor':upsample_factor}
+ft.save_data((grid, displ_Euler, meta),
+             'displ_Euler_img_to_img',
+             sample_name)
+# -
+
+# ## 2. Lagrangian displacement
 
 # +
-print('Do bilinear fits')
-all_coeffs = []
-all_residuals = []
-for displ_field in displ_Euler:
-    coeffs, residuals = bilinear_fit(points, displ_field)
-    all_coeffs.append(coeffs)
-    all_residuals.append(residuals)
+grid_spacing = 20 #//3
+window_half_size = 35
+grid_margin = window_half_size * 3//2
 
-linear_def_from_previous = np.stack(all_coeffs, axis=0)
-residuals_from_previous = np.stack(all_residuals, axis=0)
+# ----
+grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
+points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 # -
 
 print('Compute image-to-image Lagrangian displacement field:')
-displ_Lagrangian = track_displ_img_to_img(cube, points,
-                                          100, 1,
-                                          offsets=offsets)
+displ_Lagrangian_coarse = track_displ_img_to_img(cube, points,
+                                                 100, 1,
+                                                 offsets=offsets)
 # what about NaN in offsets... ?
 
+# +
 print('Compute image-to-image Lagrangian displacement field:')
-displ_Lagrangian = track_displ_img_to_img(cube, points,
-                                          35, 50,
-                                          offsets=displ_Lagrangian)
 
-from scipy.integrate import cumtrapz#(y, x=None, dx=1.0, axis=- 1, initial=None)[source]
+upsample_factor  = 50
+displ_Lagrangian = track_displ_img_to_img(cube, points,
+                                          window_half_size, upsample_factor,
+                                          offsets=displ_Lagrangian_coarse)
+# -
+
+meta = {'window_half_size':window_half_size,
+        'upsample_factor':upsample_factor}
+ft.save_data((grid, displ_Lagrangian, meta),
+             f'displ_Lagrangian_img_to_img_{len(points)}pts',
+              sample_name)
 
 # +
-positions = cumtrapz(displ_Lagrangian, axis=0, initial=0) + points
+# ===================
+# integrate image-to-image fields to get image-to-ref displ.
+displ_lagrangian_to_ref = cumtrapz(displ_Lagrangian, axis=0, initial=0)
+positions = displ_lagrangian_to_ref + points
 
 # keep only enterely visible path
 mask = ~np.any(np.isnan(displ_Lagrangian), axis=(0, 2))
@@ -216,17 +202,92 @@ plt.plot(positions[:, np.logical_not(mask), 0], positions[:, np.logical_not(mask
 plt.plot(positions[0, mask, 0], positions[0, mask, 1], 's', markersize=2, color=color);
 plt.plot(positions[:, mask, 0], positions[:, mask, 1], color=color, linewidth=1);
 
-# +
-image_id = 12
-view_factor = 20
-positions = cumtrapz(displ_Lagrangian, axis=0, initial=0)*view_factor + points
-x = positions[image_id, :, 0].reshape(grid[0].shape)
-y = positions[image_id, :, 1].reshape(grid[1].shape)
 
-plt.pcolor(x, y, x,
-           edgecolors='black', linewidth=1, antialiased=True);
-plt.axis('equal');
+def plot_Y_profile(nearest_x, image_id,
+                   grid,
+                   displ_lagrangian_to_ref,
+                   color = 'darkorange'):
+    
+    dx = displ_lagrangian_to_ref[image_id, :, 0].reshape(grid[0].shape)
+    dy = displ_lagrangian_to_ref[image_id, :, 1].reshape(grid[0].shape)
+
+    # Profils Y
+    x_span = grid[0][0, :]
+    j = np.searchsorted(x_span, nearest_x)
+    
+    dy_profile = dy[:, j]
+    mask_dy_profile = ~np.isnan(dy_profile)
+    dy_profile = dy_profile[mask_dy_profile]
+
+    y_profile = grid[1][:, j][mask_dy_profile]
+    x_profile = grid[0][:, j][mask_dy_profile]
+    
+    plt.plot(y_profile,
+             dy_profile,
+             color=color,
+             label=f'at x={x_span[j]} px')
+    
+    plt.xlabel('y [px]'); plt.ylabel('displ. v [px]');
+    plt.title(f"displ. component v - image {image_names[image_id].split('.')[0]}")
+
+    a, b = np.polyfit(y_profile, dy_profile, 1)
+    plt.plot(y_profile, a*y_profile + b, ':',
+             color=color, alpha=0.8,
+             label=f'$\epsilon_y$=dv/dy={a*100:.2f}%');
+    plt.legend();
+    return x_profile, y_profile, dy_profile
+
+
+# +
+image_id = 8
+
+x1050, y1050, v1050 = plot_Y_profile(850, image_id,
+               grid,
+               displ_lagrangian_to_ref,
+               color = 'lightblue')
+
+x450, y450, v450 = plot_Y_profile(450, image_id,
+               grid,
+               displ_lagrangian_to_ref,
+               color = 'darkorange')
+
+
 # -
+
+plt.figure();
+plt.imshow(cube[image_id, :, :]);
+plt.plot(x450, y450, '.-', color='darkorange')
+plt.plot(x1050, y1050, '.-', color='lightblue')
+plt.title(f'{image_names[image_id]}');
+
+# +
+image_id = 10
+
+view_factor = 20
+
+x = grid[0]
+y = grid[1]
+
+dx = np.diff(x, axis=1, prepend=np.NaN)
+dy = np.diff(y, axis=0, prepend=np.NaN)
+
+u = displ_lagrangian_to_ref[image_id, :, 0].reshape(grid[0].shape)
+v = displ_lagrangian_to_ref[image_id, :, 1].reshape(grid[0].shape)
+dudx = np.diff(u, axis=0, prepend=np.NaN)
+dvdy = np.diff(v, axis=0, prepend=np.NaN) / dy 
+
+positions_amplified = displ_lagrangian_to_ref*view_factor + points
+x_amplified = positions_amplified[image_id, :, 0].reshape(grid[0].shape)
+y_amplified = positions_amplified[image_id, :, 1].reshape(grid[0].shape)
+
+plt.pcolor(x_amplified, y_amplified, dvdy*100,
+           edgecolors='black', linewidth=1, antialiased=True, cmap='viridis');
+plt.axis('equal');
+plt.colorbar();
+plt.title(f'{image_names[image_id]} - displ x{view_factor}');
+# -
+
+dy
 
 # 4. Displacement field relative to the reference image
 displ_Lagrangian_ref = track_displ_img_to_ref(cube, points,
@@ -424,5 +485,8 @@ print(f'graph saved: {filename}')
 # plt.imshow(cube[0]);
 # plt.plot(*def_centers[1:12].T)
 # -
+7e3*0.8/100
+
+
 
 
