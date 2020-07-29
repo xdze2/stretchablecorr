@@ -145,24 +145,27 @@ def displacements_img_to_img(images, points,
                              window_half_size, upsample_factor,
                              offsets=None,
                              verbose=True):
-    """[summary]
+    """Eulerian image-to-image correlation
+    i.e. at position (points) fixed relative to the camera frame
 
     Parameters
     ----------
-    images : [type]
-        [description]
-    points : [type]
-        [description]
-    window_half_size : [type]
-        [description]
-    upsample_factor : [type]
-        [description]
-    offsets : [type], optional
+    images : iterable
+        sequence of images
+    points : iterable of point coordinates [[x1, y1], ...]
+        positions where displacement is computed
+    window_half_size : integer
+        size in pixel of the square area used for correlation
+        actual size is (2w + 1)
+    upsample_factor : integer
+        wanted accuracy of the correlation
+        see doc. of scikit-image phase-cross-correlation
+    offsets : float array, optional
         could be an 2D array (nbr_images-1, 2)
         of a 3D array (nbr_images-1, nbr_points, 2)
         by default zeros (None)
     verbose : bool, optional
-        [description], by default True
+        print information
 
     Returns
     -------
@@ -170,7 +173,6 @@ def displacements_img_to_img(images, points,
         displacement vector
         NaN if an error occured (often because ROI out of image)
     """
-
 
     params = {'window_half_size':window_half_size,
               'upsample_factor':upsample_factor}
@@ -252,6 +254,7 @@ def track_displ_img_to_img(images, start_points,
 
     print('done', ' '*30)
     return displ
+
 
 # broken:
 def track_displ_img_to_ref(images, start_points,

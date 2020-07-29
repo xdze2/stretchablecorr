@@ -10,7 +10,7 @@ from skimage import io
 from skimage.color import rgb2gray
 
 from collections import defaultdict
-
+import pickle
 
 # -
 
@@ -109,7 +109,7 @@ def save_fig(fig_name, *subdirs,
     fig_name : str
         name of the file (without extension)
     *subdirs : str
-        possible sub-directories
+        possible sub-directories, for instance sample name
     image_ext : str, optional
         wanted figure format, by default 'svg'
     output_dir : str, optional
@@ -127,6 +127,21 @@ def save_fig(fig_name, *subdirs,
     if close:
         plt.close()
 
+
+def save_data(data, array_name, *subdirs,
+             output_dir='./output/'):
+    """Save data using pickle
+
+        see save_fig options
+    """
+    path = os.path.join(output_dir, *subdirs)
+    create_dir(path, verbose=False)
+    array_name = array_name.replace('.npy', '')
+    filename = f"{array_name}.pck"
+    path = os.path.join(path, filename)
+    with open(path, 'wb') as f:
+        pickle.dump(data, f)
+    print(f'data saved at {path}')
 
 
 def plot_vector_field(points, displacements,
@@ -154,6 +169,33 @@ def plot_vector_field(points, displacements,
     plt.plot(points[np.logical_not(mask), 0], points[np.logical_not(mask), 1], 's',
          markersize=1, color='yellow', alpha=0.7);
 
+
+def plot_grid_points(grid, background=None,
+                     color='white', markersize=3,
+                     show_pts_number=False,
+                     window_half_size=None):
+
+    if background is not None:
+        plt.imshow(background)
+
+    plt.plot(*grid, 'o', color=color, markersize=markersize);
+
+    if show_pts_number:
+        points = np.stack((grid[0].flatten(), grid[1].flatten()),
+                          axis=-1)
+        for k, (x, y) in enumerate(points):
+            if len(points) > 10 and k % 5 != 0:
+                continue
+            text_offset = 10.0
+            plt.text(x+text_offset, y+text_offset,
+                     str(k), fontsize=8, color=color)
+
+    if window_half_size:
+        # graph one of the ROI
+        box = np.array([[-1, 1, 1, -1, -1], [-1, -1, 1, 1, -1]])*(window_half_size + 1)
+        middle_point = tuple(np.array(grid[0].shape) // 2 - 1)
+        plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
+                 color=color, linewidth=1)
 
 #
 # =================================

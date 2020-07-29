@@ -10,21 +10,22 @@ a Python code for Digital Image Correlation (DIC)
 
 ## Workflow
 
-- Load images from a given directory, sort by alphabetical order: get an image cube.
-- Construct a regular grid (provide spacing & margin)
-- Run the cross-correlation for every points:
-    - Lagragian (surface) vs Eulerian (lab.) ref. frame ?
-    - tinkering to obtain more robust machinery
-- Post-process, graph and think
+- Load images from a given directory, sort by alphabetical order: get an **image sequence**.
+- Construct a regular **grid** with a given spacing and margin value.
+- Compute **cross-correlation** for every points[*]:
+  * Using **Eulerian** reference frame i.e. points remain fixed to the camera frame.
+  * Using **Lagrangian** reference i.e. points are attached to the sample surface (track points).
+- Post-process, **graph** and think
 
+[*] image-to-image vs image-to-reference
 
 ## Tips 
 
-- Extract images using [`ffmpeg`](https://ffmpeg.org/):
+- Extract images from video using [`ffmpeg`](https://ffmpeg.org/):
 
-    ffmpeg -i test\ 2\ input_file.avi -qscale:v 4  ./output/output_%04d.tiff
+        ffmpeg -i test\ 2\ input_file.avi -qscale:v 4  ./output/output_%04d.tiff
 
-- use number padding (0001, 0002, ...etc) in image filenames to keep the correct order (use alphabetical sort)
+- When naming the images, use number padding (0001.jpg, 0002.jpg, ...etc) to keep the correct order (use alphabetical sort)
 
 
 ## Displacement field description 
@@ -33,24 +34,29 @@ a Python code for Digital Image Correlation (DIC)
 - *Eulerian*: the laboratory or the camera field of view is used as reference, i.e. field evaluation points remain fixed on the images.
 - *Lagrangian*: points on the sample surface are tracked. The frame of reference is fixed to the sample surface.
 
-_Eulerian description_ corresponds to the simplest data processing approach, whereas _Lagrangian description__ require more complex data processing.
+_Eulerian description_ corresponds to the simplest data processing approach, whereas _Lagrangian description_ require more complex data processing. Both are similar for small displacement.
 
-similar for small displacement
+## image-to-image vs image-to-reference
+
+Another important consideration is related to the choice of the **reference state**. The displacement field is defined relatively to a non-deformed state. This, usualy, corresponds to the first image of the sequence.
 
 
-Another important consideration is related to the choice of the reference state. The displacement field is defined relatively to a non-deformed state. This, usualy, correpsonds to the first image of the sequence.
+Ideally, displacement for image `i` are directly computed using correlation between image `i` and the reference image. This is the **image-to-reference** approach.
 
-Then, each correlation, should be computed between the image `i` and the reference image. However, large displacement or deformation could occur between these two images, leading to a wrong correlation estimation. Performing the correlation image-to-image is more robust albeit leading to the summation of correlation errors.
+However, large displacement or deformation could occur between these two images, leading to a wrong correlation estimation or simply displacement larger than the window size. An other method is to perform correlations between susccesive images and integrate (sum) instantateous displacements to obtain the absolute displacement. Performing correlation **image-to-image** is more robust albeit leading to the summation of correlation errors.
 
-Thus there are, at least, four different combinaison to estimate the displacement field: either Eulerian or Lagrangian, and image-to-image (relative) or image-to-reference (absolute) correlation.
+## --
+
+Therefore, at least, four different combinaison to estimate the displacement field are possible:
+* either Eulerian or Lagrangian, 
+* and image-to-image (relative) or image-to-reference (absolute) correlations.
 
 Only two of the combinaison are used in practice: Eulerian image-to-image, and Lagrangian image-to-reference
 
---
-High order correlation method (for instance global DIC) are used to reduce the correlation error in the image-to-reference case.
+->
+**High order** correlation methods (for instance global DIC) are used to reduce the correlation error in the image-to-reference case.
 
 We could think of...
-
 
 
 **Multiscale approachs (pyramids):**
@@ -77,17 +83,11 @@ Similarly to iterative optimisation method where the choice of the initial guess
     image-to-image displacements for each points (Eulerian)  
     could include NaNs
 
+
+
 ## pseudo multi-scale approach for robust processing
 
 
->_eternal question:_ graph while computing or store and post-process: how long is the run ? how big are the data ? are the data needed afterwards ?
-
-> 2nd eternal question : loop order ? image then points, or points then images ?  now it is points then images - to allow unstructured points
-
-> 3rd eternal question : Dimension order ? numpy loops and unpacks along first dim, so first dim is the outer loop -- here points
-
-    for image in cube:
-        ...
 
 * first, run correlation image-to-image on a large ROI (i.e. the central part of the image) → obtain `offsets` values
 * second, run correlation image-to-image for all points of the grid, (using the offsets) → obtain `displ_from_previous` values 
@@ -114,7 +114,19 @@ There are many ways to do this:
 -->(img_sequence, xy0, estimated_xyi)
 
 
+## Important functions
 
+* Eulerian image-to-image correlation
+
+
+        displacements_img_to_img(
+            images,
+            points,
+            window_half_size,
+            upsample_factor,
+            offsets=None,
+            verbose=True,
+        )
 
 
 ## Development & code structure
@@ -133,6 +145,15 @@ _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#do
 docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 
     $ pdoc --html stretchablecorr.py
+
+
+
+### note
+>_eternal question:_ graph while computing or store and post-process: how long is the run ? how big are the data ? are the data needed afterwards ?
+
+> 2nd eternal question : loop order ? image then points, or points then images ?  now it is points then images - to allow unstructured points
+
+> 3rd eternal question : Dimension order ? numpy loops and unpacks along first dim, so first dim is the outer loop -- here points
 
 
 ## Next
