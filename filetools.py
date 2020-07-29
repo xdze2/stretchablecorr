@@ -70,6 +70,7 @@ def load_image_sequence(directory, verbose=True):
     Returns
     -------
     3D array of shape (nbr of images, height, width)
+    list of image names
     """
 
     images = list_images(directory)
@@ -78,6 +79,7 @@ def load_image_sequence(directory, verbose=True):
             for img_path in images]
 
     cube = np.stack(cube, axis=0)
+    image_names = [os.path.basename(p) for p in images]
 
     if verbose:
         print('Image sequence:')
@@ -85,7 +87,13 @@ def load_image_sequence(directory, verbose=True):
         print(f' {cube.shape[2]}*{cube.shape[1]} pixels')
         print(f' memory size: {cube.nbytes // 1024**2} Mo')
 
-    return cube, [os.path.basename(p) for p in images]
+        print(' images: ', end='')
+        if len(image_names) > 4:
+            print(', '.join(image_names[:3]), ', ... , ', image_names[-1])
+        else:
+            print(', '.join(image_names))
+
+    return cube, image_names
 
 
 def create_dir(path, verbose=True):

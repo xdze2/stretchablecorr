@@ -16,8 +16,6 @@
 
 import numpy as np
 import matplotlib.pylab as plt
-from skimage import io
-from skimage import img_as_uint
 from stretchablecorr import *
 # #!pip install scikit-image
 
@@ -50,16 +48,13 @@ print(sample_name)
 # ==================
 #  Load image cube
 # ==================
-print('Loading image cube...', end='\r')
 
 # List, select and sort images
 sample_input_dir = os.path.join(input_data_dir, sample_name)
-print(f'Load "{sample_name}" from {sample_input_dir}')
+print(f'Loading "{sample_name}" from {sample_input_dir} ...')
 
 cube, image_names = ft.load_image_sequence(sample_input_dir)
 # -
-
-print(', '.join(image_names))
 
 plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
 plt.imshow(np.std(cube, axis=0), cmap='viridis');

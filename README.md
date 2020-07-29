@@ -6,7 +6,8 @@ a Python code for Digital Image Correlation (DIC)
 
 [1] Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup, “Efficient subpixel image registration algorithms,” Optics Letters 33, 156-158 (2008). DOI:10.1364/OL.33.000156
 
-
+The method used here corresponds to the figure (d) below:
+![deformation order](./schema/def_states.png)
 
 ## Workflow
 
