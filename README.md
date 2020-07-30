@@ -7,7 +7,10 @@ a Python code for Digital Image Correlation (DIC)
 [1] Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup, “Efficient subpixel image registration algorithms,” Optics Letters 33, 156-158 (2008). DOI:10.1364/OL.33.000156
 
 The method used here corresponds to the figure (d) below:
+
+
 ![deformation order](./schema/def_states.png)
+
 
 ## Workflow
 
@@ -18,7 +21,7 @@ The method used here corresponds to the figure (d) below:
   * Using **Lagrangian** reference i.e. points are attached to the sample surface (track points).
 - Post-process, **graph** and think
 
-[*] image-to-image vs image-to-reference
+[*] and image-to-image vs image-to-reference (see below)
 
 ## Tips 
 
@@ -28,6 +31,7 @@ The method used here corresponds to the figure (d) below:
 
 - When naming the images, use number padding (0001.jpg, 0002.jpg, ...etc) to keep the correct order (use alphabetical sort)
 
+- Record as many as possible images
 
 ## Displacement field description 
 
@@ -46,31 +50,23 @@ Ideally, displacement for image `i` are directly computed using correlation betw
 
 However, large displacement or deformation could occur between these two images, leading to a wrong correlation estimation or simply displacement larger than the window size. An other method is to perform correlations between susccesive images and integrate (sum) instantateous displacements to obtain the absolute displacement. Performing correlation **image-to-image** is more robust albeit leading to the summation of correlation errors.
 
-## --
+Therefore, at least four different combinations are possible to estimate the displacement field:
 
-Therefore, at least, four different combinaison to estimate the displacement field are possible:
 * either Eulerian or Lagrangian, 
 * and image-to-image (relative) or image-to-reference (absolute) correlations.
 
-Only two of the combinaison are used in practice: Eulerian image-to-image, and Lagrangian image-to-reference
+> For the moment, Image-to-reference is not used. Image-to-reference displacement field is obtained by summation (`cumsum()`) of the image-to-image displacement field.
 
-->
-**High order** correlation methods (for instance global DIC) are used to reduce the correlation error in the image-to-reference case.
+_note:_ **High order** correlation methods (for instance global DIC) are used to reduce the correlation error in the image-to-reference case.
 
-We could think of...
-
-
-**Multiscale approachs (pyramids):**
-Similarly to iterative optimisation method where the choice of the initial guess is important. The two images to be correlated have to be similar enough. When large displacement (>>50 pixels, larger the the ROI window size) occurs mutli-step methods are used. 
-
--> quad-tree decomposition 1, 1/4, 1/16
+We could think of another approach...
 
 
 ## Data structures
 
 * `cube` : 3D array of floats with shape (nbr_images, height, width)  
     Sequence of gray-level images.  
-    _note: ij convention instead of xy_
+    _note: ij convention instead of xy_ --> height first
 
 * `points` : 2D array of floats with shape (nbr_points, 2)  
     Coordinates of points (could be unstructured, i.e. not a grid).  
@@ -80,54 +76,51 @@ Similarly to iterative optimisation method where the choice of the initial guess
     image-to-image overall displacement  
     could include NaNs
 
-* `displ_from_previous` : 3D array of floats with shape (nbr_points, 2, nbr_images - 1)  
-    image-to-image displacements for each points (Eulerian)  
+* `displ_field` : 3D array of floats with shape (nbr_images - 1, nbr_points, 2)  
+    generic displacements field  
     could include NaNs
 
 
 
-## pseudo multi-scale approach for robust processing
+## Pseudo multi-scale approach for robust processing
 
+**Multiscale approachs (pyramids):**
+Similarly to iterative optimisation methods where choice of initial guess is important. The two images to be correlated have to be similar enough. When large displacement (>>50 pixels, larger the the ROI window size) occurs mutli-step methods are used.
 
-
+Here a pseudo-multi-scale approach is used:
 * first, run correlation image-to-image on a large ROI (i.e. the central part of the image) → obtain `offsets` values
-* second, run correlation image-to-image for all points of the grid, (using the offsets) → obtain `displ_from_previous` values 
-    - run bilinear fit to get sample-scale Eulerian image-to-image deformations (`lin_def_from_previous` and `residuals`)
-* third, (re-)run correlation now by tracking individuals points: get Lagrangian (attached to the surface) deformation field 
-    - for this we need an image range -> it defines a the sample surface area visible from start to finish. Problems: it will be not necessaryly stay a regular and nice grid
-
-There are many ways to do this:  
-* sum image-to-image displacement (use previous position as offset)
-* run correlation with ref. image (use previous position as offset)
-* ... mix the two, mix all possible duo of images
-
-## Function names
-
-**displacements_img_to_img** (Eulerian), get_displacement_from_previous
--->(img_A, img_B, points, offset)
-
-**track_displ_img_to_img**
--->(img_sequence, xy0, offsets) (offsets are relative)
-
-    estimated_xyi = np.cumsum( ... )
-
-**track_displ_img_to_ref**
--->(img_sequence, xy0, estimated_xyi)
+* second, run correlation image-to-image for all points of the grid, using offsets, a large window (100px) and no upsample → obtain a **coarse** displacement field
+* third, (re-)run correlation using offset from the coarse displ. field, a smaller window size (35px) and a large enough upsample factor (20-100)
 
 
-## Important functions
+## The two important functions
+
 
 * Eulerian image-to-image correlation
 
+```python
+displacements_img_to_img(
+    images,
+    points,
+    window_half_size,
+    upsample_factor,
+    offsets=None,
+    verbose=True,
+    )
+```
 
-        displacements_img_to_img(
-            images,
-            points,
-            window_half_size,
-            upsample_factor,
-            offsets=None,
-            verbose=True,
-        )
+* Lagrangian image-to-image correlation
+
+```python
+track_displ_img_to_img(
+    images,
+    start_points,
+    window_half_size,
+    upsample_factor,
+    offsets=None,
+    verbose=True
+    )
+```
 
 
 ## Development & code structure
@@ -135,10 +128,10 @@ There are many ways to do this:
 There are 3 modules:
 - filetools: functions used to load and sort images
 - stretchablecorr: main set of function performing the processing
-- graphtools: post-processing functions
+- graphtools: post-processing functions (to be done)
 
 
-### Documention
+### Documention (to be done)
 
 
 _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
@@ -163,6 +156,6 @@ docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 - Error estimation
 - Length scales estimation (PSD): ROI size choice
 - Global (high order method)
- 
+- 
 
 
