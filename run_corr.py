@@ -59,8 +59,6 @@ print(f'Load "{sample_name}" from {sample_input_dir}')
 cube, image_names = ft.load_image_sequence(sample_input_dir)
 # -
 
-print(', '.join(image_names))
-
 plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
 plt.imshow(np.std(cube, axis=0), cmap='viridis');
 ft.save_fig('01_cube_std', sample_name)
