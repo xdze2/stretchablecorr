@@ -146,7 +146,7 @@ _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#do
 
 docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 
-    $ pdoc --html stretchablecorr.py
+    $ pdoc --html --output-dir docs stretchablecorr filetools --force
 
 
 
@@ -158,6 +158,6 @@ docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 - Error estimation
 - Length scales estimation (PSD): ROI size choice
 - Global (high order method)
-
+- Centered finite diff. 
 
 
