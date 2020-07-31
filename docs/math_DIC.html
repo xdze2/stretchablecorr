@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>math_DIC</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+  <script src="./katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   var macros = [];
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     katex.render(texText.data, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      macros: macros,
+      fleqn: false
+     });
+  }}});
+  </script>
+  <link rel="stylesheet" href="./katex.min.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<section id="foodic" class="level3">
+<h3>DIC</h3>
+<ul class="incremental">
+<li><p>Presentation of the problem, pratical and theoretical</p></li>
+<li><p>Application, and link to other field</p></li>
+</ul>
+<p>Mathematical notations adapted from the article: G. Besnard, F. Hild, and S. Roux, &#x201C;&#x2018;Finite-Element&#x2019; Displacement Fields Analysis from Digital Images: Application to Portevin&#x2013;Le Ch&#xE2;telier Bands,&#x201D; <em>Experimental Mechanics</em>, vol.&#xA0;46, no. 6, pp.&#xA0;789&#x2013;803, Dec.&#xA0;2006.</p>
+<p>The reference image is noted <span class="math inline">f(x)</span> and the image corresponding to the deformed state is noted <span class="math inline">g(x)</span>, where <span class="math inline">x</span> is the position in the camera reference frame (it is a 2D or 3D vector). Images are usually considered grayscale, i.e.&#xA0;<span class="math inline">f(x)</span> and <span class="math inline">g(x)</span> are scalar value. (<em>note:</em> the images are considered continious, i.e.&#xA0;coordinates of <span class="math inline">x</span> are reals, not pixel index. This means that an interpolation step is used somewhere.)</p>
+<p>We are looking for the displacement field <span class="math inline">u(x)</span> such that</p>
+<p><span class="math display">
+f( x + u{\small(x)} ) \approx g(x)
+</span></p>
+<p>The displacement field is solution of a minimization problem. The cost function <span class="math inline">\eta</span> is defined as:</p>
+<p><span class="math display">
+\eta^2 = \int_{\Omega}  C\!\left[ \; f(x+u{\small(x)}),\; g(x) \; \right] \,dx
+</span></p>
+<p>where <span class="math inline">C[\cdot]</span> is a correlation criterion (for instance Sum of Square Differences, normalized or zero-normalized). <span class="math inline">\Omega</span> is the studied domain (i.e.&#xA0;the visible part of the sample). By forgetting the normalization of the two images, the cost function writes:</p>
+<p><span class="math display">
+\eta^2 = \int_{\Omega}  \left[ \; f(x+u{\small(x)}) - g(x) \; \right]^2 \,dx
+</span></p>
+<p><em>note:</em> Cross-correlation (<span class="math inline">f\cdot g</span>) and square of the difference are related, when images are normalized (See review by B. Pan et al.&#xA0;2009).</p>
+<p><em>question:</em> Could the normalization be local or global?</p>
+<p>DIC algorithm involves the three following parts:</p>
+<ul class="incremental">
+<li><p><strong>Discretization</strong> of the integrale over the spatial domain <span class="math inline">\Omega</span>: local/global continuity of the displacement field across adjacent elements is enforced for global element (FE), whereas elements are independant in local methods (point based, sparse)</p>
+<p><span class="math display">
+\eta^2 = \sum_i \int_{\Omega_i} \left[\, f(x+u_i{\small (x)})-g(x)\, \right]^2 \, dx
+</span></p></li>
+<li><p>The solution <span class="math inline">u_i</span> is approximated as a <strong>parameterized function</strong>, usually using an affine transformation (or higher order polynomial): (using notation from FEA)</p>
+<p><span class="math display">
+\hat u_i(x) = \sum_j a_{ij} \, \psi_{ij}(x)
+</span></p>
+<p>where <span class="math inline">\psi_{ij}(\cdot)</span> is the shape function <span class="math inline">j</span> for the element <span class="math inline">i</span>.</p>
+<p>Another way to write the affine transformation is matrix notation: <span class="math inline">u_i(x)=A \times x + d</span>&#x2026; link with the strain tensor+translation+rotation?</p></li>
+<li><p>The specificity of DIC algorithm is mainly in how the minimization problem is solved. The first approach is to linearise the problem using a Taylor expansion: <span class="math inline">f(x+u) \sim f(x) + f_x(x)\cdot u + \dots</span> provided that <span class="math inline">u</span> is small The definition of the gradient needs to define a spatial scale. This leads to methods involving image pyramid (or hiearchical) methods. Indeed, gradient estimation based on simple finite difference formula at pixel scale, i.e.&#xA0;<span class="math inline">df/dx\sim f(x+1)-f(x)</span>, is valid only when the displacement amplitude <span class="math inline">|u|</span> is about one pixel. This is not usually the case. Moreover, the finite difference on experimentale data is very sensitive to noise. For this reason a smoothing method is usually applied prior to differentiation (for instance a moving average).</p></li>
+</ul>
+<p><em>note:</em> there are two discretizations, the pixels and the elements. How they are related? enforce that they are the same? range: pixel&lt;==&gt;image size and ROI size &lt;==&gt;spatial res. in displacement field</p>
+<p>More generaly, the minimization problem could be solved</p>
+<p>At the level <span class="math inline">k+1</span>, the following minimization is performed, based on transformation obtained on the previous level (<span class="math inline">u_i^k</span>):</p>
+<p><span class="math display">
+u^{(k+1)} = \underset{u_i}{\operatorname{argmin}}\; \sum_i \int_{\Omega_i^k} [f(x)-g(x)+u_i(x)\cdot f_x^{k+1}(x) ]^2 \,dx
+</span></p>
+<p><span class="math inline">f_x^{k+1}</span> is the gradient of the image <span class="math inline">f</span> using spatial wavelength of the level <span class="math inline">k+1</span>.</p>
+<p>The integration domain used is the one deduced from the previous level.</p>
+<ul class="incremental">
+<li>Symmetrize f and g? <span class="math inline">f\leftarrow (f+g)/2</span> and <span class="math inline">g \leftarrow (g-f)/2</span></li>
+</ul>
+</section>
+<section id="fooregularization" class="level3">
+<h3>Regularization</h3>
+<p>impose solution smoothness (in addition to continuity) i.e.&#xA0;set a stiffness on the mesh&#x2026; see [1]</p>
+</section>
+<section id="fooreferences" class="level3">
+<h3>References</h3>
+<p>[1] F. Hild, B. Raka, M. Baudequin, S. Roux, and F. Cantelaube, &#x201C;Multiscale displacement field measurements of compressed mineral-wool samples by digital image correlation,&#x201D; <em>Applied Optics</em>, vol.&#xA0;41, no. 32, p.&#xA0;6815, Nov.&#xA0;2002.</p>
+<p>[2] G. Besnard, F. Hild, and S. Roux, &#x201C;&#x2018;Finite-Element&#x2019; Displacement Fields Analysis from Digital Images: Application to Portevin&#x2013;Le Ch&#xE2;telier Bands,&#x201D; <em>Experimental Mechanics</em>, vol.&#xA0;46, no. 6, pp.&#xA0;789&#x2013;803, Dec.&#xA0;2006.</p>
+<p>[3] J. Le Moigne, &#x201C;Introduction to remote sensing image registration,&#x201D; in <em>2017 IEEE International Geoscience and Remote Sensing Symposium (IGARSS)</em>, Fort Worth, TX, 2017, pp.&#xA0;2565&#x2013;2568.</p>
+</section>
+</body>
+</html>

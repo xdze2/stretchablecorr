@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Images_Registration</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+  <script src="./katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   var macros = [];
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     katex.render(texText.data, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      macros: macros,
+      fleqn: false
+     });
+  }}});
+  </script>
+  <link rel="stylesheet" href="./katex.min.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<nav id="fooTOC" role="doc-toc">
+<ul class="incremental">
+<li><a href="#fooimages-registration">Images Registration</a></li>
+</ul>
+</nav>
+<section id="fooimages-registration" class="level2">
+<h2>Images Registration</h2>
+<p>Here only the zero-order registration problem is discussed, i.e.&#xA0;only a translation offset is searched between the two images.</p>
+<blockquote>
+<p><em>note:</em> mathematical notations are reduced as much as possible. For example <span class="math inline">x</span> is used for the coordinates of a point on a plane , i.e.&#xA0;<span class="math inline">x = \vec x = (\mathtt x \,, \mathtt y)</span></p>
+</blockquote>
+<section id="foomathematical-analysis" class="level3">
+<h3>Mathematical analysis</h3>
+<p>We have two signals or images: <span class="math inline">A(x)</span> and <span class="math inline">B(x)</span>. We want to find the displacement <span class="math inline">\delta</span> such as <span class="math inline">A(x+\delta)\approx B(x)</span></p>
+<blockquote>
+<p><em>note:</em> first, only translation is considered. More general transformation, affine transformation <span class="math inline">x + Mx</span> for instance could be classified as higher order method (1st order vs 0th)</p>
+</blockquote>
+<p>Using the least-square approach leads to formulating the problem as follows:</p>
+<p><span class="math display">
+\underset{\delta}{\text{argmin}} \int_x \left[ A(x+\delta) - B(x) \right]^2 \, dx
+</span></p>
+<p>By expanding the product, another formulation is obtained, involving the convolution product:</p>
+<p><span class="math display">
+\underset{\delta}{\text{argmax}} \int_x A(x+\delta) \cdot B(x) \,  dx
+</span></p>
+<blockquote>
+<p><em>note:</em> convolution is the same as cross-correlation plus or minus a sign change. Also, complex conjugate <span class="math inline">B^\star</span> appears due to the sign change.</p>
+</blockquote>
+<blockquote>
+<p><em>note 2:</em> because of the indefinite integrale notation, <span class="math inline">\int A^2 \,dx</span> and <span class="math inline">\int B^2 \,dx</span>, could be forgotten (they are constant). However, if the integration domain is of a fixed size, the image ROI could be normalized before (see [Pan2009] review).</p>
+</blockquote>
+<p>The key benefit of the correlation formulation is the possible use of the Fourier transform and the Fast Fourier Transform algorithm for the computation.</p>
+<blockquote>
+<p>big O notation: n^2 vs nlog(n) ?</p>
+</blockquote>
+<p><span class="math display">
+\operatorname{\mathscr F} \left\lbrace A \otimes B \right\rbrace =
+\operatorname{\mathscr F}\left\lbrace A\right\rbrace  \cdot   \operatorname{\mathscr F}\left\lbrace B\right\rbrace
+</span></p>
+<p>where <span class="math inline">\otimes</span> is the convolution product and <span class="math inline">\operatorname{\mathscr F}\left\lbrace \bullet \right\rbrace</span> is the Fourier Transform. It is in the following noted using calligraphic letter <span class="math inline">\operatorname{\mathscr F}\left\lbrace A \right\rbrace = \mathcal A</span>. The complex conjugate is noted with a star <span class="math inline">\mathcal A^\star</span>.</p>
+<p>Then the registration problem becomes:</p>
+<p><span class="math display">
+\underset{\delta}{\text{argmax}} \; \operatorname{\mathscr F^{-1}}\left\lbrace \, \mathcal A \cdot \mathcal B^\star \, \right\rbrace
+</span></p>
+<p>At this point, it is interresting to note that the actual information about a signal shift (translation) is embodied in the phase of the Fourier Transform (complex number). (see the translation property of the FT)</p>
+<p><span class="math display">
+\mathscr F \lbrace A(x+\delta) \rbrace(k) =  \mathcal A(k) \, e^{-2\pi i \, k \cdot \delta}
+</span></p>
+<p>Thus the <a href="https://en.wikipedia.org/wiki/Phase_correlation">phase correlation</a> approach.</p>
+<blockquote>
+<p><em>note:</em> est-ce que ce n&#x2019;est au final qu&#x2019;une histoire de normalisation ? et gestion du bruit</p>
+</blockquote>
+<p>Computing the discrete convolution product, using either FFT or simple summation, leads to a 1-pixel sampled result. However, sub-pixel accuracy is possible.</p>
+<blockquote>
+<p>It is similar to fitting a peak curve to find the central position at a resolution smaller than the sampling. Or averaging a serie of integer values to get a float.</p>
+</blockquote>
+<p>Now there is a different problem, which is the get the <strong>sub-pixel</strong> estimation of the position of the maximum of a peak (1D or 2D).</p>
+<p>Continuous desciption of the peak using interpolation and smoothing, and then either up-sampling or use iterative optimization methods to locate the sub-pixel argmax.</p>
+<ul class="incremental">
+<li>local quadratic fit of the peak and semi-analytcal approximation</li>
+<li>an interresting approach is to use the Fourier transform itself for the interpolation (zero padding, sinc)</li>
+</ul>
+</section>
+</section>
+</body>
+</html>

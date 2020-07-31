@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>DIC_softwares</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<nav id="fooTOC" role="doc-toc">
+<ul class="incremental">
+<li><a href="#foodigital-image-correlation-softwares-and-codes">Digital Image Correlation softwares and codes</a></li>
+</ul>
+</nav>
+<section id="foodigital-image-correlation-softwares-and-codes" class="level2">
+<h2>Digital Image Correlation softwares and codes</h2>
+<section id="fooopen-source" class="level3">
+<h3>Open Source</h3>
+<ul class="incremental">
+<li><p><strong>DICe</strong>, from Dan Turner at Sandia. (<a href="https://github.com/dicengine/dice">https://github.com/dicengine/dice</a>)</p>
+<p><em>Both local and global DIC algorithms (global yet to be released) <a href="http://dicengine.github.io/dice/">ref</a></em></p></li>
+<li><p><strong>OpenDIC</strong> code developed by Nicolas Vanderesse&#xA0;at ETS, montreal. (<script type="text/javascript">
+<!--
+h='&#x65;&#110;&#x73;&#46;&#x65;&#116;&#x73;&#x6d;&#116;&#108;&#46;&#x63;&#x61;';a='&#64;';n='&#78;&#x69;&#x63;&#x6f;&#108;&#x61;&#x73;&#46;&#86;&#x61;&#110;&#100;&#x65;&#114;&#x65;&#x73;&#x73;&#x65;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#78;&#x69;&#x63;&#x6f;&#108;&#x61;&#x73;&#46;&#86;&#x61;&#110;&#100;&#x65;&#114;&#x65;&#x73;&#x73;&#x65;&#32;&#x61;&#116;&#32;&#x65;&#110;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#116;&#x73;&#x6d;&#116;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x61;</noscript>)</p>
+<p><em>code non accessible</em></p></li>
+<li><p>custom Matlab-based code, by Christoph Eberl - Daniel Gianola (UCSB) https://www.mathworks.com/matlabcentral/fileexchange/12413-digital-image-correlation-and-tracking</p>
+<p><em>use <code>cpcorr</code> from Matlab&#x2019;s image processing toolbox <a href="https://fr.mathworks.com/help/images/ref/cpcorr.html">ref</a>: &#x201C;only moves the position of a control point by up to four pixels. Adjusted coordinates are accurate up to one-tenth of a pixel. <code>cpcorr</code> is designed to get subpixel accuracy from the image content and coarse control point selection.&#x201D;</em></p></li>
+<li><p><strong>Correla</strong> (Val&#xE9;ry Valle, Pprime) https://www.pprime.fr/?q=en/photomechanics</p>
+<p><em>code non directement accessible</em></p></li>
+<li><p><strong>YADICS</strong> (Yet Another DIC software), LML - Lille <a href="http://yadics.univ-lille1.fr/wordpress/">http://yadics.univ-lille1.fr/wordpress/</a></p>
+<p><em>le code semble non maintenu, date de 2015, compilation probl&#xE9;matique</em></p></li>
+<li><p><strong>Ncorr</strong> (Georgia Tech) <a href="http://www.ncorr.com/">http://www.ncorr.com/</a> Ncorr is an open source 2D&#xA0;digital image correlation MATLAB program.</p></li>
+<li><p><strong>pyDIC</strong> (Damien Andr&#xE9;, Centre Europ&#xE9;en de la C&#xE9;ramique, Limoges) <a href="https://gitlab.com/damien.andre/pydic">https://gitlab.com/damien.andre/pydic</a> <em>python + OpenCV: algorithme basique (use cv2.calcOpticalFlowPyrLK)</em></p></li>
+<li><p><strong>elastiX</strong> http://elastix.isi.uu.nl/</p>
+<p><em>Medical image registration problems, based on <a href="http://www.itk.org">Insight Segmentation and Registration Toolkit</a> (ITK). Accompanied by the API <a href="http://simpleelastix.github.io/">SimpleElastix</a>, making it available in languages like C++, Python, Java, R, Ruby, C# and Lua.</em></p></li>
+<li><p><strong>pyxel</strong> https://github.com/jcpassieux/pyxel <em>python library for experimental mechanics using finite elements</em> <em>Jean-Emmanuel Pierr&#xE9;, <a href="http://institut-clement-ader.org/author/jcpassieux/">Jean-Charles Passieux</a>, Jean-No&#xEB;l P&#xE9;ri&#xE9; (ICA - Institut Cl&#xE9;ment Ader, INSA Toulouse)</em> <strong>FE based</strong> use Scipy <code>RectBivariateSpline</code> <a href="https://github.com/jcpassieux/pyxel/blob/77a3dc433958e6541772e4ab200cf8e0ac9c7b10/pyxel.py#L1059">line 1059</a> for image interpolation</p></li>
+<li><p><strong>&#xB5;DIC</strong> https://github.com/PolymerGuy/muDIC Digital Image Correlation in Python</p></li>
+<li><p><strong>py2DIC</strong> http://github.com/Geod-Geom/py2DIC/ <em>Geodesy and Geomatics Division of the Sapienza University ofRome</em> uses <code>cv2.matchTemplate</code> <a href="https://docs.opencv.org/2.4/doc/tutorials/imgproc/histograms/template_matching/template_matching.html">doc</a></p></li>
+<li><p><strong>dolfin_dic</strong> https://bitbucket.org/mgenet/dolfin_dic/src/master/ https://www.sciencedirect.com/science/article/abs/pii/S1361841518305346</p></li>
+</ul>
+</section>
+<section id="foocommercial-package" class="level3">
+<h3>Commercial package</h3>
+<ul class="incremental">
+<li><p><strong>Vic2D</strong> from Correlated Solutions</p></li>
+<li><p><strong>Aramis (GOM)</strong> <a href="https://www.gom.com/fr/systemes-de-mesure/aramis.html">https://www.gom.com/fr/systemes-de-mesure/aramis.html</a></p></li>
+<li><p><strong>Correli</strong> Le logiciel de corr&#xE9;lation d&#x2019;image CORRELI STC est d&#xE9;velopp&#xE9; par HOLO3, en partenariat avec le LMT de Cachan et Airbus Group Innovations.<a href="https://www.correli-stc.com/accueil.html">https://www.correli-stc.com/accueil.html</a></p>
+<p><em>ENS Cachan, Fran&#xE7;ois HILD, St&#xE9;phane ROUX code pas en ligne (apparement Matlab)</em></p></li>
+<li><p><strong>EikoSim</strong> https://eikosim.com/entreprise/ <em>De par son expertise et son lien &#xE9;troit avec le laboratoire de recherche LMT (ENS Paris-Saclay), EikoSim&#x2026;</em></p></li>
+</ul>
+</section>
+</section>
+</body>
+</html>
