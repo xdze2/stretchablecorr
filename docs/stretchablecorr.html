@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.4" />
+<title>stretchablecorr API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>stretchablecorr</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+import numpy as np
+import matplotlib.pylab as plt
+
+
+try:
+    from skimage.registration import phase_cross_correlation
+except ImportError:
+    print(&#39;Warning: scikit-image not up-to-date&#39;)
+    from skimage.feature import register_translation as phase_cross_correlation
+
+
+
+
+def colorize_image(image, intensity_low, intensity_high, cmap=&#39;viridis&#39;):
+    &#34;&#34;&#34;Convert intensity values to color using a colormap
+       rescale values between (intensity_low, intensity_high)
+    &#34;&#34;&#34;
+    image_normalized = (image.astype(np.float) - intensity_low)/(intensity_high - intensity_low)
+
+    cm = plt.get_cmap(cmap)
+    colored_image = cm(image_normalized)
+    colored_image[image_normalized &gt; 0.999] = np.array([1, 0, 0, 1])
+    colored_image[image_normalized &lt; 0.001] = np.array([0, 0, 0, 1])
+    return colored_image
+
+
+def crop(I, xy_center, half_size):
+    &#34;&#34;&#34;Return the centered square at the position xy
+
+    Args:
+        I: input image (2D array)
+        xy_center: tuple of float
+        half_size: half of the size of the crop
+
+    Returns:
+        cropped image array
+        indices of the center
+
+
+    &gt;&gt;&gt; from skimage.data import rocket
+    &gt;&gt;&gt; x, y = (322, 150)
+    &gt;&gt;&gt; plt.imshow(rocket());
+    &gt;&gt;&gt; print(rocket().shape)
+    &gt;&gt;&gt; plt.plot(x, y, &#39;sr&#39;);
+    &gt;&gt;&gt; plt.imshow(crop(rocket(), (x, y), 50)[0]);
+
+    todo: unit test using hash for image
+    https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
+    &#34;&#34;&#34;
+
+    j, i = np.around(xy_center).astype(np.int)
+    i_slicing = np.s_[i - half_size:i + half_size + 1]
+    j_slicing = np.s_[j - half_size:j + half_size + 1]
+
+    return I[i_slicing, j_slicing], (i, j)
+
+
+def get_shifts(I, J, x, y,
+               offset=(0.0, 0.0),
+               window_half_size=15,
+               upsample_factor=20):
+    &#34;&#34;&#34;Cross-correlation between images I and J,
+        at the position (x, y) using a windows of size 2*window_half_size + 1
+
+    see `phase_cross_correlation` from skimage
+    # https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
+
+    Args:
+      I, J: input images
+      x, y: point coordinates arround which shift is evaluated
+      offset: tuple (dx, dy) pre-computed displacement of J relative to I
+
+    Returns:
+        dx, dy: displacements
+        error: scalar correlation error
+
+    &gt;&gt;&gt; from skimage.data import camera
+    &gt;&gt;&gt; dx, dy = 10, 15
+    &gt;&gt;&gt; I = camera()[dy:, dx:]
+    &gt;&gt;&gt; J = camera()[:-dy, :-dx]
+    &gt;&gt;&gt; plt.imshow(I+J);
+    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
+    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250,
+                      window_half_size=150,
+                      upsample_factor=1,
+                      offset=(4.5, 14.2)) )
+    &#34;&#34;&#34;
+    dx, dy = offset
+
+    source, ij_src = crop(I, (x, y), window_half_size)
+    target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
+
+    shifts, error, _ = phase_cross_correlation(source, target,
+                                               upsample_factor=upsample_factor)
+    shifts = -shifts  # displacement = -registration = dst - src
+
+    dx = shifts[1] + (ij_tgt[1] - ij_src[1])
+    dy = shifts[0] + (ij_tgt[0] - ij_src[0])
+    return dx, dy, error
+
+
+def build_grid(img_shape, margin, spacing):
+    &#34;&#34;&#34;Build a centered regular grid
+
+    note: as given by `np.meshgrid`
+
+    Parameters
+    ----------
+    img_shape : tuple (height, width)
+        size of the image for which the grid will be used
+    margin : Int or Float
+        minimal distance to image edges without points
+    spacing : Int or Float
+        distance in pixel between points
+
+    Returns
+    -------
+    3D nd-array of floats, shape (2, nbr pts height, width)
+       grid[0]: X coordinates of grid points
+       grid[1]: Y coordinates of grid points
+    &#34;&#34;&#34;
+
+    margin = int(np.ceil(margin))
+    spacing = int(np.ceil(spacing))
+    x_span = np.arange(0, img_shape[1]-2*margin, spacing)
+    y_span = np.arange(0, img_shape[0]-2*margin, spacing)
+
+    x_offset = int( (img_shape[1] - x_span[-1])/2 )
+    y_offset = int( (img_shape[0] - y_span[-1])/2 )
+
+    x_grid, y_grid = np.meshgrid(x_span + x_offset, y_span + y_offset)
+
+    print(&#34;grid size:&#34;, &#34;%ix%i&#34; % (len(x_span), len(y_span)))
+    print(&#34; i.e.&#34;, len(x_span)*len(y_span), &#34;points&#34;)
+
+    return np.stack((x_grid, y_grid))
+
+
+# ==========================
+#  Loops for displacements
+# ==========================
+
+def displacements_img_to_img(images, points,
+                             window_half_size, upsample_factor,
+                             offsets=None,
+                             verbose=True):
+    &#34;&#34;&#34;Eulerian image-to-image correlation
+    i.e. at position (points) fixed relative to the camera frame
+
+    Parameters
+    ----------
+    images : iterable
+        sequence of images
+    points : iterable of point coordinates [[x1, y1], ...]
+        positions where displacement is computed
+    window_half_size : integer
+        size in pixel of the square area used for correlation
+        actual size is (2w + 1)
+    upsample_factor : integer
+        wanted accuracy of the correlation
+        see doc. of scikit-image phase-cross-correlation
+    offsets : float array, optional
+        could be an 2D array (nbr_images-1, 2)
+        of a 3D array (nbr_images-1, nbr_points, 2)
+        by default zeros (None)
+    verbose : bool, optional
+        print information
+
+    Returns
+    -------
+    3d array of shape (nbr_images-1, nbr_points, 2)
+        displacement vector
+        NaN if an error occured (often because ROI out of image)
+    &#34;&#34;&#34;
+
+    params = {&#39;window_half_size&#39;:window_half_size,
+              &#39;upsample_factor&#39;:upsample_factor}
+
+    if offsets is None:
+        offsets = np.zeros((len(images)-1, len(points), 2))
+    elif len(offsets.shape)==2:
+        offsets = np.tile(offsets[:, np.newaxis, :], (1, len(points), 1))
+        print(offsets.shape)
+
+    displ = np.empty((len(images)-1,
+                      len(points),
+                      2))
+    displ[:] = np.NaN
+
+    N = (len(images) - 1)*len(points)
+    for k, (A, B) in enumerate(zip(images, images[1:])):
+        for i, xyi in enumerate(points):
+            try:
+                sx, sy, _err = get_shifts(A, B, *xyi,
+                                        offset=offsets[k, i, :],
+                                        **params)
+
+                displ[k, i, :] = sx, sy
+            except ValueError:
+                pass
+
+            if verbose:
+                print(f&#39;{int(100*(k*len(points)+i))//N: 3d}%&#39;+
+                      f&#39;  images:{k:02d}→{k+1:02d}&#39;+
+                      f&#39;  point:{i: 4d} ...&#39;,
+                      end=&#39;\r&#39;)
+
+    print(&#39;done&#39;, &#39; &#39;*30)
+    return displ
+
+
+def track_displ_img_to_img(images, start_points,
+                            window_half_size, upsample_factor,
+                            offsets=None,
+                            verbose=True):
+    params = {&#39;window_half_size&#39;:window_half_size,
+              &#39;upsample_factor&#39;:upsample_factor}
+
+    if offsets is None:
+        offsets = np.zeros((len(images)-1, len(start_points), 2))
+    elif len(offsets.shape)==2:
+        offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
+        print(offsets.shape)
+
+    displ = np.empty((len(images)-1,
+                      len(start_points),
+                      2))
+    displ[:] = np.NaN
+
+    N = (len(images) - 1)*len(start_points)
+    for i, (x0, y0) in enumerate(start_points):
+        xi, yi = x0, y0
+        for k, (A, B) in enumerate(zip(images, images[1:])):
+
+            if verbose:
+                print(f&#39;{int(100*(i*(len(images)-1)+k))//N: 3d}%&#39;+
+                      f&#39;  images:{k:02d}→{k+1:02d}&#39;+
+                      f&#39;  point:{i: 4d} ...&#39;,
+                      end=&#39;\r&#39;)
+
+            try:
+                sx, sy, _err = get_shifts(A, B, xi, yi,
+                                          offset=offsets[k, i, :],
+                                          **params)
+
+                displ[k, i, :] = sx, sy
+                xi += sx
+                yi += sy
+            except ValueError:
+                #if verbose:
+                #    print(&#39;out of limits for image&#39;, k)
+                break
+
+    print(&#39;done&#39;, &#39; &#39;*30)
+    return displ
+
+
+# broken:
+def track_displ_img_to_ref(images, start_points,
+                           window_half_size, upsample_factor,
+                           offsets=None,
+                           verbose=True):
+    params = {&#39;window_half_size&#39;:window_half_size,
+              &#39;upsample_factor&#39;:upsample_factor}
+
+    if offsets is None:
+        offsets = np.zeros((len(images)-1, 2))
+
+    displ = np.empty((len(images)-1,
+                      len(start_points),
+                      2))
+    displ[:] = np.NaN
+    A = images[0]
+    for i, (x0, y0) in enumerate(start_points):
+        dx, dy = 0, 0
+        for k, B in enumerate(images[1:]):
+
+            if verbose:
+                print(f&#39;image {k}-&gt;{k+1}&#39;+
+                      f&#39; point {i}&#39;,
+                      end=&#39;\r&#39;)
+
+            try:
+                sx, sy, er = get_shifts(A, B, x0, y0,
+                                        offset=offsets[k] + np.array([dx, dy]),
+                                        **params)
+
+                displ[k, i, :] = sx, sy
+                dx, dy = sx, sy
+            except ValueError:
+                if verbose:
+                    print(&#39;out of limits for image&#39;, k)
+                break
+
+    print(&#39;done&#39;, &#39; &#39;*30)
+    return displ
+
+
+# ===============
+#  Bilinear Fit
+# ===============
+
+def bilinear_fit(points, displacements):
+    &#34;&#34;&#34;Performs a bilinear fit on the displacements field
+
+    Solve the equation u = A*x + t
+
+    Parameters
+    ----------
+    points : nd-array (nbr_points, 2)
+        coordinates of points (x, y)
+    displacements : nd-array (nbr_points, 2)
+        displacement for each point (u, v)
+        could include NaN
+
+    Returns
+    -------
+    nd-array (2, 3)
+        coefficients matrix (affine transformation + translation)
+    nd-array (nbr_points, 2)
+        residuals for each points
+    &#34;&#34;&#34;
+    u, v = displacements.T
+    mask = np.logical_not(np.logical_or(np.isnan(u), np.isnan(v)))
+    u, v = u[mask], v[mask]
+    x, y = points[mask, :].T
+
+    ones = np.ones_like(x)
+    M = np.vstack([x, y, ones]).T
+
+    p_uy, _residual_y, _rank, _s = np.linalg.lstsq(M, v, rcond=None)
+    p_ux, _residual_x, _rank, _s = np.linalg.lstsq(M, u, rcond=None)
+
+    coefficients = np.vstack([p_ux, p_uy])
+
+    ## Unbiased estimator variance (see p47 T. Hastie)
+    #sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
+    #sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
+
+    # Residuals:
+    u_linear = np.matmul( M, p_ux )
+    v_linear = np.matmul( M, p_uy )
+
+    residuals_x = u - u_linear
+    residuals_y = v - v_linear
+
+    residuals_xy = np.vstack([residuals_x, residuals_y]).T
+
+    # Merge with ignored NaN values:
+    residuals_NaN = np.full(displacements.shape, np.nan)
+    residuals_NaN[mask, :] = residuals_xy
+
+    return coefficients, residuals_NaN
+
+
+
+if __name__ == &#34;__main__&#34;:
+    import doctest
+    doctest.testmod()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="stretchablecorr.bilinear_fit"><code class="name flex">
+<span>def <span class="ident">bilinear_fit</span></span>(<span>points, displacements)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Performs a bilinear fit on the displacements field</p>
+<p>Solve the equation u = A*x + t</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>points</code></strong> :&ensp;<code>nd-array (nbr_points, 2)</code></dt>
+<dd>coordinates of points (x, y)</dd>
+<dt><strong><code>displacements</code></strong> :&ensp;<code>nd-array (nbr_points, 2)</code></dt>
+<dd>displacement for each point (u, v)
+could include NaN</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>nd-array (2, 3)</code></dt>
+<dd>coefficients matrix (affine transformation + translation)</dd>
+<dt><code>nd-array (nbr_points, 2)</code></dt>
+<dd>residuals for each points</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def bilinear_fit(points, displacements):
+    &#34;&#34;&#34;Performs a bilinear fit on the displacements field
+
+    Solve the equation u = A*x + t
+
+    Parameters
+    ----------
+    points : nd-array (nbr_points, 2)
+        coordinates of points (x, y)
+    displacements : nd-array (nbr_points, 2)
+        displacement for each point (u, v)
+        could include NaN
+
+    Returns
+    -------
+    nd-array (2, 3)
+        coefficients matrix (affine transformation + translation)
+    nd-array (nbr_points, 2)
+        residuals for each points
+    &#34;&#34;&#34;
+    u, v = displacements.T
+    mask = np.logical_not(np.logical_or(np.isnan(u), np.isnan(v)))
+    u, v = u[mask], v[mask]
+    x, y = points[mask, :].T
+
+    ones = np.ones_like(x)
+    M = np.vstack([x, y, ones]).T
+
+    p_uy, _residual_y, _rank, _s = np.linalg.lstsq(M, v, rcond=None)
+    p_ux, _residual_x, _rank, _s = np.linalg.lstsq(M, u, rcond=None)
+
+    coefficients = np.vstack([p_ux, p_uy])
+
+    ## Unbiased estimator variance (see p47 T. Hastie)
+    #sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
+    #sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
+
+    # Residuals:
+    u_linear = np.matmul( M, p_ux )
+    v_linear = np.matmul( M, p_uy )
+
+    residuals_x = u - u_linear
+    residuals_y = v - v_linear
+
+    residuals_xy = np.vstack([residuals_x, residuals_y]).T
+
+    # Merge with ignored NaN values:
+    residuals_NaN = np.full(displacements.shape, np.nan)
+    residuals_NaN[mask, :] = residuals_xy
+
+    return coefficients, residuals_NaN</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.build_grid"><code class="name flex">
+<span>def <span class="ident">build_grid</span></span>(<span>img_shape, margin, spacing)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Build a centered regular grid</p>
+<p>note: as given by <code>np.meshgrid</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>img_shape</code></strong> :&ensp;<code>tuple (height, width)</code></dt>
+<dd>size of the image for which the grid will be used</dd>
+<dt><strong><code>margin</code></strong> :&ensp;<code>Int</code> or <code>Float</code></dt>
+<dd>minimal distance to image edges without points</dd>
+<dt><strong><code>spacing</code></strong> :&ensp;<code>Int</code> or <code>Float</code></dt>
+<dd>distance in pixel between points</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>3D nd-array</code> of <code>floats, shape (2, nbr pts height, width)</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>grid[0]: X coordinates of grid points
+grid[1]: Y coordinates of grid points</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def build_grid(img_shape, margin, spacing):
+    &#34;&#34;&#34;Build a centered regular grid
+
+    note: as given by `np.meshgrid`
+
+    Parameters
+    ----------
+    img_shape : tuple (height, width)
+        size of the image for which the grid will be used
+    margin : Int or Float
+        minimal distance to image edges without points
+    spacing : Int or Float
+        distance in pixel between points
+
+    Returns
+    -------
+    3D nd-array of floats, shape (2, nbr pts height, width)
+       grid[0]: X coordinates of grid points
+       grid[1]: Y coordinates of grid points
+    &#34;&#34;&#34;
+
+    margin = int(np.ceil(margin))
+    spacing = int(np.ceil(spacing))
+    x_span = np.arange(0, img_shape[1]-2*margin, spacing)
+    y_span = np.arange(0, img_shape[0]-2*margin, spacing)
+
+    x_offset = int( (img_shape[1] - x_span[-1])/2 )
+    y_offset = int( (img_shape[0] - y_span[-1])/2 )
+
+    x_grid, y_grid = np.meshgrid(x_span + x_offset, y_span + y_offset)
+
+    print(&#34;grid size:&#34;, &#34;%ix%i&#34; % (len(x_span), len(y_span)))
+    print(&#34; i.e.&#34;, len(x_span)*len(y_span), &#34;points&#34;)
+
+    return np.stack((x_grid, y_grid))</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.colorize_image"><code class="name flex">
+<span>def <span class="ident">colorize_image</span></span>(<span>image, intensity_low, intensity_high, cmap='viridis')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert intensity values to color using a colormap
+rescale values between (intensity_low, intensity_high)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def colorize_image(image, intensity_low, intensity_high, cmap=&#39;viridis&#39;):
+    &#34;&#34;&#34;Convert intensity values to color using a colormap
+       rescale values between (intensity_low, intensity_high)
+    &#34;&#34;&#34;
+    image_normalized = (image.astype(np.float) - intensity_low)/(intensity_high - intensity_low)
+
+    cm = plt.get_cmap(cmap)
+    colored_image = cm(image_normalized)
+    colored_image[image_normalized &gt; 0.999] = np.array([1, 0, 0, 1])
+    colored_image[image_normalized &lt; 0.001] = np.array([0, 0, 0, 1])
+    return colored_image</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.crop"><code class="name flex">
+<span>def <span class="ident">crop</span></span>(<span>I, xy_center, half_size)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return the centered square at the position xy</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>I</code></strong></dt>
+<dd>input image (2D array)</dd>
+<dt><strong><code>xy_center</code></strong></dt>
+<dd>tuple of float</dd>
+<dt><strong><code>half_size</code></strong></dt>
+<dd>half of the size of the crop</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>cropped image array
+indices of the center</p>
+<pre><code class="python">&gt;&gt;&gt; from skimage.data import rocket
+&gt;&gt;&gt; x, y = (322, 150)
+&gt;&gt;&gt; plt.imshow(rocket());
+&gt;&gt;&gt; print(rocket().shape)
+&gt;&gt;&gt; plt.plot(x, y, 'sr');
+&gt;&gt;&gt; plt.imshow(crop(rocket(), (x, y), 50)[0]);
+</code></pre>
+<p>todo: unit test using hash for image
+<a href="https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55">https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55</a></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def crop(I, xy_center, half_size):
+    &#34;&#34;&#34;Return the centered square at the position xy
+
+    Args:
+        I: input image (2D array)
+        xy_center: tuple of float
+        half_size: half of the size of the crop
+
+    Returns:
+        cropped image array
+        indices of the center
+
+
+    &gt;&gt;&gt; from skimage.data import rocket
+    &gt;&gt;&gt; x, y = (322, 150)
+    &gt;&gt;&gt; plt.imshow(rocket());
+    &gt;&gt;&gt; print(rocket().shape)
+    &gt;&gt;&gt; plt.plot(x, y, &#39;sr&#39;);
+    &gt;&gt;&gt; plt.imshow(crop(rocket(), (x, y), 50)[0]);
+
+    todo: unit test using hash for image
+    https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
+    &#34;&#34;&#34;
+
+    j, i = np.around(xy_center).astype(np.int)
+    i_slicing = np.s_[i - half_size:i + half_size + 1]
+    j_slicing = np.s_[j - half_size:j + half_size + 1]
+
+    return I[i_slicing, j_slicing], (i, j)</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.displacements_img_to_img"><code class="name flex">
+<span>def <span class="ident">displacements_img_to_img</span></span>(<span>images, points, window_half_size, upsample_factor, offsets=None, verbose=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Eulerian image-to-image correlation
+i.e. at position (points) fixed relative to the camera frame</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>images</code></strong> :&ensp;<code>iterable</code></dt>
+<dd>sequence of images</dd>
+<dt><strong><code>points</code></strong> :&ensp;<code>iterable</code> of <code>point coordinates [[x1, y1], &hellip;]</code></dt>
+<dd>positions where displacement is computed</dd>
+<dt><strong><code>window_half_size</code></strong> :&ensp;<code>integer</code></dt>
+<dd>size in pixel of the square area used for correlation
+actual size is (2w + 1)</dd>
+<dt><strong><code>upsample_factor</code></strong> :&ensp;<code>integer</code></dt>
+<dd>wanted accuracy of the correlation
+see doc. of scikit-image phase-cross-correlation</dd>
+<dt><strong><code>offsets</code></strong> :&ensp;<code>float array</code>, optional</dt>
+<dd>could be an 2D array (nbr_images-1, 2)
+of a 3D array (nbr_images-1, nbr_points, 2)
+by default zeros (None)</dd>
+<dt><strong><code>verbose</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>print information</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>3d array</code> of <code>shape (nbr_images-1, nbr_points, 2)</code></dt>
+<dd>displacement vector
+NaN if an error occured (often because ROI out of image)</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def displacements_img_to_img(images, points,
+                             window_half_size, upsample_factor,
+                             offsets=None,
+                             verbose=True):
+    &#34;&#34;&#34;Eulerian image-to-image correlation
+    i.e. at position (points) fixed relative to the camera frame
+
+    Parameters
+    ----------
+    images : iterable
+        sequence of images
+    points : iterable of point coordinates [[x1, y1], ...]
+        positions where displacement is computed
+    window_half_size : integer
+        size in pixel of the square area used for correlation
+        actual size is (2w + 1)
+    upsample_factor : integer
+        wanted accuracy of the correlation
+        see doc. of scikit-image phase-cross-correlation
+    offsets : float array, optional
+        could be an 2D array (nbr_images-1, 2)
+        of a 3D array (nbr_images-1, nbr_points, 2)
+        by default zeros (None)
+    verbose : bool, optional
+        print information
+
+    Returns
+    -------
+    3d array of shape (nbr_images-1, nbr_points, 2)
+        displacement vector
+        NaN if an error occured (often because ROI out of image)
+    &#34;&#34;&#34;
+
+    params = {&#39;window_half_size&#39;:window_half_size,
+              &#39;upsample_factor&#39;:upsample_factor}
+
+    if offsets is None:
+        offsets = np.zeros((len(images)-1, len(points), 2))
+    elif len(offsets.shape)==2:
+        offsets = np.tile(offsets[:, np.newaxis, :], (1, len(points), 1))
+        print(offsets.shape)
+
+    displ = np.empty((len(images)-1,
+                      len(points),
+                      2))
+    displ[:] = np.NaN
+
+    N = (len(images) - 1)*len(points)
+    for k, (A, B) in enumerate(zip(images, images[1:])):
+        for i, xyi in enumerate(points):
+            try:
+                sx, sy, _err = get_shifts(A, B, *xyi,
+                                        offset=offsets[k, i, :],
+                                        **params)
+
+                displ[k, i, :] = sx, sy
+            except ValueError:
+                pass
+
+            if verbose:
+                print(f&#39;{int(100*(k*len(points)+i))//N: 3d}%&#39;+
+                      f&#39;  images:{k:02d}→{k+1:02d}&#39;+
+                      f&#39;  point:{i: 4d} ...&#39;,
+                      end=&#39;\r&#39;)
+
+    print(&#39;done&#39;, &#39; &#39;*30)
+    return displ</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.get_shifts"><code class="name flex">
+<span>def <span class="ident">get_shifts</span></span>(<span>I, J, x, y, offset=(0.0, 0.0), window_half_size=15, upsample_factor=20)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Cross-correlation between images I and J,
+at the position (x, y) using a windows of size 2*window_half_size + 1</p>
+<p>see <code>phase_cross_correlation</code> from skimage</p>
+<h1 id="httpsscikit-imageorgdocsdevapiskimagefeaturehtmlskimagefeatureregister_translation"><a href="https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation">https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation</a></h1>
+<h2 id="args">Args</h2>
+<dl>
+<dt>I, J: input images</dt>
+<dt>x, y: point coordinates arround which shift is evaluated</dt>
+<dt><strong><code>offset</code></strong></dt>
+<dd>tuple (dx, dy) pre-computed displacement of J relative to I</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>dx, dy</code></dt>
+<dd>displacements</dd>
+<dt><code>error</code></dt>
+<dd>scalar correlation error</dd>
+</dl>
+<pre><code class="python">&gt;&gt;&gt; from skimage.data import camera
+&gt;&gt;&gt; dx, dy = 10, 15
+&gt;&gt;&gt; I = camera()[dy:, dx:]
+&gt;&gt;&gt; J = camera()[:-dy, :-dx]
+&gt;&gt;&gt; plt.imshow(I+J);
+&gt;&gt;&gt; print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
+&gt;&gt;&gt; print( get_shifts(I, J, 250, 250,
+                  window_half_size=150,
+                  upsample_factor=1,
+                  offset=(4.5, 14.2)) )
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_shifts(I, J, x, y,
+               offset=(0.0, 0.0),
+               window_half_size=15,
+               upsample_factor=20):
+    &#34;&#34;&#34;Cross-correlation between images I and J,
+        at the position (x, y) using a windows of size 2*window_half_size + 1
+
+    see `phase_cross_correlation` from skimage
+    # https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
+
+    Args:
+      I, J: input images
+      x, y: point coordinates arround which shift is evaluated
+      offset: tuple (dx, dy) pre-computed displacement of J relative to I
+
+    Returns:
+        dx, dy: displacements
+        error: scalar correlation error
+
+    &gt;&gt;&gt; from skimage.data import camera
+    &gt;&gt;&gt; dx, dy = 10, 15
+    &gt;&gt;&gt; I = camera()[dy:, dx:]
+    &gt;&gt;&gt; J = camera()[:-dy, :-dx]
+    &gt;&gt;&gt; plt.imshow(I+J);
+    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
+    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250,
+                      window_half_size=150,
+                      upsample_factor=1,
+                      offset=(4.5, 14.2)) )
+    &#34;&#34;&#34;
+    dx, dy = offset
+
+    source, ij_src = crop(I, (x, y), window_half_size)
+    target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
+
+    shifts, error, _ = phase_cross_correlation(source, target,
+                                               upsample_factor=upsample_factor)
+    shifts = -shifts  # displacement = -registration = dst - src
+
+    dx = shifts[1] + (ij_tgt[1] - ij_src[1])
+    dy = shifts[0] + (ij_tgt[0] - ij_src[0])
+    return dx, dy, error</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.track_displ_img_to_img"><code class="name flex">
+<span>def <span class="ident">track_displ_img_to_img</span></span>(<span>images, start_points, window_half_size, upsample_factor, offsets=None, verbose=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def track_displ_img_to_img(images, start_points,
+                            window_half_size, upsample_factor,
+                            offsets=None,
+                            verbose=True):
+    params = {&#39;window_half_size&#39;:window_half_size,
+              &#39;upsample_factor&#39;:upsample_factor}
+
+    if offsets is None:
+        offsets = np.zeros((len(images)-1, len(start_points), 2))
+    elif len(offsets.shape)==2:
+        offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
+        print(offsets.shape)
+
+    displ = np.empty((len(images)-1,
+                      len(start_points),
+                      2))
+    displ[:] = np.NaN
+
+    N = (len(images) - 1)*len(start_points)
+    for i, (x0, y0) in enumerate(start_points):
+        xi, yi = x0, y0
+        for k, (A, B) in enumerate(zip(images, images[1:])):
+
+            if verbose:
+                print(f&#39;{int(100*(i*(len(images)-1)+k))//N: 3d}%&#39;+
+                      f&#39;  images:{k:02d}→{k+1:02d}&#39;+
+                      f&#39;  point:{i: 4d} ...&#39;,
+                      end=&#39;\r&#39;)
+
+            try:
+                sx, sy, _err = get_shifts(A, B, xi, yi,
+                                          offset=offsets[k, i, :],
+                                          **params)
+
+                displ[k, i, :] = sx, sy
+                xi += sx
+                yi += sy
+            except ValueError:
+                #if verbose:
+                #    print(&#39;out of limits for image&#39;, k)
+                break
+
+    print(&#39;done&#39;, &#39; &#39;*30)
+    return displ</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.track_displ_img_to_ref"><code class="name flex">
+<span>def <span class="ident">track_displ_img_to_ref</span></span>(<span>images, start_points, window_half_size, upsample_factor, offsets=None, verbose=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def track_displ_img_to_ref(images, start_points,
+                           window_half_size, upsample_factor,
+                           offsets=None,
+                           verbose=True):
+    params = {&#39;window_half_size&#39;:window_half_size,
+              &#39;upsample_factor&#39;:upsample_factor}
+
+    if offsets is None:
+        offsets = np.zeros((len(images)-1, 2))
+
+    displ = np.empty((len(images)-1,
+                      len(start_points),
+                      2))
+    displ[:] = np.NaN
+    A = images[0]
+    for i, (x0, y0) in enumerate(start_points):
+        dx, dy = 0, 0
+        for k, B in enumerate(images[1:]):
+
+            if verbose:
+                print(f&#39;image {k}-&gt;{k+1}&#39;+
+                      f&#39; point {i}&#39;,
+                      end=&#39;\r&#39;)
+
+            try:
+                sx, sy, er = get_shifts(A, B, x0, y0,
+                                        offset=offsets[k] + np.array([dx, dy]),
+                                        **params)
+
+                displ[k, i, :] = sx, sy
+                dx, dy = sx, sy
+            except ValueError:
+                if verbose:
+                    print(&#39;out of limits for image&#39;, k)
+                break
+
+    print(&#39;done&#39;, &#39; &#39;*30)
+    return displ</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="stretchablecorr.bilinear_fit" href="#stretchablecorr.bilinear_fit">bilinear_fit</a></code></li>
+<li><code><a title="stretchablecorr.build_grid" href="#stretchablecorr.build_grid">build_grid</a></code></li>
+<li><code><a title="stretchablecorr.colorize_image" href="#stretchablecorr.colorize_image">colorize_image</a></code></li>
+<li><code><a title="stretchablecorr.crop" href="#stretchablecorr.crop">crop</a></code></li>
+<li><code><a title="stretchablecorr.displacements_img_to_img" href="#stretchablecorr.displacements_img_to_img">displacements_img_to_img</a></code></li>
+<li><code><a title="stretchablecorr.get_shifts" href="#stretchablecorr.get_shifts">get_shifts</a></code></li>
+<li><code><a title="stretchablecorr.track_displ_img_to_img" href="#stretchablecorr.track_displ_img_to_img">track_displ_img_to_img</a></code></li>
+<li><code><a title="stretchablecorr.track_displ_img_to_ref" href="#stretchablecorr.track_displ_img_to_ref">track_displ_img_to_ref</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.4</a>.</p>
+</footer>
+</body>
+</html>
