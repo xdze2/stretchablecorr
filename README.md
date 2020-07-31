@@ -23,7 +23,15 @@ The method used here corresponds to the figure (d) below:
 
 [*] and image-to-image vs image-to-reference (see below)
 
-## Tips 
+
+## Links:
+
+* [**➡module documentation and notes**](https://xdze2.github.io/stretchablecorr/)
+* jupyter notebook (use jupytext) for [correlations computation](https://github.com/xdze2/stretchablecorr/blob/master/run_corr.py)
+* jupyter notebook (use jupytext) for [post-process](https://github.com/xdze2/stretchablecorr/blob/master/post_process.py)
+
+
+## Tips 
 
 - Extract images from video using [`ffmpeg`](https://ffmpeg.org/):
 
@@ -131,7 +139,7 @@ There are 3 modules:
 - graphtools: post-processing functions (to be done)
 
 
-### Documention (to be done)
+### Documention
 
 
 _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
@@ -142,12 +150,6 @@ docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 
 
 
-### note
->_eternal question:_ graph while computing or store and post-process: how long is the run ? how big are the data ? are the data needed afterwards ?
-
-> 2nd eternal question : loop order ? image then points, or points then images ?  now it is points then images - to allow unstructured points
-
-> 3rd eternal question : Dimension order ? numpy loops and unpacks along first dim, so first dim is the outer loop -- here points
 
 
 ## Next
@@ -156,6 +158,6 @@ docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 - Error estimation
 - Length scales estimation (PSD): ROI size choice
 - Global (high order method)
-- 
+
 
 
