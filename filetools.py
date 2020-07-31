@@ -16,10 +16,10 @@ import pickle
 
 def extract_digits(string):
     '''Extract all digits from given string
-       used to sort images by name
+    used to sort images by name
 
-       >>> extract_digits("a1b2cd34")
-       1234
+    >>> extract_digits("a1b2cd34")
+    1234
     '''
     return int(''.join(filter(str.isdigit, string)))
 

@@ -54,18 +54,27 @@ def colorize_image(image, intensity_low, intensity_high, cmap=&#39;viridis&#39;)
 
 
 def crop(I, xy_center, half_size):
-    &#34;&#34;&#34;Return the centered square at the position xy
+    &#34;&#34;&#34;Returns the centered square at the position xy
 
-    Args:
-        I: input image (2D array)
-        xy_center: tuple of float
-        half_size: half of the size of the crop
+    Parameters
+    ----------
+    I : 2D array
+        input image
+    xy_center : tuple of floats
+        central coordinates (will be rounded)         
+    half_size : integer
+        half size of the cropped region.
+        The actuak size is `(2*half_size + 1)`  
 
-    Returns:
+    Returns
+    -------
+    2D array
         cropped image array
-        indices of the center
+    tuple of integers
+        indices of the actual center
 
-
+    Examples
+    --------
     &gt;&gt;&gt; from skimage.data import rocket
     &gt;&gt;&gt; x, y = (322, 150)
     &gt;&gt;&gt; plt.imshow(rocket());
@@ -73,9 +82,10 @@ def crop(I, xy_center, half_size):
     &gt;&gt;&gt; plt.plot(x, y, &#39;sr&#39;);
     &gt;&gt;&gt; plt.imshow(crop(rocket(), (x, y), 50)[0]);
 
-    todo: unit test using hash for image
-    https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
-    &#34;&#34;&#34;
+
+    .. todo:: unit test using hash for image https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
+
+    &#34;&#34;&#34;    
 
     j, i = np.around(xy_center).astype(np.int)
     i_slicing = np.s_[i - half_size:i + half_size + 1]
@@ -89,20 +99,29 @@ def get_shifts(I, J, x, y,
                window_half_size=15,
                upsample_factor=20):
     &#34;&#34;&#34;Cross-correlation between images I and J,
-        at the position (x, y) using a windows of size 2*window_half_size + 1
+        at the position (x, y) using a windows of size `2*window_half_size + 1`
 
-    see `phase_cross_correlation` from skimage
-    # https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
+    see `phase_cross_correlation` from skimage  
+    https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
 
-    Args:
-      I, J: input images
-      x, y: point coordinates arround which shift is evaluated
-      offset: tuple (dx, dy) pre-computed displacement of J relative to I
+    Parameters
+    ----------
+    I, J : 2D arrays 
+        input images
+    x, y : tuple 
+        point coordinates arround which shift is evaluated
+    offset : tuple (dx, dy)
+        pre-computed displacement of J relative to I
 
-    Returns:
-        dx, dy: displacements
-        error: scalar correlation error
+    Returns
+    -------
+    dx, dy
+        displacements
+    error
+        scalar correlation error
 
+    Examples
+    --------
     &gt;&gt;&gt; from skimage.data import camera
     &gt;&gt;&gt; dx, dy = 10, 15
     &gt;&gt;&gt; I = camera()[dy:, dx:]
@@ -145,8 +164,8 @@ def build_grid(img_shape, margin, spacing):
     Returns
     -------
     3D nd-array of floats, shape (2, nbr pts height, width)
-       grid[0]: X coordinates of grid points
-       grid[1]: Y coordinates of grid points
+       grid[0]: X coordinates of grid points  
+       grid[1]: Y coordinates of grid points  
     &#34;&#34;&#34;
 
     margin = int(np.ceil(margin))
@@ -198,7 +217,7 @@ def displacements_img_to_img(images, points,
     Returns
     -------
     3d array of shape (nbr_images-1, nbr_points, 2)
-        displacement vector
+        Displacement vector. 
         NaN if an error occured (often because ROI out of image)
     &#34;&#34;&#34;
 
@@ -289,6 +308,28 @@ def track_displ_img_to_ref(images, start_points,
                            window_half_size, upsample_factor,
                            offsets=None,
                            verbose=True):
+    &#34;&#34;&#34;broken
+
+    Parameters
+    ----------
+    images : [type]
+        [description]
+    start_points : [type]
+        [description]
+    window_half_size : [type]
+        [description]
+    upsample_factor : [type]
+        [description]
+    offsets : [type], optional
+        [description], by default None
+    verbose : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    [type]
+        [description]
+    &#34;&#34;&#34;
     params = {&#39;window_half_size&#39;:window_half_size,
               &#39;upsample_factor&#39;:upsample_factor}
 
@@ -493,7 +534,7 @@ could include NaN</dd>
 <dt><code>3D nd-array</code> of <code>floats, shape (2, nbr pts height, width)</code></dt>
 <dd>&nbsp;</dd>
 </dl>
-<p>grid[0]: X coordinates of grid points
+<p>grid[0]: X coordinates of grid points<br>
 grid[1]: Y coordinates of grid points</p></div>
 <details class="source">
 <summary>
@@ -516,8 +557,8 @@ grid[1]: Y coordinates of grid points</p></div>
     Returns
     -------
     3D nd-array of floats, shape (2, nbr pts height, width)
-       grid[0]: X coordinates of grid points
-       grid[1]: Y coordinates of grid points
+       grid[0]: X coordinates of grid points  
+       grid[1]: Y coordinates of grid points  
     &#34;&#34;&#34;
 
     margin = int(np.ceil(margin))
@@ -563,19 +604,25 @@ rescale values between (intensity_low, intensity_high)</p></div>
 <span>def <span class="ident">crop</span></span>(<span>I, xy_center, half_size)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Return the centered square at the position xy</p>
-<h2 id="args">Args</h2>
+<div class="desc"><p>Returns the centered square at the position xy</p>
+<h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>I</code></strong></dt>
-<dd>input image (2D array)</dd>
-<dt><strong><code>xy_center</code></strong></dt>
-<dd>tuple of float</dd>
-<dt><strong><code>half_size</code></strong></dt>
-<dd>half of the size of the crop</dd>
+<dt><strong><code>I</code></strong> :&ensp;<code>2D array</code></dt>
+<dd>input image</dd>
+<dt><strong><code>xy_center</code></strong> :&ensp;<code>tuple</code> of <code>floats</code></dt>
+<dd>central coordinates (will be rounded)</dd>
+<dt><strong><code>half_size</code></strong> :&ensp;<code>integer</code></dt>
+<dd>half size of the cropped region.
+The actuak size is <code>(2*half_size + 1)</code></dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>cropped image array
-indices of the center</p>
+<dl>
+<dt><code>2D array</code></dt>
+<dd>cropped image array</dd>
+<dt><code>tuple</code> of <code>integers</code></dt>
+<dd>indices of the actual center</dd>
+</dl>
+<h2 id="examples">Examples</h2>
 <pre><code class="python">&gt;&gt;&gt; from skimage.data import rocket
 &gt;&gt;&gt; x, y = (322, 150)
 &gt;&gt;&gt; plt.imshow(rocket());
@@ -583,25 +630,36 @@ indices of the center</p>
 &gt;&gt;&gt; plt.plot(x, y, 'sr');
 &gt;&gt;&gt; plt.imshow(crop(rocket(), (x, y), 50)[0]);
 </code></pre>
-<p>todo: unit test using hash for image
-<a href="https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55">https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55</a></p></div>
+<div class="admonition todo">
+<p class="admonition-title">TODO</p>
+<p>unit test using hash for image <a href="https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55">https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55</a></p>
+</div></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def crop(I, xy_center, half_size):
-    &#34;&#34;&#34;Return the centered square at the position xy
+    &#34;&#34;&#34;Returns the centered square at the position xy
 
-    Args:
-        I: input image (2D array)
-        xy_center: tuple of float
-        half_size: half of the size of the crop
+    Parameters
+    ----------
+    I : 2D array
+        input image
+    xy_center : tuple of floats
+        central coordinates (will be rounded)         
+    half_size : integer
+        half size of the cropped region.
+        The actuak size is `(2*half_size + 1)`  
 
-    Returns:
+    Returns
+    -------
+    2D array
         cropped image array
-        indices of the center
+    tuple of integers
+        indices of the actual center
 
-
+    Examples
+    --------
     &gt;&gt;&gt; from skimage.data import rocket
     &gt;&gt;&gt; x, y = (322, 150)
     &gt;&gt;&gt; plt.imshow(rocket());
@@ -609,9 +667,10 @@ indices of the center</p>
     &gt;&gt;&gt; plt.plot(x, y, &#39;sr&#39;);
     &gt;&gt;&gt; plt.imshow(crop(rocket(), (x, y), 50)[0]);
 
-    todo: unit test using hash for image
-    https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
-    &#34;&#34;&#34;
+
+    .. todo:: unit test using hash for image https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
+
+    &#34;&#34;&#34;    
 
     j, i = np.around(xy_center).astype(np.int)
     i_slicing = np.s_[i - half_size:i + half_size + 1]
@@ -648,7 +707,7 @@ by default zeros (None)</dd>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>3d array</code> of <code>shape (nbr_images-1, nbr_points, 2)</code></dt>
-<dd>displacement vector
+<dd>Displacement vector.
 NaN if an error occured (often because ROI out of image)</dd>
 </dl></div>
 <details class="source">
@@ -684,7 +743,7 @@ NaN if an error occured (often because ROI out of image)</dd>
     Returns
     -------
     3d array of shape (nbr_images-1, nbr_points, 2)
-        displacement vector
+        Displacement vector. 
         NaN if an error occured (often because ROI out of image)
     &#34;&#34;&#34;
 
@@ -729,15 +788,17 @@ NaN if an error occured (often because ROI out of image)</dd>
 </code></dt>
 <dd>
 <div class="desc"><p>Cross-correlation between images I and J,
-at the position (x, y) using a windows of size 2*window_half_size + 1</p>
-<p>see <code>phase_cross_correlation</code> from skimage</p>
-<h1 id="httpsscikit-imageorgdocsdevapiskimagefeaturehtmlskimagefeatureregister_translation"><a href="https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation">https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation</a></h1>
-<h2 id="args">Args</h2>
+at the position (x, y) using a windows of size <code>2*window_half_size + 1</code></p>
+<p>see <code>phase_cross_correlation</code> from skimage<br>
+<a href="https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation">https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation</a></p>
+<h2 id="parameters">Parameters</h2>
 <dl>
-<dt>I, J: input images</dt>
-<dt>x, y: point coordinates arround which shift is evaluated</dt>
-<dt><strong><code>offset</code></strong></dt>
-<dd>tuple (dx, dy) pre-computed displacement of J relative to I</dd>
+<dt><strong><code>I</code></strong>, <strong><code>J</code></strong> :&ensp;<code>2D arrays </code></dt>
+<dd>input images</dd>
+<dt><strong><code>x</code></strong>, <strong><code>y</code></strong> :&ensp;<code>tuple </code></dt>
+<dd>point coordinates arround which shift is evaluated</dd>
+<dt><strong><code>offset</code></strong> :&ensp;<code>tuple (dx, dy)</code></dt>
+<dd>pre-computed displacement of J relative to I</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -746,6 +807,7 @@ at the position (x, y) using a windows of size 2*window_half_size + 1</p>
 <dt><code>error</code></dt>
 <dd>scalar correlation error</dd>
 </dl>
+<h2 id="examples">Examples</h2>
 <pre><code class="python">&gt;&gt;&gt; from skimage.data import camera
 &gt;&gt;&gt; dx, dy = 10, 15
 &gt;&gt;&gt; I = camera()[dy:, dx:]
@@ -766,20 +828,29 @@ at the position (x, y) using a windows of size 2*window_half_size + 1</p>
                window_half_size=15,
                upsample_factor=20):
     &#34;&#34;&#34;Cross-correlation between images I and J,
-        at the position (x, y) using a windows of size 2*window_half_size + 1
+        at the position (x, y) using a windows of size `2*window_half_size + 1`
 
-    see `phase_cross_correlation` from skimage
-    # https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
+    see `phase_cross_correlation` from skimage  
+    https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
 
-    Args:
-      I, J: input images
-      x, y: point coordinates arround which shift is evaluated
-      offset: tuple (dx, dy) pre-computed displacement of J relative to I
+    Parameters
+    ----------
+    I, J : 2D arrays 
+        input images
+    x, y : tuple 
+        point coordinates arround which shift is evaluated
+    offset : tuple (dx, dy)
+        pre-computed displacement of J relative to I
 
-    Returns:
-        dx, dy: displacements
-        error: scalar correlation error
+    Returns
+    -------
+    dx, dy
+        displacements
+    error
+        scalar correlation error
 
+    Examples
+    --------
     &gt;&gt;&gt; from skimage.data import camera
     &gt;&gt;&gt; dx, dy = 10, 15
     &gt;&gt;&gt; I = camera()[dy:, dx:]
@@ -864,7 +935,25 @@ at the position (x, y) using a windows of size 2*window_half_size + 1</p>
 <span>def <span class="ident">track_displ_img_to_ref</span></span>(<span>images, start_points, window_half_size, upsample_factor, offsets=None, verbose=True)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>broken</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>images</code></strong> :&ensp;<code>[type]</code></dt>
+<dd>[description]</dd>
+<dt><strong><code>start_points</code></strong> :&ensp;<code>[type]</code></dt>
+<dd>[description]</dd>
+<dt><strong><code>window_half_size</code></strong> :&ensp;<code>[type]</code></dt>
+<dd>[description]</dd>
+<dt><strong><code>upsample_factor</code></strong> :&ensp;<code>[type]</code></dt>
+<dd>[description]</dd>
+<dt><strong><code>offsets</code></strong> :&ensp;<code>[type]</code>, optional</dt>
+<dd>[description], by default None</dd>
+<dt><strong><code>verbose</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>[description], by default True</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>[type]
+[description]</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -873,6 +962,28 @@ at the position (x, y) using a windows of size 2*window_half_size + 1</p>
                            window_half_size, upsample_factor,
                            offsets=None,
                            verbose=True):
+    &#34;&#34;&#34;broken
+
+    Parameters
+    ----------
+    images : [type]
+        [description]
+    start_points : [type]
+        [description]
+    window_half_size : [type]
+        [description]
+    upsample_factor : [type]
+        [description]
+    offsets : [type], optional
+        [description], by default None
+    verbose : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    [type]
+        [description]
+    &#34;&#34;&#34;
     params = {&#39;window_half_size&#39;:window_half_size,
               &#39;upsample_factor&#39;:upsample_factor}
 

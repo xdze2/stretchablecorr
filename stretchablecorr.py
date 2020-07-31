@@ -26,18 +26,27 @@ def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
 
 
 def crop(I, xy_center, half_size):
-    """Return the centered square at the position xy
+    """Returns the centered square at the position xy
 
-    Args:
-        I: input image (2D array)
-        xy_center: tuple of float
-        half_size: half of the size of the crop
+    Parameters
+    ----------
+    I : 2D array
+        input image
+    xy_center : tuple of floats
+        central coordinates (will be rounded)         
+    half_size : integer
+        half size of the cropped region.
+        The actuak size is `(2*half_size + 1)`  
 
-    Returns:
+    Returns
+    -------
+    2D array
         cropped image array
-        indices of the center
+    tuple of integers
+        indices of the actual center
 
-
+    Examples
+    --------
     >>> from skimage.data import rocket
     >>> x, y = (322, 150)
     >>> plt.imshow(rocket());
@@ -45,9 +54,10 @@ def crop(I, xy_center, half_size):
     >>> plt.plot(x, y, 'sr');
     >>> plt.imshow(crop(rocket(), (x, y), 50)[0]);
 
-    todo: unit test using hash for image
-    https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
-    """
+
+    .. todo:: unit test using hash for image https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
+
+    """    
 
     j, i = np.around(xy_center).astype(np.int)
     i_slicing = np.s_[i - half_size:i + half_size + 1]
@@ -61,20 +71,29 @@ def get_shifts(I, J, x, y,
                window_half_size=15,
                upsample_factor=20):
     """Cross-correlation between images I and J,
-        at the position (x, y) using a windows of size 2*window_half_size + 1
+        at the position (x, y) using a windows of size `2*window_half_size + 1`
 
-    see `phase_cross_correlation` from skimage
-    # https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
+    see `phase_cross_correlation` from skimage  
+    https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
 
-    Args:
-      I, J: input images
-      x, y: point coordinates arround which shift is evaluated
-      offset: tuple (dx, dy) pre-computed displacement of J relative to I
+    Parameters
+    ----------
+    I, J : 2D arrays 
+        input images
+    x, y : tuple 
+        point coordinates arround which shift is evaluated
+    offset : tuple (dx, dy)
+        pre-computed displacement of J relative to I
 
-    Returns:
-        dx, dy: displacements
-        error: scalar correlation error
+    Returns
+    -------
+    dx, dy
+        displacements
+    error
+        scalar correlation error
 
+    Examples
+    --------
     >>> from skimage.data import camera
     >>> dx, dy = 10, 15
     >>> I = camera()[dy:, dx:]
@@ -117,8 +136,8 @@ def build_grid(img_shape, margin, spacing):
     Returns
     -------
     3D nd-array of floats, shape (2, nbr pts height, width)
-       grid[0]: X coordinates of grid points
-       grid[1]: Y coordinates of grid points
+       grid[0]: X coordinates of grid points  
+       grid[1]: Y coordinates of grid points  
     """
 
     margin = int(np.ceil(margin))
@@ -170,7 +189,7 @@ def displacements_img_to_img(images, points,
     Returns
     -------
     3d array of shape (nbr_images-1, nbr_points, 2)
-        displacement vector
+        Displacement vector. 
         NaN if an error occured (often because ROI out of image)
     """
 
@@ -261,6 +280,28 @@ def track_displ_img_to_ref(images, start_points,
                            window_half_size, upsample_factor,
                            offsets=None,
                            verbose=True):
+    """broken
+
+    Parameters
+    ----------
+    images : [type]
+        [description]
+    start_points : [type]
+        [description]
+    window_half_size : [type]
+        [description]
+    upsample_factor : [type]
+        [description]
+    offsets : [type], optional
+        [description], by default None
+    verbose : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     params = {'window_half_size':window_half_size,
               'upsample_factor':upsample_factor}
 
