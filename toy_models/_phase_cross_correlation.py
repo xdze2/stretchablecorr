@@ -50,15 +50,13 @@ def _upsampled_dft(data, upsampled_region_size,
         upsampled_region_size = [upsampled_region_size, ] * data.ndim
     else:
         if len(upsampled_region_size) != data.ndim:
-            raise ValueError("shape of upsampled region sizes must be equal "
-                             "to input data's number of dimensions.")
+            raise ValueError("shape of upsampled region sizes must be equal")
 
     if axis_offsets is None:
         axis_offsets = [0, ] * data.ndim
     else:
         if len(axis_offsets) != data.ndim:
-            raise ValueError("number of axis offsets must be equal to input "
-                             "data's number of dimensions.")
+            raise ValueError("number of axis offsets must be equal to input")
 
     im2pi = 1j * 2 * np.pi
 
