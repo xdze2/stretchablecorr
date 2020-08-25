@@ -1,10 +1,7 @@
----
-tags: DIC
----
 
 # Images Registration
 
-Here only the zero-order registration problem is discussed, i.e. only a translation offset is searched between the two images.
+Here only the **zero-order registration** problem is discussed, i.e. only a translation offset is searched between the two images.
 
 > _note:_ mathematical notations are reduced as much as possible. For example $x$ is used for the coordinates of a point on a plane , i.e. $x = \vec x = (\mathtt x \,, \mathtt y)$
 
@@ -55,7 +52,8 @@ $$
 
 Thus the [phase correlation](https://en.wikipedia.org/wiki/Phase_correlation) approach. 
 
-> _note:_ est-ce que ce n'est au final qu'une histoire de normalisation ? et gestion du bruit
+> _Question:_  What are the differences and advantages between the phase correlation approach (working with the phase only) and the "cross-correlation" approach (working with the absolute value)
+
 
 Computing the discrete convolution product, using either FFT or simple summation, leads to a 1-pixel sampled result. However, sub-pixel accuracy is possible. 
 
@@ -65,5 +63,28 @@ Now there is a different problem, which is the get the **sub-pixel** estimation 
 
 Continuous desciption of the peak using interpolation and smoothing, and then either up-sampling or use iterative optimization methods to locate the sub-pixel argmax.
 
-- local quadratic fit of the peak and semi-analytcal approximation
-- an interresting approach is to use the Fourier transform itself for the interpolation (zero padding, sinc)
+Possible sub-pixel accuracy methods are:
+- local polynomial fit of the peak
+  - using linear least-square method
+  - using semi-analytcal approximation [Foroosh2002]
+- an interresting approach is to use the Fourier transform itself for the interpolation and upsampling (zero padding, sinc) [Guizar-Sicairos2008]
+- Non-linear optimization method (gradient descent) on the interpolated peak function (see also [Guizar-Sicairos2008]). Initial guess using argmax on the FFT-based cross-correlation without upsampling.
+- Phase unwrapping approach, see for instance [Balci2006]. (My though: it is a non-linear problem and it involves computation of the inverse Fourier transform... better to use non-linear optimisation directly)
+- Centroïd computation (weighted average)
+
+> It is similar to the peak fitting problem. However, here no known mathematical function of the peak shape is assumed and only position of the maximum is searched for.  
+
+
+--> Phase correlation with appropriate windowing VS  "cross-correlation"  
+--> Why the method proposed by Guizar-Sicairos et al. (i.e. brute force optimization) is preferred over gradient descent optimization? 
+
+### References
+
+- Foroosh, H., J.B. Zerubia, et M. Berthod. « Extension of Phase Correlation to Subpixel Registration ». IEEE Transactions on Image Processing 11, nᵒ 3 (mars 2002): 188‑200. https://doi.org/10.1109/83.988953.
+- Guizar-Sicairos, Manuel, Samuel T. Thurman, et James R. Fienup. « Efficient Subpixel Image Registration Algorithms ». Optics Letters 33, nᵒ 2 (15 janvier 2008): 156. https://doi.org/10.1364/OL.33.000156.
+- Balci, Murat, et Hassan Foroosh. « Subpixel Registration Directly from the Phase Difference ». EURASIP Journal on Advances in Signal Processing 2006, nᵒ 1 (décembre 2006). https://doi.org/10.1155/ASP/2006/60796.
+
+
+## Error estimation
+
+- Kybic, J. « Bootstrap Resampling for Image Registration Uncertainty Estimation Without Ground Truth ». IEEE Transactions on Image Processing 19, nᵒ 1 (janvier 2010): 64‑73. https://doi.org/10.1109/TIP.2009.2030955.
