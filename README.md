@@ -141,6 +141,9 @@ There are 3 modules:
 
 ### Documention
 
+ use Github static site in the `/docs` folder
+
+#### Docstrings
 
 _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
 
@@ -148,8 +151,16 @@ docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 
     $ pdoc --html --output-dir docs stretchablecorr filetools --force
 
+#### Markdown with math
+
+* convert markdown file to html using [pandoc](https://pandoc.org/MANUAL.html). _simplest solution to display **math equation** online, with Katex_
 
 
+* use pandoc's config file `pandoc.yaml` (need pandoc last version)
+
+        $ pandoc --defaults=pandoc.yaml
+
+* and use simple **css style**
 
 
 ## Next
