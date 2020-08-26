@@ -96,11 +96,11 @@ datasets = glob(os.path.join(resultdir, '*.pck'))
 
 print(f'Available data set for {sample_name}')
 print( '=======================' + '='*len(sample_name) )
-ft.print_numbered_list([os.path.basename(d) for d in dataset])
+ft.print_numbered_list([os.path.basename(d) for d in datasets])
 
 # Select a sample:
 dataset_id = input('> Select an file:')
-data_file = dataset[int(dataset_id)]
+data_file = datasets[int(dataset_id)]
 print(data_file)
 
 # Load dataset
@@ -153,9 +153,6 @@ eps_yy_img2img = [M[1, 1] for M in all_coeffs]
 
 def cumsumzero(a, **kargs):
     return np.cumsum(np.pad(a, (1, 0), "constant"), *kargs)
-
-print(len(eps_xx_img2img), len(stretch_values))
-print(len(eps_yy), len(stretch_values))
 
 eps_xx = cumsumzero(eps_xx_img2img)*100
 eps_yy = cumsumzero(eps_yy_img2img)*100
@@ -284,7 +281,7 @@ points_mask = serpentine_mask[points[:, 1], points[:, 0]]
 points_mask = points_mask.reshape(grid[0].shape)
 
 #points_mask = np.logical_not( points_mask )
-print(points_mask[0, 0])
+#print(points_mask[0, 0])
 
 # +
 view_factor = 3
@@ -318,8 +315,8 @@ for image_id, displ_field in enumerate(displ_lagrangian_to_ref):
     ft.save_fig(f'{field_value_name}_{image_id:03d}',
                 sample_name,
                 output_dir, close=True)
-    
-    
+
+
 # -
 
 # ### Measured strain vs Applied strain
