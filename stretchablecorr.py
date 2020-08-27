@@ -33,10 +33,10 @@ def crop(I, xy_center, half_size):
     I : 2D array
         input image
     xy_center : tuple of floats
-        central coordinates (will be rounded)         
+        central coordinates (will be rounded)
     half_size : integer
         half size of the cropped region.
-        The actuak size is `(2*half_size + 1)`  
+        The actuak size is `(2*half_size + 1)`
 
     Returns
     -------
@@ -57,7 +57,7 @@ def crop(I, xy_center, half_size):
 
     .. todo:: unit test using hash for image https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
 
-    """    
+    """
 
     j, i = np.around(xy_center).astype(np.int)
     i_slicing = np.s_[i - half_size:i + half_size + 1]
@@ -69,18 +69,19 @@ def crop(I, xy_center, half_size):
 def get_shifts(I, J, x, y,
                offset=(0.0, 0.0),
                window_half_size=15,
-               upsample_factor=20):
+               upsample_factor=20,
+               method='skimage'):
     """Cross-correlation between images I and J,
         at the position (x, y) using a windows of size `2*window_half_size + 1`
 
-    see `phase_cross_correlation` from skimage  
+    see `phase_cross_correlation` from skimage
     https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
 
     Parameters
     ----------
-    I, J : 2D arrays 
+    I, J : 2D arrays
         input images
-    x, y : tuple 
+    x, y : tuple
         point coordinates arround which shift is evaluated
     offset : tuple (dx, dy)
         pre-computed displacement of J relative to I
@@ -110,9 +111,12 @@ def get_shifts(I, J, x, y,
     source, ij_src = crop(I, (x, y), window_half_size)
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
 
-    shifts, error, _ = phase_cross_correlation(source, target,
-                                               upsample_factor=upsample_factor)
-    shifts = -shifts  # displacement = -registration = dst - src
+    if method == 'skimage':
+        shifts, error, _ = phase_cross_correlation(source, target,
+                                                upsample_factor=upsample_factor)
+        shifts = -shifts  # displacement = -registration = dst - src
+    elif method == 'opti':
+        shifts, error = phase_registration_optim(source, target, phase=True)
 
     dx = shifts[1] + (ij_tgt[1] - ij_src[1])
     dy = shifts[0] + (ij_tgt[0] - ij_src[0])
@@ -136,8 +140,8 @@ def build_grid(img_shape, margin, spacing):
     Returns
     -------
     3D nd-array of floats, shape (2, nbr pts height, width)
-       grid[0]: X coordinates of grid points  
-       grid[1]: Y coordinates of grid points  
+       grid[0]: X coordinates of grid points
+       grid[1]: Y coordinates of grid points
     """
 
     margin = int(np.ceil(margin))
@@ -189,7 +193,7 @@ def displacements_img_to_img(images, points,
     Returns
     -------
     3d array of shape (nbr_images-1, nbr_points, 2)
-        Displacement vector. 
+        Displacement vector.
         NaN if an error occured (often because ROI out of image)
     """
 
@@ -230,11 +234,10 @@ def displacements_img_to_img(images, points,
 
 
 def track_displ_img_to_img(images, start_points,
-                            window_half_size, upsample_factor,
-                            offsets=None,
-                            verbose=True):
-    params = {'window_half_size':window_half_size,
-              'upsample_factor':upsample_factor}
+                           offsets=None,
+                           verbose=True, **params):
+    #params = {'window_half_size':window_half_size,
+    #          'upsample_factor':upsample_factor}
 
     if offsets is None:
         offsets = np.zeros((len(images)-1, len(start_points), 2))
@@ -246,6 +249,10 @@ def track_displ_img_to_img(images, start_points,
                       len(start_points),
                       2))
     displ[:] = np.NaN
+
+    errors = np.empty((len(images)-1,
+                      len(start_points)))
+    errors[:] = np.NaN
 
     N = (len(images) - 1)*len(start_points)
     for i, (x0, y0) in enumerate(start_points):
@@ -264,6 +271,7 @@ def track_displ_img_to_img(images, start_points,
                                           **params)
 
                 displ[k, i, :] = sx, sy
+                errors[k, i] = _err
                 xi += sx
                 yi += sy
             except ValueError:
@@ -272,70 +280,60 @@ def track_displ_img_to_img(images, start_points,
                 break
 
     print('done', ' '*30)
-    return displ
+    return displ, errors
 
 
 # broken:
 def track_displ_img_to_ref(images, start_points,
                            window_half_size, upsample_factor,
-                           offsets=None,
+                           offsets=None, method='skimage',
                            verbose=True):
-    """broken
-
-    Parameters
-    ----------
-    images : [type]
-        [description]
-    start_points : [type]
-        [description]
-    window_half_size : [type]
-        [description]
-    upsample_factor : [type]
-        [description]
-    offsets : [type], optional
-        [description], by default None
-    verbose : bool, optional
-        [description], by default True
-
-    Returns
-    -------
-    [type]
-        [description]
-    """
     params = {'window_half_size':window_half_size,
-              'upsample_factor':upsample_factor}
+              'upsample_factor':upsample_factor,
+              'method':method}
 
     if offsets is None:
-        offsets = np.zeros((len(images)-1, 2))
+        offsets = np.zeros((len(images)-1, len(start_points), 2))
+    elif len(offsets.shape)==2:
+        offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
+        print(offsets.shape)
 
     displ = np.empty((len(images)-1,
                       len(start_points),
                       2))
     displ[:] = np.NaN
+
+    errors = np.empty((len(images)-1,
+                      len(start_points)))
+    errors[:] = np.NaN
     A = images[0]
+    N = (len(images) - 1)*len(start_points)
     for i, (x0, y0) in enumerate(start_points):
-        dx, dy = 0, 0
+        xi, yi = x0, y0
         for k, B in enumerate(images[1:]):
 
             if verbose:
-                print(f'image {k}->{k+1}'+
-                      f' point {i}',
+                print(f'{int(100*(i*(len(images)-1)+k))//N: 3d}%'+
+                      f'  images:{k:02d}→{k+1:02d}'+
+                      f'  point:{i: 4d} ...',
                       end='\r')
 
             try:
-                sx, sy, er = get_shifts(A, B, x0, y0,
-                                        offset=offsets[k] + np.array([dx, dy]),
-                                        **params)
+                sx, sy, _err = get_shifts(A, B, xi, yi,
+                                          offset=offsets[k, i, :],
+                                          **params)
 
                 displ[k, i, :] = sx, sy
-                dx, dy = sx, sy
+                errors[k, i] = _err
+                xi += sx
+                yi += sy
             except ValueError:
-                if verbose:
-                    print('out of limits for image', k)
+                #if verbose:
+                #    print('out of limits for image', k)
                 break
 
     print('done', ' '*30)
-    return displ
+    return displ, errors
 
 
 # ===============
@@ -395,6 +393,97 @@ def bilinear_fit(points, displacements):
     return coefficients, residuals_NaN
 
 
+# ===========================
+#  Phase image registration
+# ===========================
+import numpy as np
+from scipy.fft import fftn, ifftn
+from scipy.fft import fftshift, fftfreq
+from scipy.signal.windows import blackman
+from scipy.optimize import minimize
+
+
+def dft_tensordot(A, yx):
+    im2pi = 1j * 2 * np.pi
+    y, x = yx
+    yky = np.exp( im2pi * y * fftfreq(A.shape[0]) )
+    xkx = np.exp( im2pi * x * fftfreq(A.shape[1]) )
+
+    a = np.tensordot(xkx, A, axes=(0, -1))
+    a = np.tensordot(yky, a, axes=(0, -1))
+    return a
+
+
+def grad_dft(data, yx):
+    im2pi = 1j * 2 * np.pi
+    y, x = yx
+    kx = im2pi * fftfreq(data.shape[1])
+    ky = im2pi * fftfreq(data.shape[0])
+
+    exp_kx = np.exp(x * kx)
+    exp_ky = np.exp(y * ky)
+
+    gradx = np.tensordot(exp_kx * kx, data, axes=(0, -1))
+    gradx = np.tensordot(exp_ky, gradx, axes=(0, -1))
+
+    grady = np.tensordot(exp_kx, data, axes=(0, -1))
+    grady = np.tensordot(exp_ky * ky, grady, axes=(0, -1))
+
+    return np.array([grady, gradx])
+
+
+def phase_registration_optim(A, B, phase=True):
+    """Find translation between images A and B
+    as the argmax of the phase cross corelation
+    use iterative optimization
+
+    Parameters
+    ----------
+    A : [type]
+        [description]
+    B : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    upsamplefactor = 1
+
+    u = blackman(A.shape[0])
+    v = blackman(A.shape[1])
+    window = u[:, np.newaxis] * v[np.newaxis, :]
+    if not phase:
+        window = 1
+
+    a = fftn(A * window)
+    b = fftn(B * window)
+
+    ab = a * b.conj()
+    if phase:
+        phase = ab / np.abs(ab)
+    else:
+        phase = ab
+    phase_corr = ifftn(fftshift(phase),
+                       s=upsamplefactor*np.array(ab.shape))
+    phase_corr = np.abs( fftshift(phase_corr) )
+
+    dx_span = fftshift( fftfreq(phase_corr.shape[1]) )*A.shape[1]
+    dy_span = fftshift( fftfreq(phase_corr.shape[0]) )*A.shape[0]
+
+    # argmax
+    argmax_idx = np.unravel_index(np.argmax(phase_corr), phase_corr.shape)
+    argmax = dy_span[argmax_idx[0]], dx_span[argmax_idx[1]]
+
+    def cost(xy, ab):
+        return -np.abs(dft_tensordot(ab, xy))
+
+    #def jac(xy, ab):
+    #    return -np.real(grad_dft(ab, xy))
+
+    res = minimize(cost, argmax, args=(phase, ), method='BFGS', tol=1e-3)#, jac=jac)
+    return res.x, 0  # res.hess_inv
 
 if __name__ == "__main__":
     import doctest
