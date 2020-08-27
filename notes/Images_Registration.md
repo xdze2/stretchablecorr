@@ -63,13 +63,13 @@ Now there is a different problem, which is the get the **sub-pixel** estimation 
 
 Continuous desciption of the peak using interpolation and smoothing, and then either up-sampling or use iterative optimization methods to locate the sub-pixel argmax.
 
-Possible sub-pixel accuracy methods are:
+Possible sub-pixel accuracy methods are: 
 - local polynomial fit of the peak
   - using linear least-square method
   - using semi-analytcal approximation [Foroosh2002]
 - an interresting approach is to use the Fourier transform itself for the interpolation and upsampling (zero padding, sinc) [Guizar-Sicairos2008]
 - Non-linear optimization method (gradient descent) on the interpolated peak function (see also [Guizar-Sicairos2008]). Initial guess using argmax on the FFT-based cross-correlation without upsampling.
-- Phase unwrapping approach, see for instance [Balci2006]. (My though: it is a non-linear problem and it involves computation of the inverse Fourier transform... better to use non-linear optimisation directly)
+- Phase unwrapping approach, see for instance [Balci2006]. (My though: it is a non-linear problem and it involves computation of the inverse Fourier transform... better to use non-linear optimisation directly). See also [Stone2001].
 - Centroïd computation (weighted average)
 
 > It is similar to the peak fitting problem. However, here no known mathematical function of the peak shape is assumed and only position of the maximum is searched for.  
@@ -78,11 +78,15 @@ Possible sub-pixel accuracy methods are:
 --> Phase correlation with appropriate windowing VS  "cross-correlation"  
 --> Why the method proposed by Guizar-Sicairos et al. (i.e. brute force optimization) is preferred over gradient descent optimization? 
 
+Windowing see Stone2001
+
 ### References
 
+- Stone, H.S., M.T. Orchard, Ee-Chien Chang, et S.A. Martucci. « A Fast Direct Fourier-Based Algorithm for Subpixel Registration of Images ». IEEE Transactions on Geoscience and Remote Sensing 39, nᵒ 10 (octobre 2001): 2235‑43. https://doi.org/10.1109/36.957286.
 - Foroosh, H., J.B. Zerubia, et M. Berthod. « Extension of Phase Correlation to Subpixel Registration ». IEEE Transactions on Image Processing 11, nᵒ 3 (mars 2002): 188‑200. https://doi.org/10.1109/83.988953.
 - Guizar-Sicairos, Manuel, Samuel T. Thurman, et James R. Fienup. « Efficient Subpixel Image Registration Algorithms ». Optics Letters 33, nᵒ 2 (15 janvier 2008): 156. https://doi.org/10.1364/OL.33.000156.
 - Balci, Murat, et Hassan Foroosh. « Subpixel Registration Directly from the Phase Difference ». EURASIP Journal on Advances in Signal Processing 2006, nᵒ 1 (décembre 2006). https://doi.org/10.1155/ASP/2006/60796.
+
 
 
 ## Error estimation

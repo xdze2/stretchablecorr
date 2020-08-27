@@ -15,6 +15,7 @@
 ## 2020-08-25
 
 1. windowing & phase correlation **vs** cross-correlation
+    pas évident, semble dépendre du cas test (artif, reel...)
 2. opti vs upsampling DFT: speed, robustness
 
 - high order method. Use DFT for interpolation.
@@ -26,7 +27,7 @@
 - Benchmark bench
   - Generated images: interpolation & rotation
   - Real pictures
-  - pack all in a function
+  [x] pack all in a function 
 
 - Entropy & locality error estimation ?
   - erreur dans l'estimation de la position du maximum. C'est l'erreur du bruit
