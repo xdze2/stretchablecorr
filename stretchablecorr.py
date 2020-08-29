@@ -27,6 +27,7 @@ def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
 
 def crop(I, xy_center, half_size):
     """Returns the centered square at the position xy
+    rounds xy_center to nearest integers first
 
     Parameters
     ----------
@@ -63,14 +64,19 @@ def crop(I, xy_center, half_size):
     i_slicing = np.s_[i - half_size:i + half_size + 1]
     j_slicing = np.s_[j - half_size:j + half_size + 1]
 
-    return I[i_slicing, j_slicing], (i, j)
+    I_crop = I[i_slicing, j_slicing]
+
+    if I_crop.shape[:2] != (2*half_size+1, 2*half_size+1):
+        raise ValueError("crop out of image bounds", i, j, I_crop.shape)
+
+    return I_crop, (i, j)
 
 
 def get_shifts(I, J, x, y,
+               window_half_size,
                offset=(0.0, 0.0),
-               window_half_size=15,
-               upsample_factor=20,
-               method='skimage'):
+               method='skimage',
+               coarse_search=True, **params):
     """Cross-correlation between images I and J,
         at the position (x, y) using a windows of size `2*window_half_size + 1`
 
@@ -108,18 +114,36 @@ def get_shifts(I, J, x, y,
     """
     dx, dy = offset
 
+    if coarse_search:
+        coarse_window_half_size = 3*window_half_size
+        x_margin = min(x, I.shape[1]-x)
+        y_margin = min(y, I.shape[0]-y)
+        coarse_window_half_size = min(coarse_window_half_size, x_margin, y_margin)
+        source, ij_src = crop(I, (x, y), coarse_window_half_size)
+        target, ij_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
+        shifts = phase_cross_correlation(source, target,
+                                         upsample_factor=1,
+                                         return_error=False)
+        shifts = -shifts  # displacement = -registration = dst - src
+        dx += shifts[1]
+        dy += shifts[0]
+
     source, ij_src = crop(I, (x, y), window_half_size)
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
 
     if method == 'skimage':
         shifts, error, _ = phase_cross_correlation(source, target,
-                                                upsample_factor=upsample_factor)
+                                                   **params)
         shifts = -shifts  # displacement = -registration = dst - src
     elif method == 'opti':
-        shifts, error = phase_registration_optim(source, target, phase=True)
+        shifts, error = phase_registration_optim(source, target,
+                                                 **params)
+    else:
+        raise ValueError("method must be 'skimage' or 'opti'")
 
     dx = shifts[1] + (ij_tgt[1] - ij_src[1])
     dy = shifts[0] + (ij_tgt[0] - ij_src[0])
+
     return dx, dy, error
 
 
@@ -432,7 +456,7 @@ def grad_dft(data, yx):
     return np.array([grady, gradx])
 
 
-def phase_registration_optim(A, B, phase=True):
+def phase_registration_optim(A, B, phase=True, verbose=False):
     """Find translation between images A and B
     as the argmax of the phase cross corelation
     use iterative optimization
@@ -483,7 +507,52 @@ def phase_registration_optim(A, B, phase=True):
     #    return -np.real(grad_dft(ab, xy))
 
     res = minimize(cost, argmax, args=(phase, ), method='BFGS', tol=1e-3)#, jac=jac)
-    return res.x, 0  # res.hess_inv
+    if verbose:
+        print(res)
+    return -res.x, 0  # res.hess_inv
+
+
+
+def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
+    """Output the cross correlation (or phase)
+
+    Parameters
+    ----------
+    A : [type]
+        [description]
+    B : [type]
+        [description]
+    upsamplefactor : int, optional
+        [description], by default 1
+    phase : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    if phase:
+        u = blackman(A.shape[0])
+        v = blackman(A.shape[1])
+        window = u[:, np.newaxis] * v[np.newaxis, :]
+    else:
+        window = 1
+
+    a, b = fftn(A * window), fftn(B * window)
+    ab = a * b.conj()
+    if phase:
+        ab = ab / np.abs(ab)
+    phase_corr = ifftn(fftshift(ab),
+                       s=upsamplefactor*np.array(ab.shape))
+    phase_corr = np.abs( fftshift(phase_corr) )
+
+    dx_span = fftshift( fftfreq(phase_corr.shape[1]) )*A.shape[1]
+    dy_span = fftshift( fftfreq(phase_corr.shape[0]) )*A.shape[0]
+
+    return dx_span, dy_span, phase_corr
+
+
 
 if __name__ == "__main__":
     import doctest
