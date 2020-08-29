@@ -26,7 +26,7 @@ The method used here corresponds to the figure (d) below:
 
 ## Links:
 
-* [**➡module documentation and notes**](https://xdze2.github.io/stretchablecorr/)
+* [**➡ module documentation and notes**](https://xdze2.github.io/stretchablecorr/)
 * jupyter notebook (use jupytext) for [correlations computation](https://github.com/xdze2/stretchablecorr/blob/master/run_corr.py)
 * jupyter notebook (use jupytext) for [post-process](https://github.com/xdze2/stretchablecorr/blob/master/post_process.py)
 
