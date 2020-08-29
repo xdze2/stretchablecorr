@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>math_DIC</title>
+  <title>math DIC</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -13,8 +13,8 @@
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
   </style>
-  <link rel="stylesheet" href="pandoc.css" />
-  <script src="./katex.min.js"></script>
+  <link rel="stylesheet" href="./files/pandoc.css" />
+  <script src="./files/katex.min.js"></script>
   <script>document.addEventListener("DOMContentLoaded", function () {
    var mathElements = document.getElementsByClassName("math");
    var macros = [];
@@ -29,15 +29,18 @@
      });
   }}});
   </script>
-  <link rel="stylesheet" href="./katex.min.css" />
+  <link rel="stylesheet" href="./files/katex.min.css" />
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
   <![endif]-->
 </head>
 <body>
+<header id="title-block-header">
+<h1 class="title">math DIC</h1>
+</header>
 <section id="foodic" class="level3">
 <h3>DIC</h3>
-<ul class="incremental">
+<ul>
 <li><p>Presentation of the problem, pratical and theoretical</p></li>
 <li><p>Application, and link to other field</p></li>
 </ul>
@@ -58,7 +61,7 @@ f( x + u{\small(x)} ) \approx g(x)
 <p><em>note:</em> Cross-correlation (<span class="math inline">f\cdot g</span>) and square of the difference are related, when images are normalized (See review by B. Pan et al.&#xA0;2009).</p>
 <p><em>question:</em> Could the normalization be local or global?</p>
 <p>DIC algorithm involves the three following parts:</p>
-<ul class="incremental">
+<ul>
 <li><p><strong>Discretization</strong> of the integrale over the spatial domain <span class="math inline">\Omega</span>: local/global continuity of the displacement field across adjacent elements is enforced for global element (FE), whereas elements are independant in local methods (point based, sparse)</p>
 <p><span class="math display">
 \eta^2 = \sum_i \int_{\Omega_i} \left[\, f(x+u_i{\small (x)})-g(x)\, \right]^2 \, dx
@@ -79,7 +82,7 @@ u^{(k+1)} = \underset{u_i}{\operatorname{argmin}}\; \sum_i \int_{\Omega_i^k} [f(
 </span></p>
 <p><span class="math inline">f_x^{k+1}</span> is the gradient of the image <span class="math inline">f</span> using spatial wavelength of the level <span class="math inline">k+1</span>.</p>
 <p>The integration domain used is the one deduced from the previous level.</p>
-<ul class="incremental">
+<ul>
 <li>Symmetrize f and g? <span class="math inline">f\leftarrow (f+g)/2</span> and <span class="math inline">g \leftarrow (g-f)/2</span></li>
 </ul>
 </section>

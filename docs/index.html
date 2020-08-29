@@ -1,29 +1,106 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
 <head>
-<meta charset="utf-8">
-<title>stretchablecorr documentation</title>
-<meta name="description" content="" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>introduction</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="./files/pandoc.css" />
+  <script src="./files/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   var macros = [];
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     katex.render(texText.data, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      macros: macros,
+      fleqn: false
+     });
+  }}});
+  </script>
+  <link rel="stylesheet" href="./files/katex.min.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
 </head>
 <body>
-<h1>stretchablecorr documentation</h1>
-
-<h2>Modules</h2>
+<header id="title-block-header">
+<h1 class="title">introduction</h1>
+</header>
+<p><strong>Digital Image Correlation</strong> is part of the more general problem of finding the best geometric transformation allowing to match two digital images. This class of problem is refered as <em>image registration</em> and are encounter in various domains:</p>
 <ul>
-    <li><a href="./stretchablecorr.html">stretchablecorr.py</a></li>
-    <li><a href="./filetools.html">filetools.py</a></li>
+<li>Remote sensing community to study satellite images</li>
+<li>Medical imagery</li>
+<li><a href="https://en.wikipedia.org/wiki/Super-resolution_imaging">Super-resolution</a></li>
+<li>Image stacking (astronomy)</li>
+<li><a href="https://en.wikipedia.org/wiki/Particle_image_velocimetry">Particle image velocimetry</a></li>
 </ul>
-
-
-<h2>notes</h2>
+<p>Other problems in computer vision are also related:</p>
 <ul>
-    <li><a href="./introduction.html">introduction</a></li>
-    <li><a href="./list_DICsoftwares.html">DIC softwares</a></li>
-    <li><a href="./image_registration_math.html">image registration math</a></li>
-    <li><a href="./math_DIC.html">math DIC</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Optical_flow">Optical flow</a> used in computer vision. See for instance the <a href="https://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method">Lucas&#x2013;Kanade method</a></li>
+<li>feature matching</li>
+<li><a href="https://en.wikipedia.org/wiki/3D_reconstruction_from_multiple_images">Stereophotogrammetry</a> (3D reconstruction from a set of pictures) (i.e.&#xA0;stereoscopic vision)</li>
 </ul>
-    
-
-
+<p>&#x2013;</p>
+<p>The general formulation of the image registration is to find the transformation between the two images that optimizes a particular criterion:</p>
+<p><span class="math display">
+\underset{\theta}{\text{argmin}} \;\big\langle A(x),\, B(\, \small{T_\theta(x)}\,) \big\rangle
+</span></p>
+<p>where <span class="math inline">T_\theta(\bullet)</span> is a family of geometric transformation function paramatrized by the parameter set <span class="math inline">\theta</span> and <span class="math inline">\langle \bullet ,\, \bullet \rangle</span> is a cost function.</p>
+<p>Possible transformations could be classified regarding their order:</p>
+<ul>
+<li>Constant: translation <span class="math inline">u( x) = Const.</span></li>
+<li>Linear: rotation, scaling and deformation <span class="math inline">u(x) = C + M\times x</span></li>
+<li>Non-linear: quadratic, splines&#x2026; etc</li>
+</ul>
+<figure>
+<img src="../docs/files/a9287707b295e049a77e1bb3678c2d26d4a54f0f.png" alt="" /><figcaption>./files/def_states.png</figcaption>
+</figure>
+<p>Distinction between <strong>local</strong> and <strong>global</strong> methods are sometime used for Digital Image Correlation methods, which could be understood as low or high order methods.</p>
+<p>Any high order deformation could be reduced to a low order transformations provided that:</p>
+<ul>
+<li>small enough local parts of the image are considered (<a href="https://en.wikipedia.org/wiki/Region_of_interest">ROI</a>) (Taylor decomposition)</li>
+<li>and that the two images are similar enough</li>
+</ul>
+<p>One advantage of high order methods is that deformation field <span class="math inline">\varepsilon_{ij}(x)</span> is directly obtained, in addition to the displacement field <span class="math inline">u_i(x)</span>. To numericaly derive the deformation from the estimated displacement field, interpolation and smoothing methods have to be used.</p>
+<p>Further hypothesis which are obvious in case of mechanical test analysis:</p>
+<ul>
+<li>the two observed sampled images represent the same scene</li>
+<li>obtained under similar conditions (same set-up and same camera)</li>
+<li>sampled on identical grids</li>
+</ul>
+<section id="foonext" class="level4">
+<h4>Next</h4>
+<ul>
+<li><a href="./images_registration.html">math of images registration</a></li>
+<li><a href="./list_DICsoftwares.html">List of DIC softwares</a></li>
+<li>Bibliography on DIC (specific to mecanical test)</li>
+</ul>
+</section>
+<section id="foosome-references" class="level4">
+<h4>Some references</h4>
+<ul>
+<li><p>Pan, Bing, Kemao Qian, Huimin Xie, et Anand Asundi. &#xAB;&#xA0;Two-Dimensional Digital Image Correlation for in-Plane Displacement and Strain Measurement: A Review&#xA0;&#xBB;. Measurement Science and Technology 20, n&#x1D52; 6 (1 juin 2009): 062001. https://doi.org/10.1088/0957-0233/20/6/062001.</p></li>
+<li><p>Stone, H.S., M.T. Orchard, Ee-Chien Chang, et S.A. Martucci. &#xAB; A Fast Direct Fourier-Based Algorithm for Subpixel Registration of Images &#xBB;. IEEE Transactions on Geoscience and Remote Sensing 39, n&#x1D52; 10 (octobre 2001): 2235&#x2011;43. https://doi.org/10.1109/36.957286.</p></li>
+</ul>
+</section>
+<section id="fooremarks" class="level4">
+<h4>Remarks</h4>
+<p>[1] <span class="math inline">T_\theta(B(x))</span> could be written</p>
+<p>[2] Continuous notation is used here <span class="math inline">A(x)</span>. However, digital images are discrete. At the end, intensity of pixels <span class="math inline">\mathtt A[i, j]</span> will be used. Also, computing the cost function will require to obtain image intensity at non-integer pixel position. Displacement smaller than one pixel could be deduced with appropriate method (sub&#xEE;xel accuracy). For these reason, <span class="math inline">A(x)</span> refere to the theoretical &#x201C;true&#x201D; image, before the acquisition and the sampling. Interpolation and smoothing methods will be used to get an estimation of <span class="math inline">A(x)</span> from the actual measured image <span class="math inline">\mathtt A[i, j]</span></p>
+<hr />
+<p><a href="https://github.com/xdze2/stretchablecorr">&#x2190; back to github page</a></p>
+</section>
 </body>
 </html>

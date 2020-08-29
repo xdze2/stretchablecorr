@@ -65,9 +65,9 @@ verbosity: INFO
 #columns: 78
 #dpi: 72
 
-extract-media: mediadir
+extract-media: ../docs/files
 
-table-of-contents: true
+table-of-contents: false
 toc-depth: 2
 number-sections: false
 # a list of offsets at each heading level
@@ -98,7 +98,7 @@ listings: false
 # you may specify a url with webtex, mathjax, katex
 html-math-method:
   method: katex
-  url: ./
+  url: ./files/
 # none, references, or javascript
 email-obfuscation: javascript
 
@@ -125,7 +125,7 @@ track-changes: accept
 
 html-q-tags: false
 css:
-- pandoc.css
+- ./files/pandoc.css
 
 # none, all, or best
 ipynb-output: best
