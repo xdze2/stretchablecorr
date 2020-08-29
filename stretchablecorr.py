@@ -9,7 +9,7 @@ except ImportError:
     print('Warning: scikit-image not up-to-date')
     from skimage.feature import register_translation as phase_cross_correlation
 
-
+from opti_registration import phase_registration_optim
 
 
 def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
@@ -67,7 +67,7 @@ def crop(I, xy_center, half_size):
     I_crop = I[i_slicing, j_slicing]
 
     if I_crop.shape[:2] != (2*half_size+1, 2*half_size+1):
-        raise ValueError("crop out of image bounds", i, j, I_crop.shape)
+        raise ValueError("crop out of image bounds", I_crop.shape)
 
     return I_crop, (i, j)
 
@@ -77,11 +77,14 @@ def get_shifts(I, J, x, y,
                offset=(0.0, 0.0),
                method='skimage',
                coarse_search=True, **params):
-    """Cross-correlation between images I and J,
-        at the position (x, y) using a windows of size `2*window_half_size + 1`
+    """Interface to perform local shifts estimation between images I and J,
+       at position (x, y) using a window of size `2*window_half_size + 1`
 
-    see `phase_cross_correlation` from skimage
+    Available methods:  
+    - 'skimage': see `phase_cross_correlation` from skimage
     https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
+
+    - 'opti': use iterative optimization to find the maximum
 
     Parameters
     ----------
@@ -415,142 +418,6 @@ def bilinear_fit(points, displacements):
     residuals_NaN[mask, :] = residuals_xy
 
     return coefficients, residuals_NaN
-
-
-# ===========================
-#  Phase image registration
-# ===========================
-import numpy as np
-from scipy.fft import fftn, ifftn
-from scipy.fft import fftshift, fftfreq
-from scipy.signal.windows import blackman
-from scipy.optimize import minimize
-
-
-def dft_tensordot(A, yx):
-    im2pi = 1j * 2 * np.pi
-    y, x = yx
-    yky = np.exp( im2pi * y * fftfreq(A.shape[0]) )
-    xkx = np.exp( im2pi * x * fftfreq(A.shape[1]) )
-
-    a = np.tensordot(xkx, A, axes=(0, -1))
-    a = np.tensordot(yky, a, axes=(0, -1))
-    return a
-
-
-def grad_dft(data, yx):
-    im2pi = 1j * 2 * np.pi
-    y, x = yx
-    kx = im2pi * fftfreq(data.shape[1])
-    ky = im2pi * fftfreq(data.shape[0])
-
-    exp_kx = np.exp(x * kx)
-    exp_ky = np.exp(y * ky)
-
-    gradx = np.tensordot(exp_kx * kx, data, axes=(0, -1))
-    gradx = np.tensordot(exp_ky, gradx, axes=(0, -1))
-
-    grady = np.tensordot(exp_kx, data, axes=(0, -1))
-    grady = np.tensordot(exp_ky * ky, grady, axes=(0, -1))
-
-    return np.array([grady, gradx])
-
-
-def phase_registration_optim(A, B, phase=True, verbose=False):
-    """Find translation between images A and B
-    as the argmax of the phase cross corelation
-    use iterative optimization
-
-    Parameters
-    ----------
-    A : [type]
-        [description]
-    B : [type]
-        [description]
-
-    Returns
-    -------
-    [type]
-        [description]
-    """
-    upsamplefactor = 1
-
-    u = blackman(A.shape[0])
-    v = blackman(A.shape[1])
-    window = u[:, np.newaxis] * v[np.newaxis, :]
-    if not phase:
-        window = 1
-
-    a = fftn(A * window)
-    b = fftn(B * window)
-
-    ab = a * b.conj()
-    if phase:
-        phase = ab / np.abs(ab)
-    else:
-        phase = ab
-    phase_corr = ifftn(fftshift(phase),
-                       s=upsamplefactor*np.array(ab.shape))
-    phase_corr = np.abs( fftshift(phase_corr) )
-
-    dx_span = fftshift( fftfreq(phase_corr.shape[1]) )*A.shape[1]
-    dy_span = fftshift( fftfreq(phase_corr.shape[0]) )*A.shape[0]
-
-    # argmax
-    argmax_idx = np.unravel_index(np.argmax(phase_corr), phase_corr.shape)
-    argmax = dy_span[argmax_idx[0]], dx_span[argmax_idx[1]]
-
-    def cost(xy, ab):
-        return -np.abs(dft_tensordot(ab, xy))
-
-    #def jac(xy, ab):
-    #    return -np.real(grad_dft(ab, xy))
-
-    res = minimize(cost, argmax, args=(phase, ), method='BFGS', tol=1e-3)#, jac=jac)
-    if verbose:
-        print(res)
-    return -res.x, 0  # res.hess_inv
-
-
-
-def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
-    """Output the cross correlation (or phase)
-
-    Parameters
-    ----------
-    A : [type]
-        [description]
-    B : [type]
-        [description]
-    upsamplefactor : int, optional
-        [description], by default 1
-    phase : bool, optional
-        [description], by default True
-
-    Returns
-    -------
-    [type]
-        [description]
-    """
-    if phase:
-        u = blackman(A.shape[0])
-        v = blackman(A.shape[1])
-        window = u[:, np.newaxis] * v[np.newaxis, :]
-    else:
-        window = 1
-
-    a, b = fftn(A * window), fftn(B * window)
-    ab = a * b.conj()
-    if phase:
-        ab = ab / np.abs(ab)
-    phase_corr = ifftn(fftshift(ab),
-                       s=upsamplefactor*np.array(ab.shape))
-    phase_corr = np.abs( fftshift(phase_corr) )
-
-    dx_span = fftshift( fftfreq(phase_corr.shape[1]) )*A.shape[1]
-    dy_span = fftshift( fftfreq(phase_corr.shape[0]) )*A.shape[0]
-
-    return dx_span, dy_span, phase_corr
 
 
 
