@@ -98,7 +98,7 @@ listings: false
 # you may specify a url with webtex, mathjax, katex
 html-math-method:
   method: katex
-  url: ./files/
+  url: files/
 # none, references, or javascript
 email-obfuscation: javascript
 
