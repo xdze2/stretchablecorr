@@ -65,7 +65,7 @@ verbosity: INFO
 #columns: 78
 #dpi: 72
 
-extract-media: ../docs/files
+extract-media: ../docs/
 
 table-of-contents: false
 toc-depth: 2
@@ -98,7 +98,7 @@ listings: false
 # you may specify a url with webtex, mathjax, katex
 html-math-method:
   method: katex
-  url: files/
+  url: ./
 # none, references, or javascript
 email-obfuscation: javascript
 
@@ -125,7 +125,7 @@ track-changes: accept
 
 html-q-tags: false
 css:
-- ./files/pandoc.css
+- ./pandoc.css
 
 # none, all, or best
 ipynb-output: best
