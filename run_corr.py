@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.3.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -136,9 +136,20 @@ meta = {'window_half_size':window_half_size,
 ft.save_data((grid, displ_Euler, meta),
              f'displ_Euler_img_to_img_{len(points)}pts',
              sample_name)
+
+
 # -
 
 # ## 2. Lagrangian displacement
+
+def integrate_displacement(displ_Lagrangian):
+    # add zeros at the begining
+    zeros = np.zeros_like(displ_Lagrangian[0])[np.newaxis, :, :]
+    displ_Lagrangian_zero = np.concatenate([zeros, displ_Lagrangian], axis=0)
+
+    displ_lagrangian_to_ref = np.cumsum(displ_Lagrangian_zero, axis=0)
+    return displ_lagrangian_to_ref
+
 
 # +
 # ==================
@@ -199,18 +210,6 @@ if save:
     ft.save_data((grid, displ_Lagrangian, meta),
                  f'displ_Lagrangian_img_to_img_{len(points)}pts',
                   sample_name)
-
-
-# -
-def integrate_displacement(displ_Lagrangian):
-    # add zeros at the begining
-    zeros = np.zeros_like(displ_Lagrangian[0])[np.newaxis, :, :]
-    displ_Lagrangian_zero = np.concatenate([zeros, displ_Lagrangian], axis=0)
-
-    displ_lagrangian_to_ref = np.cumsum(displ_Lagrangian_zero, axis=0)
-    return displ_lagrangian_to_ref
-
-
 # +
 # Integrate
 # image-to-image fields to get image-to-ref displ.
@@ -226,7 +225,9 @@ mask = ~np.any(np.isnan(displ_Lagrangian), axis=(0, 2))
 displ_Lagrangian_dict = {}
 
 # +
+# ========================
 # compare skimage vs optim
+# ========================
 upsample_factor  = 100
 window_half_size = 12
 save = False
@@ -545,5 +546,72 @@ def test(a, b, c='a', **kwargs):
 
 
 test(1, 2, yo='1')
+
+# ## error RMS
+
+k = 12
+point_k = points[k, None]
+
+point_k
+
+# +
+upsample_factor  = 100
+window_half_size = 20
+
+
+displ_Lagrangian1, err1 = track_displ_img_to_img(cube[::1], point_k,
+                                               method='skimage',
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor,
+                                               coarse_search=True,
+                                               offsets=None)
+displ_Lagrangian_to_ref1 = integrate_displacement(displ_Lagrangian1)
+
+displ_Lagrangian2, err2 = track_displ_img_to_img(cube[::2], point_k,
+                                               method='skimage',
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor,
+                                               offsets=displ_Lagrangian_to_ref1)
+
+
+
+displ_Lagrangian12, err12 = track_displ_img_to_img(cube[::1], point_k,
+                                               method='skimage',
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor,
+                                               coarse_search=False,
+                                               offsets=displ_Lagrangian_to_ref1)
+
+displ_Lagrangian3, err3 = track_displ_img_to_img(cube[::3], point_k,
+                                               method='skimage',
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor,
+                                               offsets=displ_Lagrangian_to_ref1)
+
+displ_Lagrangian4, err4 = track_displ_img_to_ref(cube, point_k,
+                                               method='skimage',
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor,
+                                               offsets=displ_Lagrangian_to_ref1)
+# -
+
+
+plt.plot(np.arange(0, len(err1), 1), err1, label='1 by 1')
+plt.plot(np.arange(0, len(err1), 1), err12, label='1 by 1, no search')
+plt.plot(np.arange(0, len(err1), 2), err2, label='2 by 2')
+plt.plot(np.arange(0, len(err1)-1, 3), err3, label='3 by 3')
+plt.plot(np.arange(0, len(err4), 1), err4, label='to ref')
+plt.legend();
+
+displ_Lagrangian_to_ref2 = integrate_displacement(displ_Lagrangian2)
+displ_Lagrangian_to_ref1 = integrate_displacement(displ_Lagrangian1)
+displ_Lagrangian_to_ref3 = integrate_displacement(displ_Lagrangian3)
+
+plt.plot(*displ_Lagrangian_to_ref1[:, 0, :].T, '-o')
+plt.plot(*displ_Lagrangian_to_ref2[:, 0, :].T)
+plt.plot(*displ_Lagrangian_to_ref3[:, 0, :].T)
+plt.plot(*displ_Lagrangian4[:, 0, :].T)
+
+#
 
 
