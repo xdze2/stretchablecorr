@@ -145,14 +145,13 @@ ft.save_data((grid, displ_Euler, meta),
 #  Define the grid
 # ==================
 
-grid_spacing = 120
-window_half_size = 35
+grid_spacing = 180
+window_half_size = 100
 grid_margin = window_half_size * 3//2
 
 # ----
 grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
 points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
-
 
 # Graph the grid
 plt.figure();
@@ -183,7 +182,10 @@ displ_Lagrangian_coarse, err = track_displ_img_to_img(cube, points,
 # 3. get image-to-image displacements
 print('Compute image-to-image Lagrangian displacement field:')
 
-upsample_factor  = 50 
+upsample_factor  = 50
+window_half_size = 50
+save = False
+
 displ_Lagrangian, err = track_displ_img_to_img(cube, points,
                                                method='skimage',
                                                window_half_size=window_half_size,
@@ -191,20 +193,29 @@ displ_Lagrangian, err = track_displ_img_to_img(cube, points,
                                                offsets=displ_Lagrangian_coarse)
 
 # Save data
-meta = {'window_half_size':window_half_size,
-        'upsample_factor':upsample_factor}
-ft.save_data((grid, displ_Lagrangian, meta),
-             f'displ_Lagrangian_img_to_img_{len(points)}pts',
-              sample_name)
+if save:
+    meta = {'window_half_size':window_half_size,
+            'upsample_factor':upsample_factor}
+    ft.save_data((grid, displ_Lagrangian, meta),
+                 f'displ_Lagrangian_img_to_img_{len(points)}pts',
+                  sample_name)
+
+
+# -
+def integrate_displacement(displ_Lagrangian):
+    # add zeros at the begining
+    zeros = np.zeros_like(displ_Lagrangian[0])[np.newaxis, :, :]
+    displ_Lagrangian_zero = np.concatenate([zeros, displ_Lagrangian], axis=0)
+
+    displ_lagrangian_to_ref = np.cumsum(displ_Lagrangian_zero, axis=0)
+    return displ_lagrangian_to_ref
+
+
 # +
 # Integrate
 # image-to-image fields to get image-to-ref displ.
 
-# add zeros at the begining
-zeros = np.zeros_like(displ_Lagrangian[0])[np.newaxis, :, :]
-displ_Lagrangian_zero = np.concatenate([zeros, displ_Lagrangian], axis=0)
-
-displ_lagrangian_to_ref = np.cumsum(displ_Lagrangian_zero, axis=0)
+displ_lagrangian_to_ref = integrate_displacement(displ_Lagrangian_zero)
 print(f'{len(displ_lagrangian_to_ref)=}')
 positions = displ_lagrangian_to_ref + points
 
@@ -212,6 +223,134 @@ positions = displ_lagrangian_to_ref + points
 mask = ~np.any(np.isnan(displ_Lagrangian), axis=(0, 2))
 # -
 
+displ_Lagrangian_dict = {}
+
+# +
+# compare skimage vs optim
+upsample_factor  = 100
+window_half_size = 12
+save = False
+
+displ_Lagrangian_to_ref = {}
+displ_Lagrangian_dict = {}
+displ_Lagrangian, err = track_displ_img_to_img(cube, points,
+                                               method='skimage',
+                                               window_half_size=window_half_size,
+                                               upsample_factor=upsample_factor,
+                                               offsets=None)
+
+displ_Lagrangian_dict['sk_25px_x100'] = displ_Lagrangian
+displ_Lagrangian_to_ref['sk_25px_x100'] = integrate_displacement(displ_Lagrangian)
+
+# +
+window_half_size = 12
+save = False
+
+displ_Lagrangian, err = track_displ_img_to_img(cube, points,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               offsets=None)
+
+displ_Lagrangian_dict['opti_12px'] = displ_Lagrangian
+displ_Lagrangian_to_ref['opti_12px'] = integrate_displacement(displ_Lagrangian)
+
+# +
+window_half_size = 12
+save = False
+
+displ_Lagrangian, err = track_displ_img_to_img(cube, points,
+                                               method='opti',
+                                               phase=False,
+                                               window_half_size=window_half_size,
+                                               offsets=None)
+
+displ_Lagrangian_dict['opti_cc_12px'] = displ_Lagrangian
+displ_Lagrangian_to_ref['opti_cc_12px'] = integrate_displacement(displ_Lagrangian)
+
+# +
+k = 11
+for key, displ in displ_Lagrangian_to_ref.items():
+    plt.plot(*displ[:, k].T, '-', label=key)
+    
+plt.legend();
+plt.axis('equal');
+
+#plt.xlim([-15, 0]);
+#plt.ylim([-15, 0]);
+# -
+
+points[k:k+1, :]
+
+displ_Lagrangian, err = track_displ_img_to_img(cube, points[k:k+1, :],
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               offsets=None)
+
+dif = displ_Lagrangian_dict['sk_25px_x100'] - displ_Lagrangian_dict['opti_25px']
+d = np.sqrt(dif[:, :, 0]**2 + dif[:, :, 1]**2)
+
+np.argmax(d[:, k])
+
+# +
+window_half_size = 35
+save = False
+
+displ_Lagrangian, err = track_displ_img_to_img(cube, points,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               offsets=None)
+displ_Lagrangian_dict['opti_35px'] = displ_Lagrangian
+
+displ_Lagrangian_to_ref['opti_35px'] = integrate_displacement(displ_Lagrangian)
+
+# +
+window_half_size = 35
+save = False
+
+displ_Lagrangian, err = track_displ_img_to_img(cube, points,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               phase=False,
+                                               offsets=None)
+displ_Lagrangian_dict['opti_noPhase_35px'] = displ_Lagrangian
+displ_Lagrangian_to_ref['opti_noPhase_35px'] = integrate_displacement(displ_Lagrangian)
+
+# +
+dif = displ_Lagrangian_dict['opti_noPhase_35px'] - displ_Lagrangian_dict['opti_35px']
+
+d = np.sqrt(dif[:, :, 0]**2 + dif[:, :, 1]**2)
+# -
+
+np.nanargmax(d.flatten(), axis=0)
+
+d[:, 75]
+
+d[np.argmax(d, axis=0)].T
+
+displ_Lagrangian_one, err = track_displ_img_to_img(cube, points,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               offsets=None)
+
+displ_Lagrangian_to_ref_one = integrate_displacement(displ_Lagrangian_one)
+
+displ_Lagrangian_two, err = track_displ_img_to_img(cube[::2], points,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               offsets=None)
+
+displ_Lagrangian_to_ref_two = integrate_displacement(displ_Lagrangian_two)
+
+# +
+k = 25
+plt.plot(*displ_Lagrangian_to_ref_two[:, k].T, '-')
+plt.plot(*displ_Lagrangian_to_ref_one[:, k].T, '-')
+    
+plt.legend();
+plt.axis('equal');
+# -
+
+# Plot all crop zones
 point_id = 25
 window_half_size = 35
 for k, (B, displ) in enumerate(zip(cube, displ_lagrangian_to_ref)):
@@ -219,6 +358,151 @@ for k, (B, displ) in enumerate(zip(cube, displ_lagrangian_to_ref)):
     source, ij_src = crop(B, offset, window_half_size)
     plt.figure(figsize=(2, 2));
     plt.imshow(source)
+
+# +
+k = 10
+window_half_size = 10
+displ_Lagrangian_to_ref = {}
+
+displ_Lagrangian_opti, err = track_displ_img_to_img(cube, points[k:k+1, :],
+                                                    method='opti',
+                                                   window_half_size=window_half_size,
+                                                    coarse_search=True,
+                                                    offsets=None)
+displ_Lagrangian_to_ref['opti'] = integrate_displacement(displ_Lagrangian_opti)
+
+displ_Lagrangian_opti, err = track_displ_img_to_img(cube, points[k:k+1, :],
+                                                    method='opti',
+                                                   window_half_size=2*window_half_size,
+                                                    coarse_search=True,
+                                                    offsets=None)
+displ_Lagrangian_to_ref['opti 2x'] = integrate_displacement(displ_Lagrangian_opti)
+
+displ_Lagrangian_skim, err = track_displ_img_to_img(cube, points[k:k+1, :],
+                                                    method='skimage',
+                                                    window_half_size=window_half_size,
+                                                    coarse_search=True,
+                                                    offsets=None)
+
+displ_Lagrangian_to_ref['skimage'] = integrate_displacement(displ_Lagrangian_skim)
+
+
+# +
+for key, displ in displ_Lagrangian_to_ref.items():
+    plt.plot(*displ[:, 0].T, '-', label=key)
+    
+plt.legend();
+plt.axis('equal');
+# -
+
+if -3:
+    print(3)
+
+dif = displ_Lagrangian_to_ref['opti'] - displ_Lagrangian_to_ref['skimage']
+d = np.sqrt(dif[:, :, 0]**2 + dif[:, :, 1]**2)
+
+plt.plot(d, 'o-')
+
+# +
+# Phase optim  VS  cross corr
+k = 10
+window_half_size = 100
+iA, iB = 17, 18
+
+pts = points[k] + displ_Lagrangian_to_ref['skimage'][iA, :]
+
+# +
+window_half_size = 25
+displ_Lagrangian_skim, err = track_displ_img_to_img(cube[iA:iB+1], pts,
+                                                    method='skimage',
+                                                    window_half_size=window_half_size,
+                                                    offsets=None)
+
+displ_Lagrangian_opti, err = track_displ_img_to_img(cube[iA:iB+1], pts,
+                                                    method='opti',
+                                                    window_half_size=window_half_size,
+                                                    offsets=None)
+# -
+
+print(displ_Lagrangian_skim)
+print(displ_Lagrangian_opti)
+
+# get offset
+dx, dy, err = get_shifts(cube[iA], cube[iB], *pts, upsample_factor=100,
+                         window_half_size=45, method='skimage', coarse_search=False)
+print(dx, dy)
+
+# get offset
+dx, dy, err = get_shifts(cube[iA], cube[iB], *pts, upsample_factor=100,
+                         window_half_size=25, method='skimage', coarse_search=True)
+print(dx, dy)
+
+# get offset
+dx, dy, err = get_shifts(cube[iA], cube[iB], *pts, 
+                         window_half_size=45, method='opti', coarse_search=True)
+print(dx, dy)
+
+-11.22 + 11.04
+
+-11.245+0.976
+
+pts = pts.flatten()
+
+# +
+offset = np.array([-11, -2])
+
+window_half_size = 45
+A, ij_srca = crop(cube[iA], pts, window_half_size)
+B, ij_srcb = crop(cube[iB], pts+offset, window_half_size)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12,4))
+ax1.imshow(A);
+ax2.imshow(B);
+# -
+
+ij_srca, ij_srcb
+
+# +
+dx_span_ph, dy_span_ph, AdotB_pĥase = output_cross_correlation(A, B, upsamplefactor=5, phase=True)
+dxy_phase, err = phase_registration_optim(A, B, phase=True, verbose=False)
+print('phase:', dxy_phase)
+
+dx_span, dy_span, AdotB_corr = output_cross_correlation(A, B, upsamplefactor=5, phase=False)
+dxy_corr, err = phase_registration_optim(A, B, phase=False)
+
+print('corr: ', dxy_corr)
+print('skim: ', phase_cross_correlation(A, B, upsample_factor=100)[0])
+zoom_size = 8
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12,4))
+ax1.pcolormesh(-dx_span_ph, -dy_span_ph, AdotB_pĥase); plt.axis('equal');
+ax1.plot(*dxy_phase[::-1], "or")
+ax2.plot(*dxy_phase[::-1], "or")
+
+ax1.set_ylim([-zoom_size + dxy_phase[0], zoom_size + dxy_phase[0]]);
+ax1.set_xlim([-zoom_size + dxy_phase[1], zoom_size + dxy_phase[1]]);
+
+ax2.pcolormesh(-dx_span_ph, -dy_span_ph, AdotB_corr); plt.axis('equal');
+ax2.plot(*dxy_corr[::-1], "xk")
+ax1.plot(*dxy_corr[::-1], "xw")
+
+ax2.set_ylim([-zoom_size + dxy_phase[0], zoom_size + dxy_phase[0]]);
+ax2.set_xlim([-zoom_size + dxy_phase[1], zoom_size + dxy_phase[1]]);
+# -
+
+dx_span, dy_span, AdotB = output_cross_correlation(A, B, upsamplefactor=5, phase=False)
+(dx, dy), err = phase_registration_optim(A, B, phase=False)
+print(dx, dy)
+plt.pcolormesh(dx_span, dy_span, AdotB); plt.axis('equal');
+plt.plot(dy, dx, "or")
+zoom_size = 2
+plt.ylim([-zoom_size - dy, zoom_size - dy]);
+plt.xlim([-zoom_size - dx, zoom_size - dx]);
+
+phase_cross_correlation(A, B, upsample_factor=100)
+
+dx, dy, AdotB = output_cross_correlation(A, B, upsamplefactor=5, phase=False)
+plt.pcolormesh(dx, dy, AdotB); plt.axis('equal');
 
 # +
 k = 36
