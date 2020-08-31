@@ -118,9 +118,9 @@ def get_shifts(I, J, x, y,
     dx, dy = offset
 
     if coarse_search:
-        coarse_window_half_size = 3*window_half_size
-        x_margin = min(x, I.shape[1]-x)
-        y_margin = min(y, I.shape[0]-y)
+        coarse_window_half_size = 100 # 3*window_half_size
+        x_margin = int(min(x, I.shape[1]-x))
+        y_margin = int(min(y, I.shape[0]-y))
         coarse_window_half_size = min(coarse_window_half_size, x_margin, y_margin)
         source, ij_src = crop(I, (x, y), coarse_window_half_size)
         target, ij_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
