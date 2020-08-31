@@ -312,12 +312,11 @@ def track_displ_img_to_img(images, start_points,
 
 # broken:
 def track_displ_img_to_ref(images, start_points,
-                           window_half_size, upsample_factor,
-                           offsets=None, method='skimage',
-                           verbose=True):
-    params = {'window_half_size':window_half_size,
-              'upsample_factor':upsample_factor,
-              'method':method}
+                           offsets=None,
+                           verbose=True, **params):
+    #params = {'window_half_size':window_half_size,
+    #          'upsample_factor':upsample_factor,
+    #          'method':method}
 
     if offsets is None:
         offsets = np.zeros((len(images)-1, len(start_points), 2))

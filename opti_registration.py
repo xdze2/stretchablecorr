@@ -114,7 +114,7 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
                    jac=jac)
     if verbose:
         print(res)
-    return -res.x, np.trace(res.hess_inv)
+    return -res.x, np.trace(res.hess_inv)*np.std(A-B)*1.6
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):

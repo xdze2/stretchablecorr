@@ -554,7 +554,7 @@ ft.plot_grid_points(grid, background=cube[0],
                     window_half_size=window_half_size)
 # -
 
-k = 4
+k = 50
 point_k = points[k, None]
 
 point_k
@@ -619,6 +619,13 @@ displ_Lagrangian7, err7 = track_displ_img_to_img(cube[::3], point_k,
                                                phase=True,
                                                coarse_search=True,
                                                offsets=displ_Lagrangian_to_ref1)
+
+displ_Lagrangian8, err8 = track_displ_img_to_ref(cube, point_k,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               phase=True,
+                                               coarse_search=True,
+                                               offsets=displ_Lagrangian_to_ref1)
 # -
 
 
@@ -629,9 +636,10 @@ plt.plot(np.arange(0, len(err1)-1, 3), err3, label='3 by 3')
 plt.plot(np.arange(0, len(err4), 1), err4, label='to ref')
 plt.legend();
 
-plt.plot(np.arange(0, len(err5), 1), err5, label='trace H-1')
-plt.plot(np.arange(0, len(err5), 2), err6, label='trace H-1 2by2')
-plt.plot(np.arange(0, len(err5)-1, 3), err7, label='trace H-1 3by3')
+plt.semilogy(np.arange(0, len(err5), 1), err5, label='trace H-1')
+plt.semilogy(np.arange(0, len(err5), 2), err6, label='trace H-1 2by2')
+plt.semilogy(np.arange(0, len(err5)-1, 3), err7, label='trace H-1 3by3')
+plt.semilogy(np.arange(0, len(err5), 1), err8, label='trace H-1 to ref')
 plt.legend();
 
 # +
@@ -649,6 +657,8 @@ plt.plot(*displ_Lagrangian_to_ref2[:, 0, :].T)
 plt.plot(*displ_Lagrangian_to_ref3[:, 0, :].T)
 plt.plot(*displ_Lagrangian4[:, 0, :].T)
 plt.plot(*displ_Lagrangian_to_ref5[:, 0, :].T, label='opti')
+displ_Lagrangian8
+plt.plot(*displ_Lagrangian8[:, 0, :].T, label='opti to ref')
 plt.legend();
 
 #
