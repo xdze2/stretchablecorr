@@ -34,3 +34,9 @@
   - erreur maximum non global
   - what about rotation ? (i.e. non parameterized)
 
+## 2020-08-30
+
+- noise is genrally not white noise:
+  - sensor 8x8 pattern (lab bino)
+  - change in light (hs2)
+  - 
