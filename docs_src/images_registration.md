@@ -48,7 +48,7 @@ $$
 At this point, it is interresting to note that the actual information about a signal shift (translation) is embodied in the phase of the Fourier Transform (complex number). (see the translation property of the FT)
 
 $$
-\mathscr F \lbrace A(x+\delta) \rbrace(k) =  \mathcal A(k) \, e^{-2\pi i \, k \cdot \delta}
+\mathscr{F} \lbrace A(x+\delta) \rbrace(k) =  \mathcal{A} (k) \, e^{-2\pi i \, k \cdot \delta}
 $$
 
 Thus the [phase correlation](https://en.wikipedia.org/wiki/Phase_correlation) approach:

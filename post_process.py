@@ -7,11 +7,11 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.3.3
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: py3 venv
 #     language: python
-#     name: python3
+#     name: py3
 # ---
 
 import numpy as np
@@ -85,7 +85,7 @@ ft.save_fig('01_cube_std', sample_name)
 
 # extract stretch value from filenames
 stretch_values = [get_stretch(n, 'hpr1') for n in image_names]
-print('\n', f'{len(stretch_values)=}')
+print('\n', f'{len(stretch_values)}')
 # -
 
 # ## 1. Eulerian displacement
@@ -190,8 +190,8 @@ window_half_size = meta['window_half_size']
 points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 
 print('')
-print(f'{len(displ_Lagrangian)=}')
-print(f'{len(cube)=}')
+print(f'{len(displ_Lagrangian)}')
+print(f'{len(cube)}')
 
 # +
 # Integrate
@@ -202,7 +202,7 @@ zeros = np.zeros_like(displ_Lagrangian[0])[np.newaxis, :, :]
 displ_Lagrangian_zero = np.concatenate([zeros, displ_Lagrangian], axis=0)
 
 displ_lagrangian_to_ref = np.cumsum(displ_Lagrangian_zero, axis=0)
-print(f'{len(displ_lagrangian_to_ref)=}')
+print(f'{len(displ_lagrangian_to_ref)}')
 positions = displ_lagrangian_to_ref + points
 
 # keep only enterely visible path
@@ -273,15 +273,20 @@ def finite_diff_strain(grid, displ_field, nu=0.33):
 
 
 # +
+use_mask = False
+
 # Load a mask
-serpentine_mask = io.imread(f'images/{sample_name}_mask.png')
-serpentine_mask = serpentine_mask[:, :, -1] < 150
+if use_mask:
+    serpentine_mask = io.imread(f'images/{sample_name}_mask.png')
+    serpentine_mask = serpentine_mask[:, :, -1] < 150
 
-points_mask = serpentine_mask[points[:, 1], points[:, 0]]
-points_mask = points_mask.reshape(grid[0].shape)
+    points_mask = serpentine_mask[points[:, 1], points[:, 0]]
+    points_mask = points_mask.reshape(grid[0].shape)
 
-#points_mask = np.logical_not( points_mask )
-#print(points_mask[0, 0])
+    #points_mask = np.logical_not( points_mask )
+    #print(points_mask[0, 0])
+else:
+    points_mask = np.ones_like(points[:, 0])
 
 # +
 view_factor = 3
@@ -317,6 +322,11 @@ for image_id, displ_field in enumerate(displ_lagrangian_to_ref):
                 output_dir, close=True)
 
 
+# +
+traj = displ_lagrangian_to_ref + points
+
+for k in range(0, len(points), 2):
+    plt.plot(*traj[:, k, :].T)
 # -
 
 # ### Measured strain vs Applied strain

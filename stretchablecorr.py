@@ -142,7 +142,7 @@ def get_shifts(I, J, x, y,
         shifts, error = phase_registration_optim(source, target,
                                                  **params)
     else:
-        raise ValueError("method must be 'skimage' or 'opti'")
+        raise TypeError("method must be 'skimage' or 'opti'")
 
     dx = shifts[1] + (ij_tgt[1] - ij_src[1])
     dy = shifts[0] + (ij_tgt[0] - ij_src[0])

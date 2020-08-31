@@ -156,9 +156,9 @@ def integrate_displacement(displ_Lagrangian):
 #  Define the grid
 # ==================
 
-grid_spacing = 180
+grid_spacing = 30
 window_half_size = 100
-grid_margin = window_half_size * 3//2
+grid_margin = 55
 
 # ----
 grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
@@ -170,38 +170,22 @@ plt.title(f'Grille - D={grid_spacing}px - {points.shape[0]} points');
 ft.plot_grid_points(grid, background=cube[0],
                     color='white', markersize=3, show_pts_number=True,
                     window_half_size=window_half_size)
-# -
-
-# 1. get image offsets
-xy_center = [[cube.shape[1]//2, cube.shape[2]//2], ]
-central_window_halfsize = min(cube.shape[1]//3, cube.shape[2]//2) // 2
-offsets = displacements_img_to_img(cube, xy_center,
-                                   central_window_halfsize,
-                                   upsample_factor=1,
-                                   verbose=True)
-offsets = np.squeeze(offsets)
-print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px')
-
-# 2. get COARSE image-to-image displacements
-print('Compute image-to-image Lagrangian displacement field:')
-displ_Lagrangian_coarse, err = track_displ_img_to_img(cube, points,
-                                                      window_half_size=100, upsample_factor=1,
-                                                      offsets=offsets)
-# what about NaN in offsets... ?
 
 # +
-# 3. get image-to-image displacements
+# get image-to-image displacements
 print('Compute image-to-image Lagrangian displacement field:')
 
 upsample_factor  = 50
-window_half_size = 50
-save = False
+window_half_size = 20
+save = True
 
 displ_Lagrangian, err = track_displ_img_to_img(cube, points,
-                                               method='skimage',
+                                               method='opti',
+                                               coarse_search=True,
+                                               phase=False,
                                                window_half_size=window_half_size,
-                                               upsample_factor=upsample_factor,
-                                               offsets=displ_Lagrangian_coarse)
+                                               #upsample_factor=upsample_factor,
+                                               offsets=None)
 
 # Save data
 if save:
@@ -214,7 +198,7 @@ if save:
 # Integrate
 # image-to-image fields to get image-to-ref displ.
 
-displ_lagrangian_to_ref = integrate_displacement(displ_Lagrangian_zero)
+displ_lagrangian_to_ref = integrate_displacement(displ_Lagrangian)
 print(f'{len(displ_lagrangian_to_ref)=}')
 positions = displ_lagrangian_to_ref + points
 
@@ -549,14 +533,35 @@ test(1, 2, yo='1')
 
 # ## error RMS
 
-k = 12
+# +
+# ==================
+#  Define the grid
+# ==================
+
+grid_spacing = 120
+window_half_size = 100
+grid_margin = 55
+
+# ----
+grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
+points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
+
+# Graph the grid
+plt.figure();
+plt.title(f'Grille - D={grid_spacing}px - {points.shape[0]} points');
+ft.plot_grid_points(grid, background=cube[0],
+                    color='white', markersize=3, show_pts_number=True,
+                    window_half_size=window_half_size)
+# -
+
+k = 4
 point_k = points[k, None]
 
 point_k
 
 # +
 upsample_factor  = 100
-window_half_size = 20
+window_half_size = 35
 
 
 displ_Lagrangian1, err1 = track_displ_img_to_img(cube[::1], point_k,
@@ -593,6 +598,27 @@ displ_Lagrangian4, err4 = track_displ_img_to_ref(cube, point_k,
                                                window_half_size=window_half_size,
                                                upsample_factor=upsample_factor,
                                                offsets=displ_Lagrangian_to_ref1)
+
+displ_Lagrangian5, err5 = track_displ_img_to_img(cube[::1], point_k,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               phase=True,
+                                               coarse_search=True,
+                                               offsets=None)
+
+displ_Lagrangian6, err6 = track_displ_img_to_img(cube[::2], point_k,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               phase=True,
+                                               coarse_search=True,
+                                               offsets=displ_Lagrangian_to_ref1)
+
+displ_Lagrangian7, err7 = track_displ_img_to_img(cube[::3], point_k,
+                                               method='opti',
+                                               window_half_size=window_half_size,
+                                               phase=True,
+                                               coarse_search=True,
+                                               offsets=displ_Lagrangian_to_ref1)
 # -
 
 
@@ -603,15 +629,38 @@ plt.plot(np.arange(0, len(err1)-1, 3), err3, label='3 by 3')
 plt.plot(np.arange(0, len(err4), 1), err4, label='to ref')
 plt.legend();
 
+plt.plot(np.arange(0, len(err5), 1), err5, label='trace H-1')
+plt.plot(np.arange(0, len(err5), 2), err6, label='trace H-1 2by2')
+plt.plot(np.arange(0, len(err5)-1, 3), err7, label='trace H-1 3by3')
+plt.legend();
+
+# +
 displ_Lagrangian_to_ref2 = integrate_displacement(displ_Lagrangian2)
 displ_Lagrangian_to_ref1 = integrate_displacement(displ_Lagrangian1)
 displ_Lagrangian_to_ref3 = integrate_displacement(displ_Lagrangian3)
 
-plt.plot(*displ_Lagrangian_to_ref1[:, 0, :].T, '-o')
+displ_Lagrangian_to_ref5 = integrate_displacement(displ_Lagrangian5)
+displ_Lagrangian_to_ref6 = integrate_displacement(displ_Lagrangian6)
+displ_Lagrangian_to_ref7 = integrate_displacement(displ_Lagrangian7)
+# -
+
+plt.plot(*displ_Lagrangian_to_ref1[:, 0, :].T, '-o', label='1to1 sk')
 plt.plot(*displ_Lagrangian_to_ref2[:, 0, :].T)
 plt.plot(*displ_Lagrangian_to_ref3[:, 0, :].T)
 plt.plot(*displ_Lagrangian4[:, 0, :].T)
+plt.plot(*displ_Lagrangian_to_ref5[:, 0, :].T, label='opti')
+plt.legend();
 
 #
+
+
+
+
+
+
+
+
+
+
 
 

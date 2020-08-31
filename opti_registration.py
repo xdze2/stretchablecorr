@@ -9,7 +9,9 @@ from scipy.signal.windows import blackman
 from scipy.optimize import minimize
 from numba import jit
 
-@jit(nopython=True)
+nopython = False
+
+@jit(nopython=nopython)
 def custom_fftfreq(n):
     """
     same as numpy fftfreq function, but working with jit
@@ -24,7 +26,7 @@ def custom_fftfreq(n):
     results[N:] = p2
     return results * val
 
-@jit(nopython=True)
+@jit(nopython=nopython)
 def dft_dot(A, yx):
     im2pi = 1j * 2 * np.pi
     y, x = yx
@@ -36,7 +38,7 @@ def dft_dot(A, yx):
     return a / A.size
 
 
-@jit(nopython=True)
+@jit(nopython=nopython)
 def grad_dft(data, yx):
     im2pi = 1j * 2 * np.pi
     y, x = yx
@@ -112,7 +114,7 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
                    jac=jac)
     if verbose:
         print(res)
-    return -res.x, 0  # res.hess_inv
+    return -res.x, np.trace(res.hess_inv)
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
