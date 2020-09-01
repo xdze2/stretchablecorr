@@ -7,11 +7,11 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.4.2
 #   kernelspec:
-#     display_name: py3 venv
+#     display_name: Python 3
 #     language: python
-#     name: py3
+#     name: python3
 # ---
 
 import numpy as np
@@ -24,8 +24,7 @@ import os, imghdr
 import pickle
 from glob import glob
 
-from .filetools import * as ft
-from .stretchablecorr import *
+import stretchablecorr as sc
 
 # %load_ext autoreload
 # %autoreload 2
@@ -54,39 +53,20 @@ def get_stretch(image_name, sample_name):
 # ==================
 #  Load image cube
 # ==================
-
-#### Available samples list
-input_data_dir = "./images/"
-samples = next(os.walk(input_data_dir))[1]
-print('Available samples')
-print('=================')
-ft.print_numbered_list(samples)
-
-# Select a sample:
-sample_id = input('> Select an image directory:')
-sample_name = samples[int(sample_id)]
-print(sample_name)
-input_data_dir = "./images/"
-
+sample_name, sample_input_dir = sc.select_sample_dir('./images')
+cube, image_names = sc.load_image_sequence(sample_input_dir)
 
 output_dir = 'output'
 resultdir = os.path.join(output_dir, sample_name)
 
-
-print('Loading image cube...', end='\r')
-sample_input_dir = os.path.join(input_data_dir, sample_name)
-print(f'Load "{sample_name}" from {sample_input_dir}')
-
-cube, image_names = ft.load_image_sequence(sample_input_dir)
-
 # Graph std
 plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
 plt.imshow(np.std(cube, axis=0), cmap='viridis');
-ft.save_fig('01_cube_std', sample_name)
+sc.save_fig('01_cube_std', sample_name, output_dir=output_dir)
 
 # extract stretch value from filenames
 stretch_values = [get_stretch(n, 'hpr1') for n in image_names]
-print('\n', f'{len(stretch_values)}')
+print('\n', f'{len(stretch_values)} stretch values extracted')
 # -
 
 # ## 1. Eulerian displacement
@@ -97,12 +77,12 @@ datasets = glob(os.path.join(resultdir, '*.pck'))
 
 print(f'Available data set for {sample_name}')
 print( '=======================' + '='*len(sample_name) )
-ft.print_numbered_list([os.path.basename(d) for d in datasets])
+sc.print_numbered_list([os.path.basename(d) for d in datasets])
 
 # Select a sample:
 dataset_id = input('> Select an file:')
 data_file = datasets[int(dataset_id)]
-print(data_file)
+print('load', data_file)
 
 # Load dataset
 with open(data_file, 'rb') as f:
@@ -117,19 +97,19 @@ points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 for image_id, displ in enumerate(displ_Euler):
     plt.figure();
     plt.imshow(cube[image_id]);
-    ft.plot_vector_field(points, displ, view_factor=None)
+    sc.plot_vector_field(points, displ, view_factor=None)
     plt.title(f'displacement field - {image_id}→{image_id+1} - window:{window_half_size*2+1}px');
     figname = f'disp_field_{image_id:04d}'
-    ft.save_fig(figname, sample_name, 'img_to_img', close=True)
+    sc.save_fig(figname, sample_name, 'img_to_img', close=True)
     
     
     without_translation = displ - np.nanmean(displ, axis=0)
     plt.figure();
     plt.imshow(cube[image_id]);
-    ft.plot_vector_field(points, without_translation, view_factor=None)
+    sc.plot_vector_field(points, without_translation, view_factor=None)
     plt.title(f'displ. field (w/o translation) - {image_id}→{image_id+1} - window:{window_half_size*2+1}px');
     figname = f'disp_field_woTr_{image_id:04d}'
-    ft.save_fig(figname, sample_name, 'img_to_img', close=True)
+    sc.save_fig(figname, sample_name, 'img_to_img', close=True)
     
 print('done', ' '*40)
 
@@ -138,7 +118,7 @@ print('Do bilinear fits')
 all_coeffs = []
 all_residuals = []
 for displ_field in displ_Euler:
-    coeffs, residuals = bilinear_fit(points, displ_field)
+    coeffs, residuals = sc.bilinear_fit(points, displ_field)
     all_coeffs.append(coeffs)
     all_residuals.append(residuals)
 
@@ -164,7 +144,7 @@ plt.plot(stretch_values, stretch_values, '--', color='black', linewidth=1)
 plt.xlabel('applied stretch (%)');
 plt.ylabel('measured stretch (%)');
 plt.legend(); plt.title(sample_name + ' - image-to-image Eulerian');
-ft.save_fig('measured_vs_applied_stretch_Eulerian', sample_name);
+sc.save_fig('measured_vs_applied_stretch_Eulerian', sample_name);
 # -
 
 # ## 2. Lagrangian displacement
@@ -175,13 +155,12 @@ datasets = glob(os.path.join(resultdir, '*.pck'))
 
 print(f'Available data set for {sample_name}')
 print( '=======================' + '='*len(sample_name) )
-ft.print_numbered_list([os.path.basename(d) for d in datasets])
+sc.print_numbered_list([os.path.basename(d) for d in datasets])
 
 # Select a sample:
 dataset_id = input('> Select an file:')
 data_file = datasets[int(dataset_id)]
 print(data_file)
-
 
 # Load dataset
 with open(data_file, 'rb') as f:
@@ -318,9 +297,11 @@ for image_id, displ_field in enumerate(displ_lagrangian_to_ref):
     plt.title(title);
     
     output_dir = f'{field_value_name}_maps' if points_mask is None else f'{field_value_name}_maps_mask'
-    ft.save_fig(f'{field_value_name}_{image_id:03d}',
+    sc.save_fig(f'{field_value_name}_{image_id:03d}',
                 sample_name,
                 output_dir, close=True)
+    
+print('\n done')
 
 
 # +
@@ -337,7 +318,7 @@ print('Do bilinear fits')
 all_coeffs = []
 all_residuals = []
 for displ_field in displ_Lagrangian:
-    coeffs, residuals = bilinear_fit(points, displ_field)
+    coeffs, residuals = sc.bilinear_fit(points, displ_field)
     all_coeffs.append(coeffs)
     all_residuals.append(residuals)
 
@@ -363,7 +344,7 @@ plt.plot(stretch_values[:len(eps_xx)], stretch_values[:len(eps_xx)], '--', color
 plt.xlabel('applied stretch (%)');
 plt.ylabel('measured stretch (%)');
 plt.legend(); plt.title(sample_name + ' - image-to-image Lagrangian');
-ft.save_fig('measured_vs_applied_stretch_Lagrangian', sample_name);
+sc.save_fig('measured_vs_applied_stretch_Lagrangian', sample_name);
 
 
 # -
