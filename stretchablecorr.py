@@ -77,8 +77,7 @@ def get_shifts(I, J, x, y,
                offset=(0.0, 0.0),
                method='skimage',
                coarse_search=True, **params):
-    """Interface to perform local shifts estimation between images I and J,
-       at position (x, y) using a window of size `2*window_half_size + 1`
+    """Interface to registration methods
 
     Available methods:  
     - 'skimage': see `phase_cross_correlation` from skimage
@@ -92,8 +91,15 @@ def get_shifts(I, J, x, y,
         input images
     x, y : tuple
         point coordinates arround which shift is evaluated
-    offset : tuple (dx, dy)
+    window_half_size: int
+        half-size of the square region centered on (x, y) used for registration
+    offset : tuple (dx, dy), default (0, 0)
         pre-computed displacement of J relative to I
+    method : string {'skimage', 'opti'}
+        name of method used
+    coarse_search : Bool, default True
+        if True perform a first registration
+        on a larger region (100px) to find offset
 
     Returns
     -------

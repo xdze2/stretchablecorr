@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -637,9 +637,9 @@ plt.plot(np.arange(0, len(err4), 1), err4, label='to ref')
 plt.legend();
 
 plt.semilogy(np.arange(0, len(err5), 1), err5, label='trace H-1')
-plt.semilogy(np.arange(0, len(err5), 2), err6, label='trace H-1 2by2')
-plt.semilogy(np.arange(0, len(err5)-1, 3), err7, label='trace H-1 3by3')
-plt.semilogy(np.arange(0, len(err5), 1), err8, label='trace H-1 to ref')
+#plt.semilogy(np.arange(0, len(err5), 2), err6, label='trace H-1 2by2')
+#plt.semilogy(np.arange(0, len(err5)-1, 3), err7, label='trace H-1 3by3')
+#plt.semilogy(np.arange(0, len(err5), 1), err8, label='trace H-1 to ref')
 plt.legend();
 
 # +
