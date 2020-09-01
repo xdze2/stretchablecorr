@@ -12,18 +12,6 @@ except ImportError:
 from .opti_registration import phase_registration_optim
 
 
-def colorize_image(image, intensity_low, intensity_high, cmap='viridis'):
-    """Convert intensity values to color using a colormap
-       rescale values between (intensity_low, intensity_high)
-    """
-    image_normalized = (image.astype(np.float) - intensity_low)/(intensity_high - intensity_low)
-
-    cm = plt.get_cmap(cmap)
-    colored_image = cm(image_normalized)
-    colored_image[image_normalized > 0.999] = np.array([1, 0, 0, 1])
-    colored_image[image_normalized < 0.001] = np.array([0, 0, 0, 1])
-    return colored_image
-
 
 def crop(I, xy_center, half_size):
     """Returns the centered square at the position xy
