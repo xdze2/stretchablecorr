@@ -148,8 +148,8 @@ def save_fig(fig_name, *subdirs,
     create_dir(path, verbose=False)
     filename = f"{fig_name}.{image_ext.strip('. ')}"
     path = os.path.join(path, filename)
-    plt.savefig(path);
-    print(f'figure saved at {path}', end='\r')
+    plt.savefig(path)
+    print(f'figure saved at {path}', ' '*10, end='\r')
     if close:
         plt.close()
 
