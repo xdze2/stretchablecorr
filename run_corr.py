@@ -14,14 +14,16 @@
 #     name: python3
 # ---
 
+# %load_ext autoreload
+# %autoreload 2
+
 import numpy as np
 import matplotlib.pylab as plt
 from skimage import io
 from skimage import img_as_uint
-from stretchablecorr import *
+import stretchablecorr as sc
 # #!pip install scikit-image
 
-import filetools as ft
 import os, imghdr
 
 # %load_ext autoreload
@@ -33,35 +35,15 @@ from scipy.integrate import cumtrapz
 
 # ## select input images
 
-# +
-#### Available samples list
-input_data_dir = "./images/"
-samples = next(os.walk(input_data_dir))[1]
-print('Available samples')
-print('=================')
-ft.print_numbered_list(samples)
-
-# Select a sample:
-sample_id = input('> Select an image directory:')
-sample_name = samples[int(sample_id)]
-print(sample_name)
-
-# +
 # ==================
 #  Load image cube
 # ==================
-print('Loading image cube...', end='\r')
-
-# List, select and sort images
-sample_input_dir = os.path.join(input_data_dir, sample_name)
-print(f'Load "{sample_name}" from {sample_input_dir}')
-
-cube, image_names = ft.load_image_sequence(sample_input_dir)
-# -
+sample_name, sample_input_dir = sc.select_sample_dir('./images')
+cube, image_names = sc.load_image_sequence(sample_input_dir)
 
 plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
 plt.imshow(np.std(cube, axis=0), cmap='viridis');
-ft.save_fig('01_cube_std', sample_name)
+sc.save_fig('01_cube_std', sample_name)
 
 # ## 1. Eulerian displacement field
 
@@ -81,16 +63,16 @@ reference_image = 0
 print('Correlation window size:', f'{1+window_half_size*2}px')
 
 # ----
-grid = build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
+grid = sc.build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
 points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 
 # Graph the grid
 plt.figure();
 plt.title(f'Grille - D={grid_spacing}px - {points.shape[0]} points');
-ft.plot_grid_points(grid, background=cube[0],
+sc.plot_grid_points(grid, background=cube[0],
                     color='white', markersize=3,
                     window_half_size=window_half_size)
-ft.save_fig('02_grid', sample_name)
+sc.save_fig('02_grid', sample_name)
 
 # +
 # ============================================

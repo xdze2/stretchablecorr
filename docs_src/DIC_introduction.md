@@ -49,10 +49,6 @@ Further hypothesis which are obvious in case of mechanical test analysis:
 * obtained under similar conditions (same set-up and same camera)
 * sampled on identical grids
 
-### Code documentation (docstrings)
-- [stretchablecorr](./stretchablecorr.html)
-- [filetools](./filetools.html)
-- [opti_registration](./opti_registration.html)
 
 
 ### Next
@@ -61,7 +57,7 @@ Further hypothesis which are obvious in case of mechanical test analysis:
 * [List of DIC softwares](./list_DICsoftwares.html)
 * Bibliography on  DIC (specific to mecanical test)
 
-
+* [Code documentation (docstrings)](./stretchablecorr/index.html)
 
 ### Some references 
 
