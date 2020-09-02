@@ -6,6 +6,10 @@
 2.   Cramér–Rao Bound & Fisher information matrix (??)  
 --> corresponds to peak curvature 
 
+FFT based cross-correlation gives function values for whole parameter space, at least at a 1-pixel resolution. How to use this available data... ?
+
+- https://en.wikipedia.org/wiki/Standard_score
+- 2nd moment approach: estiamtion of the width of the peak, curvature
 
 ## maths
 
@@ -119,3 +123,16 @@ seems not to work... sub-pixel ? input image
 - I. S. Yetik and A. Nehorai, “Performance bounds on image registration,” IEEE Transactions on Signal Processing, vol. 54, no. 5, pp. 1737–1749, May 2006, doi: 10.1109/TSP.2006.870552.
 
 - D. Robinson and P. Milanfar, “Fundamental Performance Limits in Image Registration,” IEEE Transactions on Image Processing, vol. 13, no. 9, pp. 1185–1199, Sep. 2004, doi: 10.1109/TIP.2004.832923.
+
+
+## How to evaluate
+
+- using artificial data
+  - problem: artificial noise, for instance light and surface change, is difficult to model
+
+- using real data
+  - problem: no ground truth
+  - workaround:
+    - triangulate (AB + BC - AC)
+    - bootstrap... but how with FFT
+    - using mutliple image: get only camera noise
