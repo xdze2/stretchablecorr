@@ -82,10 +82,10 @@ sc.save_fig('02_grid', sample_name)
 # 1. get image offsets
 xy_center = [[cube.shape[1]//2, cube.shape[2]//2], ]
 central_window_halfsize = min(cube.shape[1]//3, cube.shape[2]//2) // 2
-offsets = displacements_img_to_img(cube, xy_center,
-                                   central_window_halfsize,
-                                   upsample_factor=1,
-                                   verbose=True)
+offsets = sc.displacements_img_to_img(cube, xy_center,
+                                      central_window_halfsize,
+                                      upsample_factor=1,
+                                      verbose=True)
 offsets = np.squeeze(offsets)
 print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px')
 
@@ -95,27 +95,27 @@ print(f' the largest image-to-image offset is {int(np.max(np.abs(offsets))):d}px
 window_half_size = 100
 upsample_factor = 1
 print('Compute image-to-image displacement field:')
-displ_Euler_coarse = displacements_img_to_img(cube, points,
-                                       window_half_size,
-                                       upsample_factor,
-                                       offsets=offsets,
-                                       verbose=True)
+displ_Euler_coarse = sc.displacements_img_to_img(cube, points,
+                                                 window_half_size,
+                                                 upsample_factor,
+                                                 offsets=offsets,
+                                                 verbose=True)
 
 
 # +
 # 3. get image-to-image displacements
 window_half_size = 30
 upsample_factor = 100
-displ_Euler = displacements_img_to_img(cube, points,
-                                       window_half_size,
-                                       upsample_factor,
-                                       offsets=displ_Euler_coarse,
-                                       verbose=True)
+displ_Euler = sc.displacements_img_to_img(cube, points,
+                                          window_half_size,
+                                          upsample_factor,
+                                          offsets=displ_Euler_coarse,
+                                          verbose=True)
 
 # 4. Save data
 meta = {'window_half_size':window_half_size,
         'upsample_factor':upsample_factor}
-ft.save_data((grid, displ_Euler, meta),
+sc.save_data((grid, displ_Euler, meta),
              f'displ_Euler_img_to_img_{len(points)}pts',
              sample_name)
 
