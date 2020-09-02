@@ -28,6 +28,18 @@ def custom_fftfreq(n):
 
 @jit(nopython=nopython)
 def dft_dot(A, yx):
+    """2D Discrete Fourier Transform of A at position xy 
+
+    Parameters
+    ----------
+    A : 2D array
+    yx : tuple of floats (y, x)
+
+    Returns
+    -------
+    complex
+        value DFT[A](xy)
+    """
     im2pi = 1j * 2 * np.pi
     y, x = yx
     yky = np.exp( im2pi * y * custom_fftfreq(A.shape[0]) )
@@ -76,10 +88,11 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
     """
     upsamplefactor = 1
 
-    u = blackman(A.shape[0])
-    v = blackman(A.shape[1])
-    window = u[:, np.newaxis] * v[np.newaxis, :]
-    if not phase:
+    if phase:
+        u = blackman(A.shape[0])
+        v = blackman(A.shape[1])
+        window = u[:, np.newaxis] * v[np.newaxis, :]
+    else:
         window = 1
 
     a = fftn(A * window)
@@ -87,10 +100,9 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
 
     ab = a * b.conj()
     if phase:
-        phase = ab / np.abs(ab)
-    else:
-        phase = ab
-    phase_corr = ifftn(fftshift(phase),
+        ab = ab / np.abs(ab)
+
+    phase_corr = ifftn(fftshift(ab),
                        s=upsamplefactor*np.array(ab.shape))
     phase_corr = np.abs( fftshift(phase_corr) )
 
@@ -108,7 +120,7 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
         return -np.real(grad_dft(ab, xy))
 
     res = minimize(cost, argmax,
-                   args=(phase, ),
+                   args=(ab, ),
                    method='BFGS',
                    tol=1e-3,
                    jac=jac)
@@ -119,8 +131,9 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
     sigma_J = np.std(phase_corr) #+ np.sqrt(A.size)*4
     lmbda = 1.68
     C_theta = np.trace(res.hess_inv) * sigma_J * lmbda
-    err = np.sqrt(C_theta)
-    return -res.x, res.fun/sigma_J
+    FRAE = np.sqrt(C_theta)
+    z_score = (-res.fun - np.mean(phase_corr))/sigma_J
+    return -res.x, z_score, FRAE
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
@@ -160,4 +173,20 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
     dx_span = fftshift( fftfreq(phase_corr.shape[1]) )*A.shape[1]
     dy_span = fftshift( fftfreq(phase_corr.shape[0]) )*A.shape[0]
 
-    return dx_span, dy_span, phase_corr
+    # argmax
+    argmax_idx = np.unravel_index(np.argmax(phase_corr), phase_corr.shape)
+    argmax = dy_span[argmax_idx[0]], dx_span[argmax_idx[1]]
+
+    def cost(xy, ab):
+        return -np.abs(dft_dot(ab, xy))
+
+    def jac(xy, ab):
+        return -np.real(grad_dft(ab, xy))
+
+    res = minimize(cost, argmax,
+                   args=(ab, ),
+                   method='BFGS',
+                   tol=1e-3,
+                   jac=jac)
+
+    return dx_span, dy_span, phase_corr, res

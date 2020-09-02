@@ -129,11 +129,11 @@ def get_shifts(I, J, x, y,
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
 
     if method == 'skimage':
-        shifts, error, _ = phase_cross_correlation(source, target,
+        shifts, *errors = phase_cross_correlation(source, target,
                                                    **params)
         shifts = -shifts  # displacement = -registration = dst - src
     elif method == 'opti':
-        shifts, error = phase_registration_optim(source, target,
+        shifts, *errors = phase_registration_optim(source, target,
                                                  **params)
     else:
         raise TypeError("method must be 'skimage' or 'opti'")
@@ -141,7 +141,7 @@ def get_shifts(I, J, x, y,
     dx = shifts[1] + (ij_tgt[1] - ij_src[1])
     dy = shifts[0] + (ij_tgt[0] - ij_src[0])
 
-    return dx, dy, error
+    return np.array((dx, dy)), errors
 
 
 def build_grid(img_shape, margin, spacing):
