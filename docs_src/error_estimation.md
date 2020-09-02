@@ -125,7 +125,8 @@ seems not to work... sub-pixel ? input image
 - D. Robinson and P. Milanfar, “Fundamental Performance Limits in Image Registration,” IEEE Transactions on Image Processing, vol. 13, no. 9, pp. 1185–1199, Sep. 2004, doi: 10.1109/TIP.2004.832923.
 
 
-## How to evaluate
+
+## How to evaluate
 
 - using artificial data
   - problem: artificial noise, for instance light and surface change, is difficult to model
