@@ -82,14 +82,13 @@ We could think of another approach...
     Coordinates of points (could be unstructured, i.e. not a grid).  
     (x, y) order
 
-* `offsets` : 2D array of floats with shape (nbr_images - 1, 2)   
-    image-to-image overall displacement  
-    could include NaNs
-
 * `displ_field` : 3D array of floats with shape (nbr_images - 1, nbr_points, 2)  
     generic displacements field  
     could include NaNs
 
+* `offsets` : 2D array of floats with shape (nbr_images - 1, 2)   
+    image-to-image overall displacement  
+    could include NaNs
 
 
 ## Pseudo multi-scale approach for robust processing
@@ -103,34 +102,12 @@ Here a pseudo-multi-scale approach is used:
 * third, (re-)run correlation using offset from the coarse displ. field, a smaller window size (35px) and a large enough upsample factor (20-100)
 
 
-## The two important functions
+## Important functions
 
-
+* get_shifts
 * Eulerian image-to-image correlation
-
-```python
-displacements_img_to_img(
-    images,
-    points,
-    window_half_size,
-    upsample_factor,
-    offsets=None,
-    verbose=True,
-    )
-```
-
 * Lagrangian image-to-image correlation
 
-```python
-track_displ_img_to_img(
-    images,
-    start_points,
-    window_half_size,
-    upsample_factor,
-    offsets=None,
-    verbose=True
-    )
-```
 
 
 ## Development & code structure
