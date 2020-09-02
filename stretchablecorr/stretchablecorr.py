@@ -256,7 +256,7 @@ def displacements_img_to_img(images, points,
 
 def track_displ_img_to_img(images, start_points,
                            offsets=None,
-                           verbose=True, **params):
+                           verbose=True, **params):                    
     #params = {'window_half_size':window_half_size,
     #          'upsample_factor':upsample_factor}
 
