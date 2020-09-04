@@ -133,6 +133,8 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
     C_theta = np.trace(res.hess_inv) * sigma_J * lmbda
     FRAE = np.sqrt(C_theta)
     z_score = (-res.fun - np.mean(phase_corr))/sigma_J
+
+    #c = np.sum(phase_corr > np.min(phase_corr) + np.ptp(phase_corr)*0.7)
     return -res.x, z_score, FRAE
 
 
@@ -189,4 +191,4 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
                    tol=1e-3,
                    jac=jac)
 
-    return dx_span, dy_span, phase_corr, res
+    return -dx_span, -dy_span, phase_corr, argmax

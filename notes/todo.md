@@ -39,6 +39,8 @@
 - noise is genrally not white noise:
   - sensor 8x8 pattern (lab bino)
   - change in light (hs2)
+  - rotation and def.
+
 
 ## 2020-02-09
 

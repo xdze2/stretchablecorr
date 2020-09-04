@@ -55,7 +55,7 @@ def crop(I, xy_center, half_size):
     I_crop = I[i_slicing, j_slicing]
 
     if I_crop.shape[:2] != (2*half_size+1, 2*half_size+1):
-        raise ValueError("crop out of image bounds", I_crop.shape)
+        raise ValueError("crop out of image bounds", I.shape, xy_center)
 
     return I_crop, (i, j)
 
@@ -112,7 +112,7 @@ def get_shifts(I, J, x, y,
     dx, dy = offset
 
     if coarse_search:
-        coarse_window_half_size = 100 # 3*window_half_size
+        coarse_window_half_size = 70 # 3*window_half_size
         x_margin = int(min(x, I.shape[1]-x))
         y_margin = int(min(y, I.shape[0]-y))
         coarse_window_half_size = min(coarse_window_half_size, x_margin, y_margin)
@@ -256,7 +256,7 @@ def displacements_img_to_img(images, points,
 
 def track_displ_img_to_img(images, start_points,
                            offsets=None,
-                           verbose=True, **params):                    
+                           verbose=True, **params):
     #params = {'window_half_size':window_half_size,
     #          'upsample_factor':upsample_factor}
 
@@ -287,15 +287,15 @@ def track_displ_img_to_img(images, start_points,
                       end='\r')
 
             try:
-                sx, sy, _err = get_shifts(A, B, xi, yi,
+                u, err = get_shifts(A, B, xi, yi,
                                           offset=offsets[k, i, :],
                                           **params)
-
-                displ[k, i, :] = sx, sy
-                errors[k, i] = _err
-                xi += sx
-                yi += sy
-            except ValueError:
+                
+                displ[k, i, :] = u
+                errors[k, i] = err[0]
+                xi += u[0]
+                yi += u[1]
+            except ValueError as e:
                 #if verbose:
                 #    print('out of limits for image', k)
                 break
