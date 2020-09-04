@@ -122,6 +122,8 @@ There are 4 modules:
 
  use Github static site in the `/docs` folder
 
+    $ source make_doc.sh
+
 #### Docstrings
 
 _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
@@ -135,7 +137,7 @@ docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
 * convert markdown file to html using [pandoc](https://pandoc.org/MANUAL.html). _simplest solution to display **math equation** online, with Katex_
 
 
-* use pandoc's config file `pandoc.yaml` (need pandoc last version)
+* use pandoc's config file `pandoc.yaml` (need pandoc 2.10+)
 
         $ pandoc --defaults=pandoc.yaml
 
