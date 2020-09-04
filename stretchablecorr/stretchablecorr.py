@@ -39,10 +39,6 @@ def crop(I, xy_center, half_size):
     >>> print(rocket().shape)
     >>> plt.plot(x, y, 'sr');
     >>> plt.imshow(crop(rocket(), (x, y), 50)[0]);
-
-
-    .. todo:: unit test using hash for image https://github.com/opencv/opencv/blob/e6171d17f8b22163997487b16762d09671a68597/modules/python/test/tests_common.py#L55
-
     """
 
     j, i = np.around(xy_center).astype(np.int)
@@ -65,8 +61,8 @@ def get_shifts(I, J, x, y,
     """Interface to registration methods
 
     Available methods:
-    - 'skimage': see [`phase_cross_correlation`](https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation) from skimage
-    - 'opti': use iterative optimization to find the maximum (function `phase_registration_optim`)
+        - 'skimage': see [`phase_cross_correlation`](https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation) from skimage
+        - 'opti': use iterative optimization to find the maximum (function `phase_registration_optim`)
 
     Parameters
     ----------
@@ -83,6 +79,8 @@ def get_shifts(I, J, x, y,
     coarse_search : Bool, default True
         if True perform a first registration
         on a larger region (100px) to find offset
+    params : other paramters
+        passed to the registration method
 
     Returns
     -------
@@ -107,10 +105,12 @@ def get_shifts(I, J, x, y,
     dx, dy = offset
 
     if coarse_search:
-        coarse_window_half_size = 70  # 3*window_half_size
+        coarse_window_half_size = 70  #  3*window_half_size
         x_margin = int(min(x, I.shape[1]-x))
         y_margin = int(min(y, I.shape[0]-y))
-        coarse_window_half_size = min(coarse_window_half_size, x_margin, y_margin)
+        coarse_window_half_size = min(coarse_window_half_size,
+                                      x_margin,
+                                      y_margin)
         source, ij_src = crop(I, (x, y), coarse_window_half_size)
         target, ij_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
         shifts = phase_cross_correlation(source, target,
@@ -187,6 +187,8 @@ def displacements_img_to_img(images, points,
     """Eulerian image-to-image correlation
     i.e. at position (points) fixed relative to the camera frame
 
+    .. error:: broken
+
     Parameters
     ----------
     images : iterable
@@ -200,8 +202,8 @@ def displacements_img_to_img(images, points,
         wanted accuracy of the correlation
         see doc. of scikit-image phase-cross-correlation
     offsets : float array, optional
-        could be an 2D array (nbr_images-1, 2)
-        of a 3D array (nbr_images-1, nbr_points, 2)
+        could be an 2D array (nbr_images-1, 2),
+        or a 3D array (nbr_images-1, nbr_points, 2),
         by default zeros (None)
     verbose : bool, optional
         print information
@@ -213,12 +215,12 @@ def displacements_img_to_img(images, points,
         NaN if an error occured (often because ROI out of image)
     """
 
-    params = {'window_half_size':window_half_size,
-              'upsample_factor':upsample_factor}
+    params = {'window_half_size': window_half_size,
+              'upsample_factor':  upsample_factor}
 
     if offsets is None:
         offsets = np.zeros((len(images)-1, len(points), 2))
-    elif len(offsets.shape)==2:
+    elif len(offsets.shape) == 2:
         offsets = np.tile(offsets[:, np.newaxis, :], (1, len(points), 1))
         print(offsets.shape)
 
@@ -262,11 +264,13 @@ def track_displ_img_to_img(images, start_points,
     start_points : iterable of point coordinates [[x1, y1], ...]
          starting positions of trajectories
     offsets : float array, optional
-        could be an 2D array (nbr_images-1, 2)
-        of a 3D array (nbr_images-1, nbr_points, 2)
+        could be an 2D array (nbr_images-1, 2), 
+        or a 3D array (nbr_images-1, nbr_points, 2), 
         by default zeros (None)
     verbose : bool, optional
         print information if True (default)
+    **params : other parameters
+        passed to the `get_shifts` function and then to the registration method
 
     Returns
     -------
@@ -301,8 +305,8 @@ def track_displ_img_to_img(images, start_points,
         for k, (A, B) in enumerate(zip(images, images[1:])):
 
             if verbose:
-                print(f'{int(100*(i*(len(images)-1)+k))//N: 3d}%'+
-                      f'  images:{k:02d}→{k+1:02d}'+
+                print(f'{int(100*(i*(len(images)-1)+k))//N: 3d}%' +
+                      f'  images:{k:02d}→{k+1:02d}' +
                       f'  point:{i: 4d} ...',
                       end='\r')
 
@@ -347,17 +351,36 @@ def track_displ_2steps(cube, points, **params):
     return displ1, triangle_gap
 
 
-# broken:
 def track_displ_img_to_ref(images, start_points,
                            offsets=None,
                            verbose=True, **params):
+    """
+    
+    .. error:: broken
+
+    Parameters
+    ----------
+    images : [type]
+        [description]
+    start_points : [type]
+        [description]
+    offsets : [type], optional
+        [description], by default None
+    verbose : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     # params = {'window_half_size':window_half_size,
     #          'upsample_factor':upsample_factor,
     #          'method':method}
 
     if offsets is None:
         offsets = np.zeros((len(images)-1, len(start_points), 2))
-    elif len(offsets.shape)==2:
+    elif len(offsets.shape) == 2:
         offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
         print(offsets.shape)
 
