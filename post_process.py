@@ -7,30 +7,26 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.3.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
+# +
+# %load_ext autoreload
+# %autoreload 2
+
 import numpy as np
 import matplotlib.pylab as plt
-from skimage import io
-from skimage import img_as_uint
-# #!pip install scikit-image
-
-import os, imghdr
 import pickle
 from glob import glob
 
 import stretchablecorr as sc
 
-# %load_ext autoreload
-# %autoreload 2
 
-from scipy.integrate import cumtrapz
-
+# -
 
 # # Stretchable Corr - Post-process
 
@@ -266,14 +262,15 @@ if use_mask:
     #points_mask = np.logical_not( points_mask )
     #print(points_mask[0, 0])
 else:
-    points_mask = np.ones_like(points[:, 0])
+    points_mask = None
 
 # +
-view_factor = 3
+view_factor = 20
 Poisson_coeff = 0.3
-eps_zz_limits = -5, 15 
+eps_zz_limits = None  #-5, 15 
+save = False
 
-for image_id, displ_field in enumerate(displ_lagrangian_to_ref):
+for image_id, displ_field in enumerate(displ_lagrangian_to_ref[:12]):
 
     eps_xx, eps_yy, eps_zz = finite_diff_strain(grid, displ_field, nu=Poisson_coeff)
     field_value = eps_yy
@@ -288,7 +285,12 @@ for image_id, displ_field in enumerate(displ_lagrangian_to_ref):
                        view_factor=view_factor,
                        cmap='jet') #Spectral
 
-    plt.clim(*eps_zz_limits)
+    if eps_zz_limits:
+        plt.clim(*eps_zz_limits)
+    else:
+        clim = np.nanmax(np.abs(field_value))
+        plt.clim([-clim, +clim])
+        
     title =  f'{sample_name} - {stretch_values[image_id]}% - '
     title += f'{image_names[image_id]} - '
     #title += f'eps_zz [%] (nu={Poisson_coeff}) - '
@@ -296,10 +298,11 @@ for image_id, displ_field in enumerate(displ_lagrangian_to_ref):
     title += f'displ. scale x{view_factor}'
     plt.title(title);
     
-    output_dir = f'{field_value_name}_maps' if points_mask is None else f'{field_value_name}_maps_mask'
-    sc.save_fig(f'{field_value_name}_{image_id:03d}',
-                sample_name,
-                output_dir, close=True)
+    if save:
+        output_dir = f'{field_value_name}_maps' if points_mask is None else f'{field_value_name}_maps_mask'
+        sc.save_fig(f'{field_value_name}_{image_id:03d}',
+                    sample_name,
+                    output_dir, close=True)
     
 print('\n done')
 

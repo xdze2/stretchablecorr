@@ -13,8 +13,8 @@ nopython = False
 
 @jit(nopython=nopython)
 def custom_fftfreq(n):
-    """
-    same as numpy fftfreq function, but working with jit
+    """Return the Discrete Fourier Transform sample frequencies.
+    same as numpy's `fftfreq` function but working with JIT (numba)
     https://github.com/numpy/numpy/blob/92ebe1e9a6aeb47a881a1226b08218175776f9ea/numpy/fft/helper.py#L124-L170
     """
     val = 1.0 / n
@@ -26,9 +26,10 @@ def custom_fftfreq(n):
     results[N:] = p2
     return results * val
 
+
 @jit(nopython=nopython)
 def dft_dot(A, yx):
-    """2D Discrete Fourier Transform of A at position xy 
+    """2D Discrete Fourier Transform of `A` at position `xy`
 
     Parameters
     ----------
@@ -38,12 +39,12 @@ def dft_dot(A, yx):
     Returns
     -------
     complex
-        value DFT[A](xy)
+        value DFT of `A` at position `xy`
     """
     im2pi = 1j * 2 * np.pi
     y, x = yx
-    yky = np.exp( im2pi * y * custom_fftfreq(A.shape[0]) )
-    xkx = np.exp( im2pi * x * custom_fftfreq(A.shape[1]) )
+    yky = np.exp(im2pi * y * custom_fftfreq(A.shape[0]))
+    xkx = np.exp(im2pi * x * custom_fftfreq(A.shape[1]))
 
     a = np.dot(A, xkx)
     a = np.dot(a, yky)
@@ -52,6 +53,18 @@ def dft_dot(A, yx):
 
 @jit(nopython=nopython)
 def grad_dft(data, yx):
+    """2D Discrete Fourier Transform of `grad(TF(A))` at position `xy`
+
+    Parameters
+    ----------
+    A : 2D array
+    yx : tuple of floats (y, x)
+
+    Returns
+    -------
+    (2, 1) array of complex numbers
+        value `grad(TF(A))` at position xy
+    """
     im2pi = 1j * 2 * np.pi
     y, x = yx
     kx = im2pi * custom_fftfreq(data.shape[1])
@@ -74,6 +87,7 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     """Find translation between images A and B
     as the argmax of the (phase) cross correlation
     use iterative optimization
+
     Parameters
     ----------
     A, B : 2D arrays
@@ -86,7 +100,9 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     Returns
     -------
     (2, 1) nd-array
-        displacement vector
+        displacement vector (u_y, u_x)   (note the order Y, X)
+    tuple of floats
+        error estimations
     """
     upsamplefactor = 1
 
@@ -130,7 +146,7 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
         print(res)
 
     #  FRAE - error estimation
-    sigma_J = np.std(phase_corr) #  + np.sqrt(A.size)*4
+    sigma_J = np.std(phase_corr)  #  + np.sqrt(A.size)*4
     lmbda = 1.68
     C_theta = np.trace(res.hess_inv) * sigma_J * lmbda
     FRAE = np.sqrt(C_theta)
@@ -141,23 +157,28 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
-    """Output the cross correlation (or phase)
+    """Output the cross correlation image (or phase)
+    for verification and debug
 
     Parameters
     ----------
-    A : [type]
-        [description]
-    B : [type]
-        [description]
+    A, B : 2D array
+        source and target images
     upsamplefactor : int, optional
-        [description], by default 1
+        use zero-padding to interpolated the CC on a finer grid, by default 1
     phase : bool, optional
-        [description], by default True
+        if True norm the CC by its amplitude, by default True
 
     Returns
     -------
-    [type]
-        [description]
+    1D array
+        shift X value
+    1D array
+        shift Y value
+    2D array
+        phase corr
+    tuple
+        argmax from the optimization
     """
     if phase:
         u = blackman(A.shape[0])
@@ -172,10 +193,10 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
         ab = ab / np.abs(ab)
     phase_corr = ifftn(fftshift(ab),
                        s=upsamplefactor*np.array(ab.shape))
-    phase_corr = np.abs( fftshift(phase_corr) )
+    phase_corr = np.abs(fftshift(phase_corr))
 
-    dx_span = fftshift( fftfreq(phase_corr.shape[1]) )*A.shape[1]
-    dy_span = fftshift( fftfreq(phase_corr.shape[0]) )*A.shape[0]
+    dx_span = fftshift(fftfreq(phase_corr.shape[1])) * A.shape[1]
+    dy_span = fftshift(fftfreq(phase_corr.shape[0])) * A.shape[0]
 
     # argmax
     argmax_idx = np.unravel_index(np.argmax(phase_corr), phase_corr.shape)
@@ -193,5 +214,4 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
                    tol=1e-3,
                    jac=jac)
 
-    return -dx_span, -dy_span, phase_corr, argmax
-
+    return -dx_span, -dy_span, phase_corr, res.x
