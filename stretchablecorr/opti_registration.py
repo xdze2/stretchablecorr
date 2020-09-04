@@ -69,22 +69,24 @@ def grad_dft(data, yx):
     return np.array([grady, gradx]) / data.size
 
 
-def phase_registration_optim(A, B, phase=True, verbose=False):
-    """Find translation between images A and B
-    as the argmax of the phase cross corelation
-    use iterative optimization
 
+def phase_registration_optim(A, B, phase=False, verbose=False):
+    """Find translation between images A and B
+    as the argmax of the (phase) cross correlation
+    use iterative optimization
     Parameters
     ----------
-    A : [type]
-        [description]
-    B : [type]
-        [description]
+    A, B : 2D arrays
+        source and targer images
+    phase : bool, optional
+        if True use only the phase angle, by default False
+    verbose : bool, optional
+        if true print debug information, by default False
 
     Returns
     -------
-    [type]
-        [description]
+    (2, 1) nd-array
+        displacement vector
     """
     upsamplefactor = 1
 
@@ -104,10 +106,10 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
 
     phase_corr = ifftn(fftshift(ab),
                        s=upsamplefactor*np.array(ab.shape))
-    phase_corr = np.abs( fftshift(phase_corr) )
+    phase_corr = np.abs(fftshift(phase_corr))
 
-    dx_span = fftshift( fftfreq(phase_corr.shape[1]) )*A.shape[1]
-    dy_span = fftshift( fftfreq(phase_corr.shape[0]) )*A.shape[0]
+    dx_span = fftshift(fftfreq(phase_corr.shape[1])) * A.shape[1]
+    dy_span = fftshift(fftfreq(phase_corr.shape[0])) * A.shape[0]
 
     # argmax
     argmax_idx = np.unravel_index(np.argmax(phase_corr), phase_corr.shape)
@@ -127,14 +129,14 @@ def phase_registration_optim(A, B, phase=True, verbose=False):
     if verbose:
         print(res)
 
-    # FRAE - error estimation
-    sigma_J = np.std(phase_corr) #+ np.sqrt(A.size)*4
+    #  FRAE - error estimation
+    sigma_J = np.std(phase_corr) #  + np.sqrt(A.size)*4
     lmbda = 1.68
     C_theta = np.trace(res.hess_inv) * sigma_J * lmbda
     FRAE = np.sqrt(C_theta)
     z_score = (-res.fun - np.mean(phase_corr))/sigma_J
 
-    #c = np.sum(phase_corr > np.min(phase_corr) + np.ptp(phase_corr)*0.7)
+    #  c = np.sum(phase_corr > np.min(phase_corr) + np.ptp(phase_corr)*0.7)
     return -res.x, z_score, FRAE
 
 
@@ -192,3 +194,4 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
                    jac=jac)
 
     return -dx_span, -dy_span, phase_corr, argmax
+

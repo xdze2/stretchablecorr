@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import matplotlib.pylab as plt
-
 
 try:
     from skimage.registration import phase_cross_correlation
@@ -10,7 +8,6 @@ except ImportError:
     from skimage.feature import register_translation as phase_cross_correlation
 
 from .opti_registration import phase_registration_optim
-
 
 
 def crop(I, xy_center, half_size):
@@ -67,11 +64,9 @@ def get_shifts(I, J, x, y,
                coarse_search=True, **params):
     """Interface to registration methods
 
-    Available methods:  
-    - 'skimage': see `phase_cross_correlation` from skimage
-    https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
-
-    - 'opti': use iterative optimization to find the maximum
+    Available methods:
+    - 'skimage': see [`phase_cross_correlation`](https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation) from skimage
+    - 'opti': use iterative optimization to find the maximum (function `phase_registration_optim`)
 
     Parameters
     ----------
@@ -103,16 +98,16 @@ def get_shifts(I, J, x, y,
     >>> I = camera()[dy:, dx:]
     >>> J = camera()[:-dy, :-dx]
     >>> plt.imshow(I+J);
-    >>> print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
-    >>> print( get_shifts(I, J, 250, 250,
-                      window_half_size=150,
-                      upsample_factor=1,
-                      offset=(4.5, 14.2)) )
+    >>> print(get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1))
+    >>> print(get_shifts(I, J, 250, 250,
+                         window_half_size=150,
+                         upsample_factor=1,
+                         offset=(4.5, 14.2)) )
     """
     dx, dy = offset
 
     if coarse_search:
-        coarse_window_half_size = 70 # 3*window_half_size
+        coarse_window_half_size = 70  # 3*window_half_size
         x_margin = int(min(x, I.shape[1]-x))
         y_margin = int(min(y, I.shape[0]-y))
         coarse_window_half_size = min(coarse_window_half_size, x_margin, y_margin)
@@ -130,11 +125,11 @@ def get_shifts(I, J, x, y,
 
     if method == 'skimage':
         shifts, *errors = phase_cross_correlation(source, target,
-                                                   **params)
+                                                  **params)
         shifts = -shifts  # displacement = -registration = dst - src
     elif method == 'opti':
         shifts, *errors = phase_registration_optim(source, target,
-                                                 **params)
+                                                   **params)
     else:
         raise TypeError("method must be 'skimage' or 'opti'")
 
@@ -170,8 +165,8 @@ def build_grid(img_shape, margin, spacing):
     x_span = np.arange(0, img_shape[1]-2*margin, spacing)
     y_span = np.arange(0, img_shape[0]-2*margin, spacing)
 
-    x_offset = int( (img_shape[1] - x_span[-1])/2 )
-    y_offset = int( (img_shape[0] - y_span[-1])/2 )
+    x_offset = int((img_shape[1] - x_span[-1])/2)
+    y_offset = int((img_shape[0] - y_span[-1])/2)
 
     x_grid, y_grid = np.meshgrid(x_span + x_offset, y_span + y_offset)
 
@@ -213,7 +208,7 @@ def displacements_img_to_img(images, points,
 
     Returns
     -------
-    3d array of shape (nbr_images-1, nbr_points, 2)
+    3D array of shape (nbr_images-1, nbr_points, 2)
         Displacement vector.
         NaN if an error occured (often because ROI out of image)
     """
@@ -237,8 +232,8 @@ def displacements_img_to_img(images, points,
         for i, xyi in enumerate(points):
             try:
                 sx, sy, _err = get_shifts(A, B, *xyi,
-                                        offset=offsets[k, i, :],
-                                        **params)
+                                          offset=offsets[k, i, :],
+                                          **params)
 
                 displ[k, i, :] = sx, sy
             except ValueError:
@@ -257,12 +252,37 @@ def displacements_img_to_img(images, points,
 def track_displ_img_to_img(images, start_points,
                            offsets=None,
                            verbose=True, **params):
+    """Lagrangian image-to-image correlation
+    i.e. track points on the sample surface
+
+    Parameters
+    ----------
+    images : iterable
+        sequence of images
+    start_points : iterable of point coordinates [[x1, y1], ...]
+         starting positions of trajectories
+    offsets : float array, optional
+        could be an 2D array (nbr_images-1, 2)
+        of a 3D array (nbr_images-1, nbr_points, 2)
+        by default zeros (None)
+    verbose : bool, optional
+        print information if True (default)
+
+    Returns
+    -------
+    3D array of shape (nbr_images-1, nbr_points, 2)
+        Displacement vector.
+        NaN if an error occured (often because ROI out of image)
+    """
     #params = {'window_half_size':window_half_size,
     #          'upsample_factor':upsample_factor}
 
+    if verbose:
+        print('Compute image-to-image Lagrangian displacement field:')
+
     if offsets is None:
         offsets = np.zeros((len(images)-1, len(start_points), 2))
-    elif len(offsets.shape)==2:
+    elif len(offsets.shape) == 2:
         offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
         print(offsets.shape)
 
@@ -288,27 +308,50 @@ def track_displ_img_to_img(images, start_points,
 
             try:
                 u, err = get_shifts(A, B, xi, yi,
-                                          offset=offsets[k, i, :],
-                                          **params)
-                
+                                    offset=offsets[k, i, :],
+                                    **params)
+
                 displ[k, i, :] = u
                 errors[k, i] = err[0]
                 xi += u[0]
                 yi += u[1]
-            except ValueError as e:
-                #if verbose:
-                #    print('out of limits for image', k)
+            except ValueError:
+                # pass
                 break
 
-    print('done', ' '*30)
+    if verbose:
+        print('done', ' '*30)
+
     return displ, errors
+
+
+def track_displ_2steps(cube, points, **params):
+    displ1, _err1 = track_displ_img_to_img(cube, points,
+                                           **params)
+
+    displ2a, _err2a = track_displ_img_to_img(cube[0::2], points,
+                                             **params)
+    displ2b, _err2b = track_displ_img_to_img(cube[1::2], points,
+                                             **params)
+
+    displ2 = np.zeros((displ2a.shape[0] + displ2b.shape[0],
+                       displ2b.shape[1],
+                       displ2b.shape[2]))
+
+    displ2[0::2] = displ2a
+    displ2[1::2] = displ2b
+
+    triangle_gap = displ1[:-1] + displ1[1:] - displ2
+    triangle_gap = np.sqrt(np.sum(triangle_gap**2, axis=-1))
+
+    return displ1, triangle_gap
 
 
 # broken:
 def track_displ_img_to_ref(images, start_points,
                            offsets=None,
                            verbose=True, **params):
-    #params = {'window_half_size':window_half_size,
+    # params = {'window_half_size':window_half_size,
     #          'upsample_factor':upsample_factor,
     #          'method':method}
 
@@ -417,5 +460,3 @@ def bilinear_fit(points, displacements):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
-

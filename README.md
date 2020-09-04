@@ -112,11 +112,11 @@ Here a pseudo-multi-scale approach is used:
 
 ## Development & code structure
 
-There are 3 modules:
-- filetools: functions used to load and sort images
-- stretchablecorr: main set of function performing the processing
-- graphtools: post-processing functions (to be done)
-
+There are 4 modules:
+- filetools : functions used to load and sort images
+- stretchablecorr : main set of function performing the processing
+- graphplot : post-processing functions
+- opti_registration : registration method using optimization & DFT for sub-pixel accuracy
 
 ### Documention
 
