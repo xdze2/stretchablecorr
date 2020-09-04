@@ -3,17 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.8.3" />
+<meta name="generator" content="pdoc 0.8.1" />
 <title>stretchablecorr.stretchablecorr API documentation</title>
 <meta name="description" content="" />
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin>
-<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
 <style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin></script>
-<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
 </head>
 <body>
 <main>
@@ -28,8 +26,6 @@
 </summary>
 <pre><code class="python"># -*- coding: utf-8 -*-
 import numpy as np
-import matplotlib.pylab as plt
-
 
 try:
     from skimage.registration import phase_cross_correlation
@@ -38,19 +34,6 @@ except ImportError:
     from skimage.feature import register_translation as phase_cross_correlation
 
 from .opti_registration import phase_registration_optim
-
-
-def colorize_image(image, intensity_low, intensity_high, cmap=&#39;viridis&#39;):
-    &#34;&#34;&#34;Convert intensity values to color using a colormap
-       rescale values between (intensity_low, intensity_high)
-    &#34;&#34;&#34;
-    image_normalized = (image.astype(np.float) - intensity_low)/(intensity_high - intensity_low)
-
-    cm = plt.get_cmap(cmap)
-    colored_image = cm(image_normalized)
-    colored_image[image_normalized &gt; 0.999] = np.array([1, 0, 0, 1])
-    colored_image[image_normalized &lt; 0.001] = np.array([0, 0, 0, 1])
-    return colored_image
 
 
 def crop(I, xy_center, half_size):
@@ -95,7 +78,7 @@ def crop(I, xy_center, half_size):
     I_crop = I[i_slicing, j_slicing]
 
     if I_crop.shape[:2] != (2*half_size+1, 2*half_size+1):
-        raise ValueError(&#34;crop out of image bounds&#34;, I_crop.shape)
+        raise ValueError(&#34;crop out of image bounds&#34;, I.shape, xy_center)
 
     return I_crop, (i, j)
 
@@ -107,11 +90,9 @@ def get_shifts(I, J, x, y,
                coarse_search=True, **params):
     &#34;&#34;&#34;Interface to registration methods
 
-    Available methods:  
-    - &#39;skimage&#39;: see `phase_cross_correlation` from skimage
-    https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
-
-    - &#39;opti&#39;: use iterative optimization to find the maximum
+    Available methods:
+    - &#39;skimage&#39;: see [`phase_cross_correlation`](https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation) from skimage
+    - &#39;opti&#39;: use iterative optimization to find the maximum (function `phase_registration_optim`)
 
     Parameters
     ----------
@@ -143,16 +124,16 @@ def get_shifts(I, J, x, y,
     &gt;&gt;&gt; I = camera()[dy:, dx:]
     &gt;&gt;&gt; J = camera()[:-dy, :-dx]
     &gt;&gt;&gt; plt.imshow(I+J);
-    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
-    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250,
-                      window_half_size=150,
-                      upsample_factor=1,
-                      offset=(4.5, 14.2)) )
+    &gt;&gt;&gt; print(get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1))
+    &gt;&gt;&gt; print(get_shifts(I, J, 250, 250,
+                         window_half_size=150,
+                         upsample_factor=1,
+                         offset=(4.5, 14.2)) )
     &#34;&#34;&#34;
     dx, dy = offset
 
     if coarse_search:
-        coarse_window_half_size = 100 # 3*window_half_size
+        coarse_window_half_size = 70  # 3*window_half_size
         x_margin = int(min(x, I.shape[1]-x))
         y_margin = int(min(y, I.shape[0]-y))
         coarse_window_half_size = min(coarse_window_half_size, x_margin, y_margin)
@@ -169,19 +150,19 @@ def get_shifts(I, J, x, y,
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
 
     if method == &#39;skimage&#39;:
-        shifts, error, _ = phase_cross_correlation(source, target,
-                                                   **params)
+        shifts, *errors = phase_cross_correlation(source, target,
+                                                  **params)
         shifts = -shifts  # displacement = -registration = dst - src
     elif method == &#39;opti&#39;:
-        shifts, error = phase_registration_optim(source, target,
-                                                 **params)
+        shifts, *errors = phase_registration_optim(source, target,
+                                                   **params)
     else:
         raise TypeError(&#34;method must be &#39;skimage&#39; or &#39;opti&#39;&#34;)
 
     dx = shifts[1] + (ij_tgt[1] - ij_src[1])
     dy = shifts[0] + (ij_tgt[0] - ij_src[0])
 
-    return dx, dy, error
+    return np.array((dx, dy)), errors
 
 
 def build_grid(img_shape, margin, spacing):
@@ -210,8 +191,8 @@ def build_grid(img_shape, margin, spacing):
     x_span = np.arange(0, img_shape[1]-2*margin, spacing)
     y_span = np.arange(0, img_shape[0]-2*margin, spacing)
 
-    x_offset = int( (img_shape[1] - x_span[-1])/2 )
-    y_offset = int( (img_shape[0] - y_span[-1])/2 )
+    x_offset = int((img_shape[1] - x_span[-1])/2)
+    y_offset = int((img_shape[0] - y_span[-1])/2)
 
     x_grid, y_grid = np.meshgrid(x_span + x_offset, y_span + y_offset)
 
@@ -253,7 +234,7 @@ def displacements_img_to_img(images, points,
 
     Returns
     -------
-    3d array of shape (nbr_images-1, nbr_points, 2)
+    3D array of shape (nbr_images-1, nbr_points, 2)
         Displacement vector.
         NaN if an error occured (often because ROI out of image)
     &#34;&#34;&#34;
@@ -277,8 +258,8 @@ def displacements_img_to_img(images, points,
         for i, xyi in enumerate(points):
             try:
                 sx, sy, _err = get_shifts(A, B, *xyi,
-                                        offset=offsets[k, i, :],
-                                        **params)
+                                          offset=offsets[k, i, :],
+                                          **params)
 
                 displ[k, i, :] = sx, sy
             except ValueError:
@@ -297,12 +278,37 @@ def displacements_img_to_img(images, points,
 def track_displ_img_to_img(images, start_points,
                            offsets=None,
                            verbose=True, **params):
+    &#34;&#34;&#34;Lagrangian image-to-image correlation
+    i.e. track points on the sample surface
+
+    Parameters
+    ----------
+    images : iterable
+        sequence of images
+    start_points : iterable of point coordinates [[x1, y1], ...]
+         starting positions of trajectories
+    offsets : float array, optional
+        could be an 2D array (nbr_images-1, 2)
+        of a 3D array (nbr_images-1, nbr_points, 2)
+        by default zeros (None)
+    verbose : bool, optional
+        print information if True (default)
+
+    Returns
+    -------
+    3D array of shape (nbr_images-1, nbr_points, 2)
+        Displacement vector.
+        NaN if an error occured (often because ROI out of image)
+    &#34;&#34;&#34;
     #params = {&#39;window_half_size&#39;:window_half_size,
     #          &#39;upsample_factor&#39;:upsample_factor}
 
+    if verbose:
+        print(&#39;Compute image-to-image Lagrangian displacement field:&#39;)
+
     if offsets is None:
         offsets = np.zeros((len(images)-1, len(start_points), 2))
-    elif len(offsets.shape)==2:
+    elif len(offsets.shape) == 2:
         offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
         print(offsets.shape)
 
@@ -327,28 +333,51 @@ def track_displ_img_to_img(images, start_points,
                       end=&#39;\r&#39;)
 
             try:
-                sx, sy, _err = get_shifts(A, B, xi, yi,
-                                          offset=offsets[k, i, :],
-                                          **params)
+                u, err = get_shifts(A, B, xi, yi,
+                                    offset=offsets[k, i, :],
+                                    **params)
 
-                displ[k, i, :] = sx, sy
-                errors[k, i] = _err
-                xi += sx
-                yi += sy
+                displ[k, i, :] = u
+                errors[k, i] = err[0]
+                xi += u[0]
+                yi += u[1]
             except ValueError:
-                #if verbose:
-                #    print(&#39;out of limits for image&#39;, k)
+                # pass
                 break
 
-    print(&#39;done&#39;, &#39; &#39;*30)
+    if verbose:
+        print(&#39;done&#39;, &#39; &#39;*30)
+
     return displ, errors
+
+
+def track_displ_2steps(cube, points, **params):
+    displ1, _err1 = track_displ_img_to_img(cube, points,
+                                           **params)
+
+    displ2a, _err2a = track_displ_img_to_img(cube[0::2], points,
+                                             **params)
+    displ2b, _err2b = track_displ_img_to_img(cube[1::2], points,
+                                             **params)
+
+    displ2 = np.zeros((displ2a.shape[0] + displ2b.shape[0],
+                       displ2b.shape[1],
+                       displ2b.shape[2]))
+
+    displ2[0::2] = displ2a
+    displ2[1::2] = displ2b
+
+    triangle_gap = displ1[:-1] + displ1[1:] - displ2
+    triangle_gap = np.sqrt(np.sum(triangle_gap**2, axis=-1))
+
+    return displ1, triangle_gap
 
 
 # broken:
 def track_displ_img_to_ref(images, start_points,
                            offsets=None,
                            verbose=True, **params):
-    #params = {&#39;window_half_size&#39;:window_half_size,
+    # params = {&#39;window_half_size&#39;:window_half_size,
     #          &#39;upsample_factor&#39;:upsample_factor,
     #          &#39;method&#39;:method}
 
@@ -596,8 +625,8 @@ grid[1]: Y coordinates of grid points</p></div>
     x_span = np.arange(0, img_shape[1]-2*margin, spacing)
     y_span = np.arange(0, img_shape[0]-2*margin, spacing)
 
-    x_offset = int( (img_shape[1] - x_span[-1])/2 )
-    y_offset = int( (img_shape[0] - y_span[-1])/2 )
+    x_offset = int((img_shape[1] - x_span[-1])/2)
+    y_offset = int((img_shape[0] - y_span[-1])/2)
 
     x_grid, y_grid = np.meshgrid(x_span + x_offset, y_span + y_offset)
 
@@ -605,29 +634,6 @@ grid[1]: Y coordinates of grid points</p></div>
     print(&#34; i.e.&#34;, len(x_span)*len(y_span), &#34;points&#34;)
 
     return np.stack((x_grid, y_grid))</code></pre>
-</details>
-</dd>
-<dt id="stretchablecorr.stretchablecorr.colorize_image"><code class="name flex">
-<span>def <span class="ident">colorize_image</span></span>(<span>image, intensity_low, intensity_high, cmap='viridis')</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Convert intensity values to color using a colormap
-rescale values between (intensity_low, intensity_high)</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def colorize_image(image, intensity_low, intensity_high, cmap=&#39;viridis&#39;):
-    &#34;&#34;&#34;Convert intensity values to color using a colormap
-       rescale values between (intensity_low, intensity_high)
-    &#34;&#34;&#34;
-    image_normalized = (image.astype(np.float) - intensity_low)/(intensity_high - intensity_low)
-
-    cm = plt.get_cmap(cmap)
-    colored_image = cm(image_normalized)
-    colored_image[image_normalized &gt; 0.999] = np.array([1, 0, 0, 1])
-    colored_image[image_normalized &lt; 0.001] = np.array([0, 0, 0, 1])
-    return colored_image</code></pre>
 </details>
 </dd>
 <dt id="stretchablecorr.stretchablecorr.crop"><code class="name flex">
@@ -711,7 +717,7 @@ The actuak size is <code>(2*half_size + 1)</code></dd>
     I_crop = I[i_slicing, j_slicing]
 
     if I_crop.shape[:2] != (2*half_size+1, 2*half_size+1):
-        raise ValueError(&#34;crop out of image bounds&#34;, I_crop.shape)
+        raise ValueError(&#34;crop out of image bounds&#34;, I.shape, xy_center)
 
     return I_crop, (i, j)</code></pre>
 </details>
@@ -743,7 +749,7 @@ by default zeros (None)</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>3d array</code> of <code>shape (nbr_images-1, nbr_points, 2)</code></dt>
+<dt><code>3D array</code> of <code>shape (nbr_images-1, nbr_points, 2)</code></dt>
 <dd>Displacement vector.
 NaN if an error occured (often because ROI out of image)</dd>
 </dl></div>
@@ -779,7 +785,7 @@ NaN if an error occured (often because ROI out of image)</dd>
 
     Returns
     -------
-    3d array of shape (nbr_images-1, nbr_points, 2)
+    3D array of shape (nbr_images-1, nbr_points, 2)
         Displacement vector.
         NaN if an error occured (often because ROI out of image)
     &#34;&#34;&#34;
@@ -803,8 +809,8 @@ NaN if an error occured (often because ROI out of image)</dd>
         for i, xyi in enumerate(points):
             try:
                 sx, sy, _err = get_shifts(A, B, *xyi,
-                                        offset=offsets[k, i, :],
-                                        **params)
+                                          offset=offsets[k, i, :],
+                                          **params)
 
                 displ[k, i, :] = sx, sy
             except ValueError:
@@ -825,12 +831,9 @@ NaN if an error occured (often because ROI out of image)</dd>
 </code></dt>
 <dd>
 <div class="desc"><p>Interface to registration methods</p>
-<p>Available methods:<br>
-- 'skimage': see <code>phase_cross_correlation</code> from skimage
-<a href="https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation">https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation</a></p>
-<ul>
-<li>'opti': use iterative optimization to find the maximum</li>
-</ul>
+<p>Available methods:
+- 'skimage': see <a href="https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation"><code>phase_cross_correlation</code></a> from skimage
+- 'opti': use iterative optimization to find the maximum (function <code>phase_registration_optim</code>)</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>I</code></strong>, <strong><code>J</code></strong> :&ensp;<code>2D arrays</code></dt>
@@ -860,11 +863,11 @@ on a larger region (100px) to find offset</dd>
 &gt;&gt;&gt; I = camera()[dy:, dx:]
 &gt;&gt;&gt; J = camera()[:-dy, :-dx]
 &gt;&gt;&gt; plt.imshow(I+J);
-&gt;&gt;&gt; print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
-&gt;&gt;&gt; print( get_shifts(I, J, 250, 250,
-                  window_half_size=150,
-                  upsample_factor=1,
-                  offset=(4.5, 14.2)) )
+&gt;&gt;&gt; print(get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1))
+&gt;&gt;&gt; print(get_shifts(I, J, 250, 250,
+                     window_half_size=150,
+                     upsample_factor=1,
+                     offset=(4.5, 14.2)) )
 </code></pre></div>
 <details class="source">
 <summary>
@@ -877,11 +880,9 @@ on a larger region (100px) to find offset</dd>
                coarse_search=True, **params):
     &#34;&#34;&#34;Interface to registration methods
 
-    Available methods:  
-    - &#39;skimage&#39;: see `phase_cross_correlation` from skimage
-    https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation
-
-    - &#39;opti&#39;: use iterative optimization to find the maximum
+    Available methods:
+    - &#39;skimage&#39;: see [`phase_cross_correlation`](https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation) from skimage
+    - &#39;opti&#39;: use iterative optimization to find the maximum (function `phase_registration_optim`)
 
     Parameters
     ----------
@@ -913,16 +914,16 @@ on a larger region (100px) to find offset</dd>
     &gt;&gt;&gt; I = camera()[dy:, dx:]
     &gt;&gt;&gt; J = camera()[:-dy, :-dx]
     &gt;&gt;&gt; plt.imshow(I+J);
-    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1) )
-    &gt;&gt;&gt; print( get_shifts(I, J, 250, 250,
-                      window_half_size=150,
-                      upsample_factor=1,
-                      offset=(4.5, 14.2)) )
+    &gt;&gt;&gt; print(get_shifts(I, J, 250, 250, window_half_size=150, upsample_factor=1))
+    &gt;&gt;&gt; print(get_shifts(I, J, 250, 250,
+                         window_half_size=150,
+                         upsample_factor=1,
+                         offset=(4.5, 14.2)) )
     &#34;&#34;&#34;
     dx, dy = offset
 
     if coarse_search:
-        coarse_window_half_size = 100 # 3*window_half_size
+        coarse_window_half_size = 70  # 3*window_half_size
         x_margin = int(min(x, I.shape[1]-x))
         y_margin = int(min(y, I.shape[0]-y))
         coarse_window_half_size = min(coarse_window_half_size, x_margin, y_margin)
@@ -939,23 +940,23 @@ on a larger region (100px) to find offset</dd>
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
 
     if method == &#39;skimage&#39;:
-        shifts, error, _ = phase_cross_correlation(source, target,
-                                                   **params)
+        shifts, *errors = phase_cross_correlation(source, target,
+                                                  **params)
         shifts = -shifts  # displacement = -registration = dst - src
     elif method == &#39;opti&#39;:
-        shifts, error = phase_registration_optim(source, target,
-                                                 **params)
+        shifts, *errors = phase_registration_optim(source, target,
+                                                   **params)
     else:
         raise TypeError(&#34;method must be &#39;skimage&#39; or &#39;opti&#39;&#34;)
 
     dx = shifts[1] + (ij_tgt[1] - ij_src[1])
     dy = shifts[0] + (ij_tgt[0] - ij_src[0])
 
-    return dx, dy, error</code></pre>
+    return np.array((dx, dy)), errors</code></pre>
 </details>
 </dd>
-<dt id="stretchablecorr.stretchablecorr.track_displ_img_to_img"><code class="name flex">
-<span>def <span class="ident">track_displ_img_to_img</span></span>(<span>images, start_points, offsets=None, verbose=True, **params)</span>
+<dt id="stretchablecorr.stretchablecorr.track_displ_2steps"><code class="name flex">
+<span>def <span class="ident">track_displ_2steps</span></span>(<span>cube, points, **params)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -963,15 +964,91 @@ on a larger region (100px) to find offset</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
+<pre><code class="python">def track_displ_2steps(cube, points, **params):
+    displ1, _err1 = track_displ_img_to_img(cube, points,
+                                           **params)
+
+    displ2a, _err2a = track_displ_img_to_img(cube[0::2], points,
+                                             **params)
+    displ2b, _err2b = track_displ_img_to_img(cube[1::2], points,
+                                             **params)
+
+    displ2 = np.zeros((displ2a.shape[0] + displ2b.shape[0],
+                       displ2b.shape[1],
+                       displ2b.shape[2]))
+
+    displ2[0::2] = displ2a
+    displ2[1::2] = displ2b
+
+    triangle_gap = displ1[:-1] + displ1[1:] - displ2
+    triangle_gap = np.sqrt(np.sum(triangle_gap**2, axis=-1))
+
+    return displ1, triangle_gap</code></pre>
+</details>
+</dd>
+<dt id="stretchablecorr.stretchablecorr.track_displ_img_to_img"><code class="name flex">
+<span>def <span class="ident">track_displ_img_to_img</span></span>(<span>images, start_points, offsets=None, verbose=True, **params)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Lagrangian image-to-image correlation
+i.e. track points on the sample surface</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>images</code></strong> :&ensp;<code>iterable</code></dt>
+<dd>sequence of images</dd>
+<dt><strong><code>start_points</code></strong> :&ensp;<code>iterable</code> of <code>point coordinates [[x1, y1], &hellip;]</code></dt>
+<dd>starting positions of trajectories</dd>
+<dt><strong><code>offsets</code></strong> :&ensp;<code>float array</code>, optional</dt>
+<dd>could be an 2D array (nbr_images-1, 2)
+of a 3D array (nbr_images-1, nbr_points, 2)
+by default zeros (None)</dd>
+<dt><strong><code>verbose</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>print information if True (default)</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>3D array</code> of <code>shape (nbr_images-1, nbr_points, 2)</code></dt>
+<dd>Displacement vector.
+NaN if an error occured (often because ROI out of image)</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
 <pre><code class="python">def track_displ_img_to_img(images, start_points,
                            offsets=None,
                            verbose=True, **params):
+    &#34;&#34;&#34;Lagrangian image-to-image correlation
+    i.e. track points on the sample surface
+
+    Parameters
+    ----------
+    images : iterable
+        sequence of images
+    start_points : iterable of point coordinates [[x1, y1], ...]
+         starting positions of trajectories
+    offsets : float array, optional
+        could be an 2D array (nbr_images-1, 2)
+        of a 3D array (nbr_images-1, nbr_points, 2)
+        by default zeros (None)
+    verbose : bool, optional
+        print information if True (default)
+
+    Returns
+    -------
+    3D array of shape (nbr_images-1, nbr_points, 2)
+        Displacement vector.
+        NaN if an error occured (often because ROI out of image)
+    &#34;&#34;&#34;
     #params = {&#39;window_half_size&#39;:window_half_size,
     #          &#39;upsample_factor&#39;:upsample_factor}
 
+    if verbose:
+        print(&#39;Compute image-to-image Lagrangian displacement field:&#39;)
+
     if offsets is None:
         offsets = np.zeros((len(images)-1, len(start_points), 2))
-    elif len(offsets.shape)==2:
+    elif len(offsets.shape) == 2:
         offsets = np.tile(offsets[:, np.newaxis, :], (1, len(start_points), 1))
         print(offsets.shape)
 
@@ -996,20 +1073,21 @@ on a larger region (100px) to find offset</dd>
                       end=&#39;\r&#39;)
 
             try:
-                sx, sy, _err = get_shifts(A, B, xi, yi,
-                                          offset=offsets[k, i, :],
-                                          **params)
+                u, err = get_shifts(A, B, xi, yi,
+                                    offset=offsets[k, i, :],
+                                    **params)
 
-                displ[k, i, :] = sx, sy
-                errors[k, i] = _err
-                xi += sx
-                yi += sy
+                displ[k, i, :] = u
+                errors[k, i] = err[0]
+                xi += u[0]
+                yi += u[1]
             except ValueError:
-                #if verbose:
-                #    print(&#39;out of limits for image&#39;, k)
+                # pass
                 break
 
-    print(&#39;done&#39;, &#39; &#39;*30)
+    if verbose:
+        print(&#39;done&#39;, &#39; &#39;*30)
+
     return displ, errors</code></pre>
 </details>
 </dd>
@@ -1025,7 +1103,7 @@ on a larger region (100px) to find offset</dd>
 <pre><code class="python">def track_displ_img_to_ref(images, start_points,
                            offsets=None,
                            verbose=True, **params):
-    #params = {&#39;window_half_size&#39;:window_half_size,
+    # params = {&#39;window_half_size&#39;:window_half_size,
     #          &#39;upsample_factor&#39;:upsample_factor,
     #          &#39;method&#39;:method}
 
@@ -1093,10 +1171,10 @@ on a larger region (100px) to find offset</dd>
 <ul class="">
 <li><code><a title="stretchablecorr.stretchablecorr.bilinear_fit" href="#stretchablecorr.stretchablecorr.bilinear_fit">bilinear_fit</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.build_grid" href="#stretchablecorr.stretchablecorr.build_grid">build_grid</a></code></li>
-<li><code><a title="stretchablecorr.stretchablecorr.colorize_image" href="#stretchablecorr.stretchablecorr.colorize_image">colorize_image</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.crop" href="#stretchablecorr.stretchablecorr.crop">crop</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.displacements_img_to_img" href="#stretchablecorr.stretchablecorr.displacements_img_to_img">displacements_img_to_img</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.get_shifts" href="#stretchablecorr.stretchablecorr.get_shifts">get_shifts</a></code></li>
+<li><code><a title="stretchablecorr.stretchablecorr.track_displ_2steps" href="#stretchablecorr.stretchablecorr.track_displ_2steps">track_displ_2steps</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.track_displ_img_to_img" href="#stretchablecorr.stretchablecorr.track_displ_img_to_img">track_displ_img_to_img</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.track_displ_img_to_ref" href="#stretchablecorr.stretchablecorr.track_displ_img_to_ref">track_displ_img_to_ref</a></code></li>
 </ul>
@@ -1105,7 +1183,9 @@ on a larger region (100px) to find offset</dd>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.3</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
 </footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
 </body>
 </html>
