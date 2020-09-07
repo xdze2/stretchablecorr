@@ -145,15 +145,32 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     if verbose:
         print(res)
 
+    if argmax_idx[0]>1 and argmax_idx[0] < A.shape[0]-1 and \
+        argmax_idx[1]>1 and argmax_idx[1] < A.shape[1]-1:
+
+        ky = phase_corr[argmax_idx[0]+1, argmax_idx[1]] +\
+            phase_corr[argmax_idx[0]-1, argmax_idx[1]] -\
+            2*phase_corr[argmax_idx[0], argmax_idx[1]] 
+
+        kx = phase_corr[argmax_idx[0], argmax_idx[1]+1] +\
+            phase_corr[argmax_idx[0], argmax_idx[1]-1] -\
+            2*phase_corr[argmax_idx[0], argmax_idx[1]] 
+        invH = -1/kx + -1/ky
+    else:
+        invH = np.NaN
+    
+
     #  FRAE - error estimation
-    sigma_J = np.std(phase_corr)  #  + np.sqrt(A.size)*4
-    lmbda = 1.68
-    C_theta = np.trace(res.hess_inv) * sigma_J * lmbda
+    sigma_J = np.mean(A**2 + B**2) + 2*res.fun/A.size
+    # np.std(phase_corr)  #  + np.sqrt(A.size)*4
+    # lmbda = 1.68
+    C_theta = np.trace(res.hess_inv) * sigma_J
     FRAE = np.sqrt(C_theta)
-    z_score = (-res.fun - np.mean(phase_corr))/sigma_J
+    FRAE_px = np.sqrt( invH * sigma_J )
+    z_score = (-res.fun - np.mean(phase_corr))/np.std(phase_corr)
 
     #  c = np.sum(phase_corr > np.min(phase_corr) + np.ptp(phase_corr)*0.7)
-    return -res.x, z_score, FRAE
+    return -res.x, z_score, FRAE, FRAE_px
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
