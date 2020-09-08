@@ -113,10 +113,12 @@ def get_shifts(I, J, x, y,
                                       y_margin)
         source, ij_src = crop(I, (x, y), coarse_window_half_size)
         target, ij_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
-        shifts = phase_cross_correlation(source, target,
-                                         upsample_factor=1,
-                                         return_error=False)
-        shifts = -shifts  # displacement = -registration = dst - src
+        #shifts = phase_cross_correlation(source, target,
+        #                                 upsample_factor=1,
+        #                                 return_error=False)
+        #shifts = -shifts  # displacement = -registration = dst - src
+        shifts, *_ = phase_registration_optim(source, target, phase=True)
+
         dx += shifts[1]
         dy += shifts[0]
 
