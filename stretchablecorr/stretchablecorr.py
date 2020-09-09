@@ -130,8 +130,8 @@ def get_shifts(I, J, x, y,
                                                   **params)
         shifts = -shifts  # displacement = -registration = dst - src
     elif method == 'opti':
-        shifts, *errors = phase_registration_optim(source, target,
-                                                   **params)
+        shifts, errors = phase_registration_optim(source, target,
+                                                  **params)
     else:
         raise TypeError("method must be 'skimage' or 'opti'")
 
@@ -298,7 +298,8 @@ def track_displ_img_to_img(images, start_points,
     displ[:] = np.NaN
 
     errors = np.empty((len(images)-1,
-                      len(start_points)))
+                      len(start_points),
+                      2))
     errors[:] = np.NaN
 
     N = (len(images) - 1)*len(start_points)
@@ -318,7 +319,7 @@ def track_displ_img_to_img(images, start_points,
                                     **params)
 
                 displ[k, i, :] = u
-                errors[k, i] = err[0]
+                errors[k, i] = err
                 xi += u[0]
                 yi += u[1]
             except ValueError:
@@ -331,13 +332,25 @@ def track_displ_img_to_img(images, start_points,
     return displ, errors
 
 
-def track_displ_2steps(cube, points, **params):
+def track_displ_2steps(cube, points, offsets=None, **params):
     displ1, _err1 = track_displ_img_to_img(cube, points,
+                                           offsets=offsets,
                                            **params)
 
+    if offsets is not None:
+        offsets = displ1
+        offsets_2steps = offsets[0:-1] + offsets[1:]
+        offsets_2a = offsets_2steps[0::2]
+        offsets_2b = offsets_2steps[1::2]
+    else:
+        offsets_2a = None
+        offsets_2b = None
+
     displ2a, _err2a = track_displ_img_to_img(cube[0::2], points,
+                                             offsets=offsets_2a,
                                              **params)
     displ2b, _err2b = track_displ_img_to_img(cube[1::2], points,
+                                             offsets=offsets_2b,
                                              **params)
 
     displ2 = np.zeros((displ2a.shape[0] + displ2b.shape[0],
@@ -346,11 +359,14 @@ def track_displ_2steps(cube, points, **params):
 
     displ2[0::2] = displ2a
     displ2[1::2] = displ2b
+    err2 = np.zeros_like(displ2)
+    err2[0::2] = _err2a
+    err2[1::2] = _err2b
 
     triangle_gap = displ1[:-1] + displ1[1:] - displ2
     triangle_gap = np.sqrt(np.sum(triangle_gap**2, axis=-1))
 
-    return displ1, triangle_gap
+    return displ1, triangle_gap, _err1, err2
 
 
 def track_displ_img_to_ref(images, start_points,

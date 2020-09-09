@@ -83,7 +83,7 @@ def grad_dft(data, yx):
 
 
 
-def phase_registration_optim(A, B, phase=False, verbose=False):
+def phase_registration_optim(A, B, phase=False, verbose=False, no_optim=False):
     """Find translation between images A and B
     as the argmax of the (phase) cross correlation
     use iterative optimization
@@ -131,6 +131,10 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     argmax_idx = np.unravel_index(np.argmax(phase_corr), phase_corr.shape)
     argmax = dy_span[argmax_idx[0]], dx_span[argmax_idx[1]]
 
+    # shortcut for coarse search
+    if no_optim:
+        return -np.array(argmax), 0, 0, 0
+
     def cost(xy, ab):
         return -np.abs(dft_dot(ab, xy))
 
@@ -145,19 +149,19 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     if verbose:
         print(res)
 
-    if argmax_idx[0]>1 and argmax_idx[0] < A.shape[0]-1 and \
-        argmax_idx[1]>1 and argmax_idx[1] < A.shape[1]-1:
+    # if argmax_idx[0]>1 and argmax_idx[0] < A.shape[0]-1 and \
+    #     argmax_idx[1]>1 and argmax_idx[1] < A.shape[1]-1:
 
-        ky = phase_corr[argmax_idx[0]+1, argmax_idx[1]] +\
-            phase_corr[argmax_idx[0]-1, argmax_idx[1]] -\
-            2*phase_corr[argmax_idx[0], argmax_idx[1]] 
+    #     ky = phase_corr[argmax_idx[0]+1, argmax_idx[1]] +\
+    #         phase_corr[argmax_idx[0]-1, argmax_idx[1]] -\
+    #         2*phase_corr[argmax_idx[0], argmax_idx[1]] 
 
-        kx = phase_corr[argmax_idx[0], argmax_idx[1]+1] +\
-            phase_corr[argmax_idx[0], argmax_idx[1]-1] -\
-            2*phase_corr[argmax_idx[0], argmax_idx[1]] 
-        invH = -1/kx + -1/ky
-    else:
-        invH = np.NaN
+    #     kx = phase_corr[argmax_idx[0], argmax_idx[1]+1] +\
+    #         phase_corr[argmax_idx[0], argmax_idx[1]-1] -\
+    #         2*phase_corr[argmax_idx[0], argmax_idx[1]] 
+    #     invH = -1/kx + -1/ky
+    # else:
+    #     invH = np.NaN
     
 
     #  FRAE - error estimation
@@ -166,13 +170,16 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     # lmbda = 1.68
     C_theta = np.trace(res.hess_inv) * sigma_J
     FRAE = np.sqrt(C_theta)
-    FRAE_px = np.sqrt( invH * sigma_J )
-
-    z_score = (-res.fun - np.mean(phase_corr))/np.std(phase_corr)
-    L = phase_corr
-    integral_breadth = np.sqrt( (np.sum(L) - np.mean(L))/np.ptp(L) )
+    #FRAE_px = np.sqrt( invH * sigma_J )
+    cc_mean = np.mean(phase_corr)
+    cc_std = np.std(phase_corr)
+    z_score = (-res.fun - cc_mean)/cc_std
+    z_score_px = np.abs(phase_corr - cc_mean)/cc_std
+    c = np.count_nonzero( z_score_px > 0.5*z_score)
+    #L = phase_corr
+    #integral_breadth = np.sqrt( (np.sum(L) - np.mean(L))/np.ptp(L) )
     #  c = np.sum(phase_corr > np.min(phase_corr) + np.ptp(phase_corr)*0.7)
-    return -res.x, z_score, FRAE, integral_breadth
+    return -res.x, (-res.fun, C_theta)
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
