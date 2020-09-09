@@ -1,5 +1,23 @@
 # Error estimation
 
+## How to verify
+
+- artificial images
+  - gausian noise
+  - other type of noise, or deformation ?
+
+- Triangulation on real image
+
+- Real images with rigid body motion only
+
+## Error estimators
+
+- Integral breadth: 
+  - `(sum(cc) - N*min(CC))/(max - min)`
+- z-score (same as IB ?)
+- based on curvature at max.
+
+
 1. RMS (relative error). method implemented in skimage  
 --> corresponds to peak amplitude: $max(A \otimes B)$
 
@@ -9,7 +27,7 @@
 FFT based cross-correlation gives function values for whole parameter space, at least at a 1-pixel resolution. How to use this available data... ?
 
 - https://en.wikipedia.org/wiki/Standard_score
-- 2nd moment approach: estiamtion of the width of the peak, curvature
+- 2nd moment approach: estimation of the width of the peak (don't work, because intertia is given by outer shell)
 
 ## maths
 
