@@ -104,6 +104,8 @@ def phase_registration_optim(A, B, phase=False, verbose=False, no_optim=False):
     tuple of floats
         error estimations
     """
+    #A = (A - np.min(A) )/np.std(A)
+    #B = (B - np.min(B) )/np.std(B)
     upsamplefactor = 1
 
     if phase:
@@ -169,7 +171,7 @@ def phase_registration_optim(A, B, phase=False, verbose=False, no_optim=False):
     # np.std(phase_corr)  #  + np.sqrt(A.size)*4
     # lmbda = 1.68
     C_theta = np.trace(res.hess_inv) * sigma_J
-    FRAE = np.sqrt(C_theta)
+    FRAE = np.sqrt(np.abs(C_theta))
     #FRAE_px = np.sqrt( invH * sigma_J )
     cc_mean = np.mean(phase_corr)
     cc_std = np.std(phase_corr)
