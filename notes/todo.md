@@ -42,5 +42,18 @@
   - rotation and def.
 
 
-## 2020-02-09
+## 2020-09-10
+
+
+- erreur pattern qui ne bouge pas par transparence du substrat  
+  --> True/False error detection
+
+- sigma*H-1 marche bien, sauf avec image reel et gap triangle
+???
+
+--> output PSD of the residuals  
+look at cut off frequency
+
+
+
 

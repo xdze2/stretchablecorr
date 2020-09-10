@@ -151,6 +151,10 @@ def phase_registration_optim(A, B, phase=False, verbose=False, no_optim=False):
     if verbose:
         print(res)
 
+    ky = -(phase_corr[argmax_idx[0]+1, argmax_idx[1]] +\
+        phase_corr[argmax_idx[0]-1, argmax_idx[1]] -\
+        2*phase_corr[argmax_idx[0], argmax_idx[1]] )/np.diff(dy_span).mean()**2
+
     # if argmax_idx[0]>1 and argmax_idx[0] < A.shape[0]-1 and \
     #     argmax_idx[1]>1 and argmax_idx[1] < A.shape[1]-1:
 
@@ -165,23 +169,23 @@ def phase_registration_optim(A, B, phase=False, verbose=False, no_optim=False):
     # else:
     #     invH = np.NaN
     
-
     #  FRAE - error estimation
-    sigma_J = np.mean(A**2 + B**2) + 2*res.fun/A.size
+    a_moins_b_2 = (np.mean(A) - np.mean(B))**2
+    sigma_J = np.mean(A**2 + B**2) - a_moins_b_2 + 2*res.fun/A.size
     # np.std(phase_corr)  #  + np.sqrt(A.size)*4
     # lmbda = 1.68
     C_theta = np.trace(res.hess_inv) * sigma_J
-    FRAE = np.sqrt(np.abs(C_theta))
+    #FRAE = np.sqrt(np.abs(C_theta))
     #FRAE_px = np.sqrt( invH * sigma_J )
-    cc_mean = np.mean(phase_corr)
-    cc_std = np.std(phase_corr)
-    z_score = (-res.fun - cc_mean)/cc_std
-    z_score_px = np.abs(phase_corr - cc_mean)/cc_std
-    c = np.count_nonzero( z_score_px > 0.5*z_score)
+    #cc_mean = np.mean(phase_corr)
+    #cc_std = np.std(phase_corr)
+    #z_score = (-res.fun - cc_mean)/cc_std
+    #z_score_px = np.abs(phase_corr - cc_mean)/cc_std
+    #c = np.count_nonzero( z_score_px > 0.5*z_score)
     #L = phase_corr
     #integral_breadth = np.sqrt( (np.sum(L) - np.mean(L))/np.ptp(L) )
     #  c = np.sum(phase_corr > np.min(phase_corr) + np.ptp(phase_corr)*0.7)
-    return -res.x, (-res.fun, C_theta)
+    return -res.x, (sigma_J/ ky, C_theta)
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
@@ -242,4 +246,4 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
                    tol=1e-3,
                    jac=jac)
 
-    return -dx_span, -dy_span, phase_corr, res.x
+    return -dx_span, -dy_span, phase_corr, res
