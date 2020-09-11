@@ -24,12 +24,12 @@
 2.   Cramér–Rao Bound & Fisher information matrix (??)  
 --> corresponds to peak curvature 
 
-FFT based cross-correlation gives function values for whole parameter space, at least at a 1-pixel resolution. How to use this available data... ?
+*rationale:* FFT based cross-correlation gives function values for whole parameter space, at least at a 1-pixel resolution. How to use this available data... ?
 
 - https://en.wikipedia.org/wiki/Standard_score
 - 2nd moment approach: estimation of the width of the peak (don't work, because intertia is given by outer shell)
 
-## maths
+## log likelihood maths
 
 $$
 \underset{\delta}{\text{argmin}} \int_x \left[ A(x) - B(x+\delta) \right]^2 \, dx
@@ -132,6 +132,8 @@ seems not to work... sub-pixel ? input image
 - statistics obtained from random subsets of the data (images)
 - do not work using FFT (need continuous array)
 
+
+
 ## References
 
 - Kybic, J. « Bootstrap Resampling for Image Registration Uncertainty Estimation Without Ground Truth ». IEEE Transactions on Image Processing 19, nᵒ 1 (janvier 2010): 64‑73. https://doi.org/10.1109/TIP.2009.2030955.
@@ -155,3 +157,34 @@ seems not to work... sub-pixel ? input image
     - triangulate (AB + BC - AC)
     - bootstrap... but how with FFT
     - using mutliple image: get only camera noise
+
+
+
+
+## Auto-correlation of residuals
+
+- https://stats.stackexchange.com/q/55658
+- [How to test the autocorrelation of the residuals?](https://stats.stackexchange.com/q/14914)  
+
+- [Residual Analysis with Autocorrelation - mathworks](https://www.mathworks.com/help/signal/ug/residual-analysis-with-autocorrelation.html)
+
+Statistical tests:
+- [Box-Jenkins framework](https://en.wikipedia.org/wiki/Box%E2%80%93Jenkins_method)
+- Ljung–Box test
+- Breusch-Godfrey test
+- [Durbin-Watson test](https://en.wikipedia.org/wiki/Durbin%E2%80%93Watson_statistic)
+
+but that's for time series, auto-regressive approachs  
+
+-> What about Power Spectral Density (PSD)?
+
+- [How to determine cut-off frequency using power spectral density?](https://dsp.stackexchange.com/q/19672)  
+
+- https://en.wikipedia.org/wiki/Coherence_(signal_processing)
+
+
+
+## Variance-Covariance matrix
+
+book : STRUTZ, Tilo. Data fitting and uncertainty. A practical introduction to weighted least squares and beyond. Vieweg+ Teubner, 2010.
+
