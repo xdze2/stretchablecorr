@@ -94,7 +94,70 @@ def plot_grid_points(grid, background=None,
                         [-1, -1, 1, 1, -1]])*(window_half_size + 1)
         middle_point = tuple(np.array(grid[0].shape) // 2 - 1)
         plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
-                 color=color, linewidth=1)</code></pre>
+                 color=color, linewidth=1)
+
+
+from matplotlib.lines import Line2D
+
+def plot_trajectories(trajectories, background=None, gaps=None,
+                      color=&#39;black&#39;):
+    if background is not None:
+        plt.imshow(background, alpha=.4)
+
+    for k, xy in enumerate(np.swapaxes(trajectories, 0, 1)):
+        plt.plot(*xy[0], &#39;s&#39;, color=color, markersize=1)
+        plt.plot(*xy.T, &#39;-&#39;, linewidth=.5, markersize=2, color=color)
+        if k % 5 == 0:
+            plt.text(*xy[0], str(k), fontsize=6)
+
+        if gaps is not None:
+            g = gaps[:, k]    
+            mask = ~np.isnan(g)
+            mask[mask] &amp;= g[mask] &gt; 5
+            plt.plot(*xy[1:-1, :][mask, :].T, &#39;o&#39;, markersize=2,
+                     color=&#39;red&#39;)
+            plt.legend([Line2D([0], [0], linestyle=&#39;&#39;, marker=&#39;o&#39;, color=&#39;red&#39;, markersize=2),], [&#39;gap &gt; 5px&#39;, ])
+        #plt.axis(&#39;equal&#39;)
+
+
+def plot_deformed_mesh(grid, displ_field,
+                       color_values=None,
+                       view_factor=10, cmap=&#39;Spectral&#39;):
+    
+    if color_values is None:
+        color_values = np.zeros_like(grid[0])
+    
+    # Scale displacements using view_factor
+    points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
+    positions_amplified = displ_field*view_factor + points
+    x_amplified = positions_amplified[:, 0].reshape(grid[0].shape)
+    y_amplified = positions_amplified[:, 1].reshape(grid[0].shape)
+
+    # Background Reference grid:
+    moved_out = np.any(np.isnan(displ_field), axis=1).reshape(grid[0].shape)
+    ref_colors = np.zeros_like(moved_out)
+    ref_colors[moved_out] = 1
+    
+    plt.pcolor(*grid, ref_colors,
+               edgecolors=&#39;black&#39;, linewidth=1, antialiased=True,
+               cmap=&#39;Reds&#39;, alpha=0.1)
+
+    # Front mesh:
+    plt.pcolor(x_amplified, y_amplified, color_values,
+               edgecolors=&#39;black&#39;,
+               linewidth=1,
+               antialiased=True,
+               cmap=cmap);# Spectral
+    #plt.clim(0, +10)
+
+    #sigma = np.nanstd(eps_33_pct)
+    #m = np.nanmean(eps_33_pct)
+    #plt.clim(m-1.5*sigma, m+1.5*sigma)
+
+    plt.axis(&#39;equal&#39;);
+    if color_values is not None:
+        plt.colorbar();
+    plt.xlabel(&#39;x [pixel]&#39;); plt.ylabel(&#39;y [pixel]&#39;);   </code></pre>
 </details>
 </section>
 <section>
@@ -104,6 +167,55 @@ def plot_grid_points(grid, background=None,
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="stretchablecorr.graphplot.plot_deformed_mesh"><code class="name flex">
+<span>def <span class="ident">plot_deformed_mesh</span></span>(<span>grid, displ_field, color_values=None, view_factor=10, cmap='Spectral')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def plot_deformed_mesh(grid, displ_field,
+                       color_values=None,
+                       view_factor=10, cmap=&#39;Spectral&#39;):
+    
+    if color_values is None:
+        color_values = np.zeros_like(grid[0])
+    
+    # Scale displacements using view_factor
+    points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
+    positions_amplified = displ_field*view_factor + points
+    x_amplified = positions_amplified[:, 0].reshape(grid[0].shape)
+    y_amplified = positions_amplified[:, 1].reshape(grid[0].shape)
+
+    # Background Reference grid:
+    moved_out = np.any(np.isnan(displ_field), axis=1).reshape(grid[0].shape)
+    ref_colors = np.zeros_like(moved_out)
+    ref_colors[moved_out] = 1
+    
+    plt.pcolor(*grid, ref_colors,
+               edgecolors=&#39;black&#39;, linewidth=1, antialiased=True,
+               cmap=&#39;Reds&#39;, alpha=0.1)
+
+    # Front mesh:
+    plt.pcolor(x_amplified, y_amplified, color_values,
+               edgecolors=&#39;black&#39;,
+               linewidth=1,
+               antialiased=True,
+               cmap=cmap);# Spectral
+    #plt.clim(0, +10)
+
+    #sigma = np.nanstd(eps_33_pct)
+    #m = np.nanmean(eps_33_pct)
+    #plt.clim(m-1.5*sigma, m+1.5*sigma)
+
+    plt.axis(&#39;equal&#39;);
+    if color_values is not None:
+        plt.colorbar();
+    plt.xlabel(&#39;x [pixel]&#39;); plt.ylabel(&#39;y [pixel]&#39;);   </code></pre>
+</details>
+</dd>
 <dt id="stretchablecorr.graphplot.plot_grid_points"><code class="name flex">
 <span>def <span class="ident">plot_grid_points</span></span>(<span>grid, background=None, color='white', markersize=3, show_pts_number=False, window_half_size=None)</span>
 </code></dt>
@@ -170,6 +282,35 @@ def plot_grid_points(grid, background=None,
                  color=color, linewidth=1)</code></pre>
 </details>
 </dd>
+<dt id="stretchablecorr.graphplot.plot_trajectories"><code class="name flex">
+<span>def <span class="ident">plot_trajectories</span></span>(<span>trajectories, background=None, gaps=None, color='black')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def plot_trajectories(trajectories, background=None, gaps=None,
+                      color=&#39;black&#39;):
+    if background is not None:
+        plt.imshow(background, alpha=.4)
+
+    for k, xy in enumerate(np.swapaxes(trajectories, 0, 1)):
+        plt.plot(*xy[0], &#39;s&#39;, color=color, markersize=1)
+        plt.plot(*xy.T, &#39;-&#39;, linewidth=.5, markersize=2, color=color)
+        if k % 5 == 0:
+            plt.text(*xy[0], str(k), fontsize=6)
+
+        if gaps is not None:
+            g = gaps[:, k]    
+            mask = ~np.isnan(g)
+            mask[mask] &amp;= g[mask] &gt; 5
+            plt.plot(*xy[1:-1, :][mask, :].T, &#39;o&#39;, markersize=2,
+                     color=&#39;red&#39;)
+            plt.legend([Line2D([0], [0], linestyle=&#39;&#39;, marker=&#39;o&#39;, color=&#39;red&#39;, markersize=2),], [&#39;gap &gt; 5px&#39;, ])</code></pre>
+</details>
+</dd>
 <dt id="stretchablecorr.graphplot.plot_vector_field"><code class="name flex">
 <span>def <span class="ident">plot_vector_field</span></span>(<span>points, displacements, view_factor=None, color='white')</span>
 </code></dt>
@@ -224,7 +365,9 @@ def plot_grid_points(grid, background=None,
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="stretchablecorr.graphplot.plot_deformed_mesh" href="#stretchablecorr.graphplot.plot_deformed_mesh">plot_deformed_mesh</a></code></li>
 <li><code><a title="stretchablecorr.graphplot.plot_grid_points" href="#stretchablecorr.graphplot.plot_grid_points">plot_grid_points</a></code></li>
+<li><code><a title="stretchablecorr.graphplot.plot_trajectories" href="#stretchablecorr.graphplot.plot_trajectories">plot_trajectories</a></code></li>
 <li><code><a title="stretchablecorr.graphplot.plot_vector_field" href="#stretchablecorr.graphplot.plot_vector_field">plot_vector_field</a></code></li>
 </ul>
 </li>

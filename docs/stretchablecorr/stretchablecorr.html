@@ -33,6 +33,8 @@ except ImportError:
     print(&#39;Warning: scikit-image not up-to-date&#39;)
     from skimage.feature import register_translation as phase_cross_correlation
 
+from skimage.transform.pyramids import pyramid_reduce
+
 from .opti_registration import phase_registration_optim
 
 
@@ -83,7 +85,7 @@ def get_shifts(I, J, x, y,
                window_half_size,
                offset=(0.0, 0.0),
                method=&#39;skimage&#39;,
-               coarse_search=True, **params):
+               coarse_search=False, **params):
     &#34;&#34;&#34;Interface to registration methods
 
     Available methods:
@@ -102,7 +104,7 @@ def get_shifts(I, J, x, y,
         pre-computed displacement of J relative to I
     method : string {&#39;skimage&#39;, &#39;opti&#39;}
         name of method used
-    coarse_search : Bool, default True
+    coarse_search : Bool, default False
         if True perform a first registration
         on a larger region (100px) to find offset
     params : other paramters
@@ -139,10 +141,12 @@ def get_shifts(I, J, x, y,
                                       y_margin)
         source, ij_src = crop(I, (x, y), coarse_window_half_size)
         target, ij_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
-        shifts = phase_cross_correlation(source, target,
-                                         upsample_factor=1,
-                                         return_error=False)
-        shifts = -shifts  # displacement = -registration = dst - src
+        #shifts = phase_cross_correlation(source, target,
+        #                                 upsample_factor=1,
+        #                                 return_error=False)
+        #shifts = -shifts  # displacement = -registration = dst - src
+        shifts, *_ = phase_registration_optim(source, target, phase=True)
+
         dx += shifts[1]
         dy += shifts[0]
 
@@ -152,10 +156,10 @@ def get_shifts(I, J, x, y,
     if method == &#39;skimage&#39;:
         shifts, *errors = phase_cross_correlation(source, target,
                                                   **params)
-        shifts = -shifts  # displacement = -registration = dst - src
+        shifts = -shifts  # displ. = -registration = dst - src
     elif method == &#39;opti&#39;:
-        shifts, *errors = phase_registration_optim(source, target,
-                                                   **params)
+        shifts, errors = phase_registration_optim(source, target,
+                                                  **params)
     else:
         raise TypeError(&#34;method must be &#39;skimage&#39; or &#39;opti&#39;&#34;)
 
@@ -304,8 +308,6 @@ def track_displ_img_to_img(images, start_points,
         Displacement vector.
         NaN if an error occured (often because ROI out of image)
     &#34;&#34;&#34;
-    #params = {&#39;window_half_size&#39;:window_half_size,
-    #          &#39;upsample_factor&#39;:upsample_factor}
 
     if verbose:
         print(&#39;Compute image-to-image Lagrangian displacement field:&#39;)
@@ -322,19 +324,24 @@ def track_displ_img_to_img(images, start_points,
     displ[:] = np.NaN
 
     errors = np.empty((len(images)-1,
-                      len(start_points)))
+                      len(start_points),
+                      2))
     errors[:] = np.NaN
 
-    N = (len(images) - 1)*len(start_points)
+    nbr_steps = (len(images) - 1)*len(start_points)
     for i, (x0, y0) in enumerate(start_points):
         xi, yi = x0, y0
         for k, (A, B) in enumerate(zip(images, images[1:])):
 
             if verbose:
-                print(f&#39;{int(100*(i*(len(images)-1)+k))//N: 3d}%&#39; +
+                print(f&#39;{int(100*(i*(len(images)-1)+k))//nbr_steps: 3d}%&#39; +
                       f&#39;  images:{k:02d}→{k+1:02d}&#39; +
                       f&#39;  point:{i: 4d} ...&#39;,
                       end=&#39;\r&#39;)
+
+            if np.isnan(xi) or np.isnan(yi) or np.any(np.isnan(offsets[k, i, :])):
+                # pass -&gt; return NaN value
+                break
 
             try:
                 u, err = get_shifts(A, B, xi, yi,
@@ -342,11 +349,11 @@ def track_displ_img_to_img(images, start_points,
                                     **params)
 
                 displ[k, i, :] = u
-                errors[k, i] = err[0]
+                errors[k, i] = err
                 xi += u[0]
                 yi += u[1]
             except ValueError:
-                # pass
+                # pass -&gt; return NaN value
                 break
 
     if verbose:
@@ -355,13 +362,25 @@ def track_displ_img_to_img(images, start_points,
     return displ, errors
 
 
-def track_displ_2steps(cube, points, **params):
+def track_displ_2steps(cube, points, offsets=None, **params):
     displ1, _err1 = track_displ_img_to_img(cube, points,
+                                           offsets=offsets,
                                            **params)
 
+    if offsets is not None:
+        offsets = displ1
+        offsets_2steps = offsets[0:-1] + offsets[1:]
+        offsets_2a = offsets_2steps[0::2]
+        offsets_2b = offsets_2steps[1::2]
+    else:
+        offsets_2a = None
+        offsets_2b = None
+
     displ2a, _err2a = track_displ_img_to_img(cube[0::2], points,
+                                             offsets=offsets_2a,
                                              **params)
     displ2b, _err2b = track_displ_img_to_img(cube[1::2], points,
+                                             offsets=offsets_2b,
                                              **params)
 
     displ2 = np.zeros((displ2a.shape[0] + displ2b.shape[0],
@@ -370,11 +389,14 @@ def track_displ_2steps(cube, points, **params):
 
     displ2[0::2] = displ2a
     displ2[1::2] = displ2b
+    err2 = np.zeros_like(displ2)
+    err2[0::2] = _err2a
+    err2[1::2] = _err2b
 
     triangle_gap = displ1[:-1] + displ1[1:] - displ2
     triangle_gap = np.sqrt(np.sum(triangle_gap**2, axis=-1))
 
-    return displ1, triangle_gap
+    return displ1, triangle_gap, _err1, err2
 
 
 def track_displ_img_to_ref(images, start_points,
@@ -448,63 +470,6 @@ def track_displ_img_to_ref(images, start_points,
     return displ, errors
 
 
-# ===============
-#  Bilinear Fit
-# ===============
-
-def bilinear_fit(points, displacements):
-    &#34;&#34;&#34;Performs a bilinear fit on the displacements field
-
-    Solve the equation u = A*x + t
-
-    Parameters
-    ----------
-    points : nd-array (nbr_points, 2)
-        coordinates of points (x, y)
-    displacements : nd-array (nbr_points, 2)
-        displacement for each point (u, v)
-        could include NaN
-
-    Returns
-    -------
-    nd-array (2, 3)
-        coefficients matrix (affine transformation + translation)
-    nd-array (nbr_points, 2)
-        residuals for each points
-    &#34;&#34;&#34;
-    u, v = displacements.T
-    mask = np.logical_not(np.logical_or(np.isnan(u), np.isnan(v)))
-    u, v = u[mask], v[mask]
-    x, y = points[mask, :].T
-
-    ones = np.ones_like(x)
-    M = np.vstack([x, y, ones]).T
-
-    p_uy, _residual_y, _rank, _s = np.linalg.lstsq(M, v, rcond=None)
-    p_ux, _residual_x, _rank, _s = np.linalg.lstsq(M, u, rcond=None)
-
-    coefficients = np.vstack([p_ux, p_uy])
-
-    ## Unbiased estimator variance (see p47 T. Hastie)
-    #sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
-    #sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
-
-    # Residuals:
-    u_linear = np.matmul( M, p_ux )
-    v_linear = np.matmul( M, p_uy )
-
-    residuals_x = u - u_linear
-    residuals_y = v - v_linear
-
-    residuals_xy = np.vstack([residuals_x, residuals_y]).T
-
-    # Merge with ignored NaN values:
-    residuals_NaN = np.full(displacements.shape, np.nan)
-    residuals_NaN[mask, :] = residuals_xy
-
-    return coefficients, residuals_NaN
-
-
 
 if __name__ == &#34;__main__&#34;:
     import doctest
@@ -518,84 +483,6 @@ if __name__ == &#34;__main__&#34;:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="stretchablecorr.stretchablecorr.bilinear_fit"><code class="name flex">
-<span>def <span class="ident">bilinear_fit</span></span>(<span>points, displacements)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Performs a bilinear fit on the displacements field</p>
-<p>Solve the equation u = A*x + t</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>points</code></strong> :&ensp;<code>nd-array (nbr_points, 2)</code></dt>
-<dd>coordinates of points (x, y)</dd>
-<dt><strong><code>displacements</code></strong> :&ensp;<code>nd-array (nbr_points, 2)</code></dt>
-<dd>displacement for each point (u, v)
-could include NaN</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>nd-array (2, 3)</code></dt>
-<dd>coefficients matrix (affine transformation + translation)</dd>
-<dt><code>nd-array (nbr_points, 2)</code></dt>
-<dd>residuals for each points</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def bilinear_fit(points, displacements):
-    &#34;&#34;&#34;Performs a bilinear fit on the displacements field
-
-    Solve the equation u = A*x + t
-
-    Parameters
-    ----------
-    points : nd-array (nbr_points, 2)
-        coordinates of points (x, y)
-    displacements : nd-array (nbr_points, 2)
-        displacement for each point (u, v)
-        could include NaN
-
-    Returns
-    -------
-    nd-array (2, 3)
-        coefficients matrix (affine transformation + translation)
-    nd-array (nbr_points, 2)
-        residuals for each points
-    &#34;&#34;&#34;
-    u, v = displacements.T
-    mask = np.logical_not(np.logical_or(np.isnan(u), np.isnan(v)))
-    u, v = u[mask], v[mask]
-    x, y = points[mask, :].T
-
-    ones = np.ones_like(x)
-    M = np.vstack([x, y, ones]).T
-
-    p_uy, _residual_y, _rank, _s = np.linalg.lstsq(M, v, rcond=None)
-    p_ux, _residual_x, _rank, _s = np.linalg.lstsq(M, u, rcond=None)
-
-    coefficients = np.vstack([p_ux, p_uy])
-
-    ## Unbiased estimator variance (see p47 T. Hastie)
-    #sigma_hat_x = np.sqrt(residual_x/(M.shape[0]-M.shape[1]-1))
-    #sigma_hat_y = np.sqrt(residual_y/(M.shape[0]-M.shape[1]-1))
-
-    # Residuals:
-    u_linear = np.matmul( M, p_ux )
-    v_linear = np.matmul( M, p_uy )
-
-    residuals_x = u - u_linear
-    residuals_y = v - v_linear
-
-    residuals_xy = np.vstack([residuals_x, residuals_y]).T
-
-    # Merge with ignored NaN values:
-    residuals_NaN = np.full(displacements.shape, np.nan)
-    residuals_NaN[mask, :] = residuals_xy
-
-    return coefficients, residuals_NaN</code></pre>
-</details>
-</dd>
 <dt id="stretchablecorr.stretchablecorr.build_grid"><code class="name flex">
 <span>def <span class="ident">build_grid</span></span>(<span>img_shape, margin, spacing)</span>
 </code></dt>
@@ -847,7 +734,7 @@ NaN if an error occured (often because ROI out of image)</dd>
 </details>
 </dd>
 <dt id="stretchablecorr.stretchablecorr.get_shifts"><code class="name flex">
-<span>def <span class="ident">get_shifts</span></span>(<span>I, J, x, y, window_half_size, offset=(0.0, 0.0), method='skimage', coarse_search=True, **params)</span>
+<span>def <span class="ident">get_shifts</span></span>(<span>I, J, x, y, window_half_size, offset=(0.0, 0.0), method='skimage', coarse_search=False, **params)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Interface to registration methods</p>
@@ -866,7 +753,7 @@ NaN if an error occured (often because ROI out of image)</dd>
 <dd>pre-computed displacement of J relative to I</dd>
 <dt><strong><code>method</code></strong> :&ensp;<code>string {'skimage', 'opti'}</code></dt>
 <dd>name of method used</dd>
-<dt><strong><code>coarse_search</code></strong> :&ensp;<code>Bool</code>, default <code>True</code></dt>
+<dt><strong><code>coarse_search</code></strong> :&ensp;<code>Bool</code>, default <code>False</code></dt>
 <dd>if True perform a first registration
 on a larger region (100px) to find offset</dd>
 <dt><strong><code>params</code></strong> :&ensp;<code>other paramters</code></dt>
@@ -899,7 +786,7 @@ on a larger region (100px) to find offset</dd>
                window_half_size,
                offset=(0.0, 0.0),
                method=&#39;skimage&#39;,
-               coarse_search=True, **params):
+               coarse_search=False, **params):
     &#34;&#34;&#34;Interface to registration methods
 
     Available methods:
@@ -918,7 +805,7 @@ on a larger region (100px) to find offset</dd>
         pre-computed displacement of J relative to I
     method : string {&#39;skimage&#39;, &#39;opti&#39;}
         name of method used
-    coarse_search : Bool, default True
+    coarse_search : Bool, default False
         if True perform a first registration
         on a larger region (100px) to find offset
     params : other paramters
@@ -955,10 +842,12 @@ on a larger region (100px) to find offset</dd>
                                       y_margin)
         source, ij_src = crop(I, (x, y), coarse_window_half_size)
         target, ij_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
-        shifts = phase_cross_correlation(source, target,
-                                         upsample_factor=1,
-                                         return_error=False)
-        shifts = -shifts  # displacement = -registration = dst - src
+        #shifts = phase_cross_correlation(source, target,
+        #                                 upsample_factor=1,
+        #                                 return_error=False)
+        #shifts = -shifts  # displacement = -registration = dst - src
+        shifts, *_ = phase_registration_optim(source, target, phase=True)
+
         dx += shifts[1]
         dy += shifts[0]
 
@@ -968,10 +857,10 @@ on a larger region (100px) to find offset</dd>
     if method == &#39;skimage&#39;:
         shifts, *errors = phase_cross_correlation(source, target,
                                                   **params)
-        shifts = -shifts  # displacement = -registration = dst - src
+        shifts = -shifts  # displ. = -registration = dst - src
     elif method == &#39;opti&#39;:
-        shifts, *errors = phase_registration_optim(source, target,
-                                                   **params)
+        shifts, errors = phase_registration_optim(source, target,
+                                                  **params)
     else:
         raise TypeError(&#34;method must be &#39;skimage&#39; or &#39;opti&#39;&#34;)
 
@@ -982,7 +871,7 @@ on a larger region (100px) to find offset</dd>
 </details>
 </dd>
 <dt id="stretchablecorr.stretchablecorr.track_displ_2steps"><code class="name flex">
-<span>def <span class="ident">track_displ_2steps</span></span>(<span>cube, points, **params)</span>
+<span>def <span class="ident">track_displ_2steps</span></span>(<span>cube, points, offsets=None, **params)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -990,13 +879,25 @@ on a larger region (100px) to find offset</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def track_displ_2steps(cube, points, **params):
+<pre><code class="python">def track_displ_2steps(cube, points, offsets=None, **params):
     displ1, _err1 = track_displ_img_to_img(cube, points,
+                                           offsets=offsets,
                                            **params)
 
+    if offsets is not None:
+        offsets = displ1
+        offsets_2steps = offsets[0:-1] + offsets[1:]
+        offsets_2a = offsets_2steps[0::2]
+        offsets_2b = offsets_2steps[1::2]
+    else:
+        offsets_2a = None
+        offsets_2b = None
+
     displ2a, _err2a = track_displ_img_to_img(cube[0::2], points,
+                                             offsets=offsets_2a,
                                              **params)
     displ2b, _err2b = track_displ_img_to_img(cube[1::2], points,
+                                             offsets=offsets_2b,
                                              **params)
 
     displ2 = np.zeros((displ2a.shape[0] + displ2b.shape[0],
@@ -1005,11 +906,14 @@ on a larger region (100px) to find offset</dd>
 
     displ2[0::2] = displ2a
     displ2[1::2] = displ2b
+    err2 = np.zeros_like(displ2)
+    err2[0::2] = _err2a
+    err2[1::2] = _err2b
 
     triangle_gap = displ1[:-1] + displ1[1:] - displ2
     triangle_gap = np.sqrt(np.sum(triangle_gap**2, axis=-1))
 
-    return displ1, triangle_gap</code></pre>
+    return displ1, triangle_gap, _err1, err2</code></pre>
 </details>
 </dd>
 <dt id="stretchablecorr.stretchablecorr.track_displ_img_to_img"><code class="name flex">
@@ -1070,8 +974,6 @@ NaN if an error occured (often because ROI out of image)</dd>
         Displacement vector.
         NaN if an error occured (often because ROI out of image)
     &#34;&#34;&#34;
-    #params = {&#39;window_half_size&#39;:window_half_size,
-    #          &#39;upsample_factor&#39;:upsample_factor}
 
     if verbose:
         print(&#39;Compute image-to-image Lagrangian displacement field:&#39;)
@@ -1088,19 +990,24 @@ NaN if an error occured (often because ROI out of image)</dd>
     displ[:] = np.NaN
 
     errors = np.empty((len(images)-1,
-                      len(start_points)))
+                      len(start_points),
+                      2))
     errors[:] = np.NaN
 
-    N = (len(images) - 1)*len(start_points)
+    nbr_steps = (len(images) - 1)*len(start_points)
     for i, (x0, y0) in enumerate(start_points):
         xi, yi = x0, y0
         for k, (A, B) in enumerate(zip(images, images[1:])):
 
             if verbose:
-                print(f&#39;{int(100*(i*(len(images)-1)+k))//N: 3d}%&#39; +
+                print(f&#39;{int(100*(i*(len(images)-1)+k))//nbr_steps: 3d}%&#39; +
                       f&#39;  images:{k:02d}→{k+1:02d}&#39; +
                       f&#39;  point:{i: 4d} ...&#39;,
                       end=&#39;\r&#39;)
+
+            if np.isnan(xi) or np.isnan(yi) or np.any(np.isnan(offsets[k, i, :])):
+                # pass -&gt; return NaN value
+                break
 
             try:
                 u, err = get_shifts(A, B, xi, yi,
@@ -1108,11 +1015,11 @@ NaN if an error occured (often because ROI out of image)</dd>
                                     **params)
 
                 displ[k, i, :] = u
-                errors[k, i] = err[0]
+                errors[k, i] = err
                 xi += u[0]
                 yi += u[1]
             except ValueError:
-                # pass
+                # pass -&gt; return NaN value
                 break
 
     if verbose:
@@ -1235,7 +1142,6 @@ NaN if an error occured (often because ROI out of image)</dd>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="stretchablecorr.stretchablecorr.bilinear_fit" href="#stretchablecorr.stretchablecorr.bilinear_fit">bilinear_fit</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.build_grid" href="#stretchablecorr.stretchablecorr.build_grid">build_grid</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.crop" href="#stretchablecorr.stretchablecorr.crop">crop</a></code></li>
 <li><code><a title="stretchablecorr.stretchablecorr.displacements_img_to_img" href="#stretchablecorr.stretchablecorr.displacements_img_to_img">displacements_img_to_img</a></code></li>

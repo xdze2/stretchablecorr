@@ -130,6 +130,8 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     tuple of floats
         error estimations
     &#34;&#34;&#34;
+    #A = (A - np.min(A) )/np.std(A)
+    #B = (B - np.min(B) )/np.std(B)
     upsamplefactor = 1
 
     if phase:
@@ -171,15 +173,20 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     if verbose:
         print(res)
 
-    #  FRAE - error estimation
-    sigma_J = np.std(phase_corr)  #  + np.sqrt(A.size)*4
-    lmbda = 1.68
-    C_theta = np.trace(res.hess_inv) * sigma_J * lmbda
-    FRAE = np.sqrt(C_theta)
-    z_score = (-res.fun - np.mean(phase_corr))/sigma_J
+    # Error estimation
+    # from Inv. Hessian :
+    a_moins_b_2 = (np.mean(A) - np.mean(B))**2
+    sigma2 = np.mean(A**2 + B**2) - a_moins_b_2 + 2*res.fun/A.size
+    C_theta = np.trace(res.hess_inv) * sigma2
 
-    #  c = np.sum(phase_corr &gt; np.min(phase_corr) + np.ptp(phase_corr)*0.7)
-    return -res.x, z_score, FRAE
+    # CRBD :
+    #ux = np.diff(A, axis=1).flatten()
+    #uy = np.diff(A, axis=0).flatten()
+    #ux2 = np.dot(ux, ux)
+    #uy2 = np.dot(uy, uy)
+    #uxy2 = np.dot(ux, uy)**2
+    #CRBD = sigma2 * (ux2 + uy2)/(ux2*uy2 - uxy2)
+    return -res.x, (1, C_theta)
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
@@ -240,7 +247,7 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
                    tol=1e-3,
                    jac=jac)
 
-    return -dx_span, -dy_span, phase_corr, res.x</code></pre>
+    return -dx_span, -dy_span, phase_corr, res</code></pre>
 </details>
 </section>
 <section>
@@ -460,7 +467,7 @@ for verification and debug</p>
                    tol=1e-3,
                    jac=jac)
 
-    return -dx_span, -dy_span, phase_corr, res.x</code></pre>
+    return -dx_span, -dy_span, phase_corr, res</code></pre>
 </details>
 </dd>
 <dt id="stretchablecorr.opti_registration.phase_registration_optim"><code class="name flex">
@@ -512,6 +519,8 @@ use iterative optimization</p>
     tuple of floats
         error estimations
     &#34;&#34;&#34;
+    #A = (A - np.min(A) )/np.std(A)
+    #B = (B - np.min(B) )/np.std(B)
     upsamplefactor = 1
 
     if phase:
@@ -553,15 +562,20 @@ use iterative optimization</p>
     if verbose:
         print(res)
 
-    #  FRAE - error estimation
-    sigma_J = np.std(phase_corr)  #  + np.sqrt(A.size)*4
-    lmbda = 1.68
-    C_theta = np.trace(res.hess_inv) * sigma_J * lmbda
-    FRAE = np.sqrt(C_theta)
-    z_score = (-res.fun - np.mean(phase_corr))/sigma_J
+    # Error estimation
+    # from Inv. Hessian :
+    a_moins_b_2 = (np.mean(A) - np.mean(B))**2
+    sigma2 = np.mean(A**2 + B**2) - a_moins_b_2 + 2*res.fun/A.size
+    C_theta = np.trace(res.hess_inv) * sigma2
 
-    #  c = np.sum(phase_corr &gt; np.min(phase_corr) + np.ptp(phase_corr)*0.7)
-    return -res.x, z_score, FRAE</code></pre>
+    # CRBD :
+    #ux = np.diff(A, axis=1).flatten()
+    #uy = np.diff(A, axis=0).flatten()
+    #ux2 = np.dot(ux, ux)
+    #uy2 = np.dot(uy, uy)
+    #uxy2 = np.dot(ux, uy)**2
+    #CRBD = sigma2 * (ux2 + uy2)/(ux2*uy2 - uxy2)
+    return -res.x, (1, C_theta)</code></pre>
 </details>
 </dd>
 </dl>
