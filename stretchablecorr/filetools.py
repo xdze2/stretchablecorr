@@ -2,7 +2,9 @@
 from glob import glob
 import os, re
 import imghdr
-import doctest
+from datetime import datetime
+
+#import doctest
 
 import numpy as np
 import matplotlib.pylab as plt
@@ -155,14 +157,18 @@ def save_fig(fig_name, *subdirs,
 
 
 def save_data(data, array_name, *subdirs,
-              output_dir='./output/'):
+              output_dir='./output/', add_timestamp=True):
     """Save data using pickle
 
         see save_fig options
     """
     path = os.path.join(output_dir, *subdirs)
     create_dir(path, verbose=False)
+
     array_name = array_name.replace('.npy', '')
+    if add_timestamp:
+        array_name += '_' + datetime.now().strftime("%H%M%S")
+    
     filename = f"{array_name}.pck"
     path = os.path.join(path, filename)
     with open(path, 'wb') as f:
@@ -259,7 +265,7 @@ def parse_step_dir(stepname):
     return info
 
 
-doctest.testmod(verbose=False)
+# doctest.testmod(verbose=False)
 
 
 

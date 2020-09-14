@@ -69,3 +69,66 @@ def plot_grid_points(grid, background=None,
         middle_point = tuple(np.array(grid[0].shape) // 2 - 1)
         plt.plot(box[0]+grid[0][middle_point], box[1]+grid[1][middle_point],
                  color=color, linewidth=1)
+
+
+from matplotlib.lines import Line2D
+
+def plot_trajectories(trajectories, background=None, gaps=None,
+                      color='black'):
+    if background is not None:
+        plt.imshow(background, alpha=.4)
+
+    for k, xy in enumerate(np.swapaxes(trajectories, 0, 1)):
+        plt.plot(*xy[0], 's', color=color, markersize=1)
+        plt.plot(*xy.T, '-', linewidth=.5, markersize=2, color=color)
+        if k % 5 == 0:
+            plt.text(*xy[0], str(k), fontsize=6)
+
+        if gaps is not None:
+            g = gaps[:, k]    
+            mask = ~np.isnan(g)
+            mask[mask] &= g[mask] > 5
+            plt.plot(*xy[1:-1, :][mask, :].T, 'o', markersize=2,
+                     color='red')
+            plt.legend([Line2D([0], [0], linestyle='', marker='o', color='red', markersize=2),], ['gap > 5px', ])
+        #plt.axis('equal')
+
+
+def plot_deformed_mesh(grid, displ_field,
+                       color_values=None,
+                       view_factor=10, cmap='Spectral'):
+    
+    if color_values is None:
+        color_values = np.zeros_like(grid[0])
+    
+    # Scale displacements using view_factor
+    points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
+    positions_amplified = displ_field*view_factor + points
+    x_amplified = positions_amplified[:, 0].reshape(grid[0].shape)
+    y_amplified = positions_amplified[:, 1].reshape(grid[0].shape)
+
+    # Background Reference grid:
+    moved_out = np.any(np.isnan(displ_field), axis=1).reshape(grid[0].shape)
+    ref_colors = np.zeros_like(moved_out)
+    ref_colors[moved_out] = 1
+    
+    plt.pcolor(*grid, ref_colors,
+               edgecolors='black', linewidth=1, antialiased=True,
+               cmap='Reds', alpha=0.1)
+
+    # Front mesh:
+    plt.pcolor(x_amplified, y_amplified, color_values,
+               edgecolors='black',
+               linewidth=1,
+               antialiased=True,
+               cmap=cmap);# Spectral
+    #plt.clim(0, +10)
+
+    #sigma = np.nanstd(eps_33_pct)
+    #m = np.nanmean(eps_33_pct)
+    #plt.clim(m-1.5*sigma, m+1.5*sigma)
+
+    plt.axis('equal');
+    if color_values is not None:
+        plt.colorbar();
+    plt.xlabel('x [pixel]'); plt.ylabel('y [pixel]');   

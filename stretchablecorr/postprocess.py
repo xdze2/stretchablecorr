@@ -76,3 +76,4 @@ def bilinear_fit(points, displacements):
 
     return coefficients, residuals_NaN
 
+

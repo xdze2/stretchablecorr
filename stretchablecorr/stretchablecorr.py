@@ -7,6 +7,8 @@ except ImportError:
     print('Warning: scikit-image not up-to-date')
     from skimage.feature import register_translation as phase_cross_correlation
 
+from skimage.transform.pyramids import pyramid_reduce
+
 from .opti_registration import phase_registration_optim
 
 
@@ -57,7 +59,7 @@ def get_shifts(I, J, x, y,
                window_half_size,
                offset=(0.0, 0.0),
                method='skimage',
-               coarse_search=True, **params):
+               coarse_search=False, **params):
     """Interface to registration methods
 
     Available methods:
@@ -76,7 +78,7 @@ def get_shifts(I, J, x, y,
         pre-computed displacement of J relative to I
     method : string {'skimage', 'opti'}
         name of method used
-    coarse_search : Bool, default True
+    coarse_search : Bool, default False
         if True perform a first registration
         on a larger region (100px) to find offset
     params : other paramters
@@ -128,7 +130,7 @@ def get_shifts(I, J, x, y,
     if method == 'skimage':
         shifts, *errors = phase_cross_correlation(source, target,
                                                   **params)
-        shifts = -shifts  # displacement = -registration = dst - src
+        shifts = -shifts  # displ. = -registration = dst - src
     elif method == 'opti':
         shifts, errors = phase_registration_optim(source, target,
                                                   **params)
@@ -280,8 +282,6 @@ def track_displ_img_to_img(images, start_points,
         Displacement vector.
         NaN if an error occured (often because ROI out of image)
     """
-    #params = {'window_half_size':window_half_size,
-    #          'upsample_factor':upsample_factor}
 
     if verbose:
         print('Compute image-to-image Lagrangian displacement field:')
@@ -302,16 +302,20 @@ def track_displ_img_to_img(images, start_points,
                       2))
     errors[:] = np.NaN
 
-    N = (len(images) - 1)*len(start_points)
+    nbr_steps = (len(images) - 1)*len(start_points)
     for i, (x0, y0) in enumerate(start_points):
         xi, yi = x0, y0
         for k, (A, B) in enumerate(zip(images, images[1:])):
 
             if verbose:
-                print(f'{int(100*(i*(len(images)-1)+k))//N: 3d}%' +
+                print(f'{int(100*(i*(len(images)-1)+k))//nbr_steps: 3d}%' +
                       f'  images:{k:02d}→{k+1:02d}' +
                       f'  point:{i: 4d} ...',
                       end='\r')
+
+            if np.isnan(xi) or np.isnan(yi) or np.any(np.isnan(offsets[k, i, :])):
+                # pass -> return NaN value
+                break
 
             try:
                 u, err = get_shifts(A, B, xi, yi,
@@ -323,7 +327,7 @@ def track_displ_img_to_img(images, start_points,
                 xi += u[0]
                 yi += u[1]
             except ValueError:
-                # pass
+                # pass -> return NaN value
                 break
 
     if verbose:
