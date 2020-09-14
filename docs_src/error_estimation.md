@@ -17,6 +17,7 @@
 - z-score (same as IB ?)
 - based on curvature at max.
 
+- Fundamental Limits in Multi-image Alignment https://arxiv.org/pdf/1602.01541.pdf
 
 1. RMS (relative error). method implemented in skimage  
 --> corresponds to peak amplitude: $max(A \otimes B)$
@@ -188,3 +189,9 @@ but that's for time series, auto-regressive approachs
 
 book : STRUTZ, Tilo. Data fitting and uncertainty. A practical introduction to weighted least squares and beyond. Vieweg+ Teubner, 2010.
 
+
+
+##  Multi-image Alignment
+
+- A Practical Guide to Multi-image Alignment https://arxiv.org/abs/1802.03280
+- CONSTRAINED, GLOBALLY OPTIMAL, MULTI-FRAME MOTION ESTIMATION  http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.124.2674&rep=rep1&type=pdf
