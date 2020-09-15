@@ -60,10 +60,10 @@
 \underset{\delta}{\text{argmax}} \int_x A(x+\delta) \cdot B(x) \,  dx
 </span></p>
 <blockquote>
-<p><em>note:</em> convolution is the same as cross-correlation plus or minus a sign change. Also, complex conjugate <span class="math inline">B^\star</span> appears due to the sign change.</p>
+<p><em>note 1 :</em> convolution is the same as cross-correlation plus or minus a sign change. Complex conjugate <span class="math inline">B^\star</span> appears due to the sign change.</p>
 </blockquote>
 <blockquote>
-<p><em>note 2:</em> because of the indefinite integrale notation, <span class="math inline">\int A^2 \,dx</span> and <span class="math inline">\int B^2 \,dx</span>, could be forgotten (they are constant). However, if the integration domain is of a fixed size, the image ROI could be normalized before (see [Pan2009] review).</p>
+<p><em>note 2 :</em> <span class="math inline">\int A^2 \,dx</span> and <span class="math inline">\int B^2 \,dx</span> are constant relative to the translation parameter <span class="math inline">\delta</span> for a given integration domain (ROI). There should be no need to normalize the images ROI before (see [Pan2009] review).</p>
 </blockquote>
 <p>The key benefit of the correlation formulation is the possible use of the Fourier transform and the Fast Fourier Transform algorithm for the computation.</p>
 <p><span class="math display">
@@ -86,7 +86,7 @@
 \right\rbrace
 </span></p>
 <blockquote>
-<p><em>Question:</em> What are the differences and advantages between the phase correlation approach (working with the phase only) and the &#x201C;cross-correlation&#x201D; approach (working with the absolute value)</p>
+<p><em>question :</em> What are the differences and advantages between the phase correlation approach (working with the phase only) and the &#x201C;cross-correlation&#x201D; approach (working with the absolute value)</p>
 </blockquote>
 </section>
 <section id="foosub-pixel-accuracy" class="level3">
@@ -106,15 +106,23 @@
 </ul></li>
 <li>an interresting approach is to use the Fourier transform itself for interpolation (upsampling using zero padding) [Guizar-Sicairos2008]</li>
 <li>Non-linear optimization method (gradient descent) on the interpolated peak function (see also [Guizar-Sicairos2008]). Initial guess using argmax on the FFT-based cross-correlation without upsampling.</li>
-<li>Phase unwrapping approach, see for instance [Balci2006]. (My though: it is a non-linear problem and it involves computation of the inverse Fourier transform&#x2026; better to use non-linear optimisation directly). See also [Stone2001].</li>
-<li>Centro&#xEF;d computation (weighted average)</li>
+<li>Phase unwrapping approach, see for instance [Balci2006]. <em>(My though: it is a non-linear problem and it involves computation of inverse Fourier transform or another&#x2026; better to use non-linear optimisation directly).</em> See also [Stone2001].</li>
+<li>Centro&#xEF;d computation (weighted average): possible bias when off-center sampling</li>
 </ul>
 <blockquote>
 <p>It is similar to the peak fitting problem. However, here no known mathematical function of the peak shape is assumed and only position of the maximum is searched for.</p>
 </blockquote>
-<p>&#x2013;&gt; Phase correlation with appropriate windowing VS &#x201C;cross-correlation&#x201D;<br />
-&#x2013;&gt; Why the method proposed by Guizar-Sicairos et al.&#xA0;(i.e.&#xA0;brute force optimization) is preferred over gradient descent optimization?</p>
-<p>Windowing see Stone2001</p>
+<blockquote>
+<p><em>question :</em> Why the method proposed by Guizar-Sicairos et al.&#xA0;(i.e.&#xA0;brute force optimization) is preferred over gradient descent optimization?</p>
+</blockquote>
+</section>
+<section id="foophase-correlation-and-appropriate-windowing" class="level3">
+<h3>Phase correlation and appropriate windowing</h3>
+<p>Phase correlation works better when a windowing function is applied before computation of the fourier transforms. The <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.blackman.html">Blackman window</a> is used. See [Stone2001].</p>
+</section>
+<section id="foomaximum-peak-value-and-sum-of-square-difference" class="level3">
+<h3>Maximum peak value and sum of square difference</h3>
+<p>To</p>
 </section>
 <section id="fooreferences" class="level3">
 <h3>References</h3>
