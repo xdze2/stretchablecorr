@@ -102,7 +102,7 @@ Here a "2-scale" approach is used:
 * second, run correlation image-to-image for all points of the grid, using previous offsets and smaller window size (~20px) 
 
 
-## Cross-correlation methods
+## Cross-correlation methods
 
 - The function [`phase-cross-correlation`](https://scikit-image.org/docs/stable/api/skimage.registration.html#phase-cross-correlation) from **scikit-image** could be used. Cross-correlation as pixel sampling is obtained using FFT. Sub-pixel precision is obtained employing an upsampled matrix-multiplication DFT [1].
 
@@ -111,7 +111,7 @@ Here a "2-scale" approach is used:
 - Similar approach, but non-linear optimization ([BFGS](https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm)) is used to locate the cross-correlation peak. See `phase_registration_optim` function.
 
 
-## Install
+## Installation
 
 - download the repository (`git clone http://`, ...)
 - `python --version` --> Python 3.6.9
@@ -119,7 +119,7 @@ Here a "2-scale" approach is used:
 - `$ pip install numba` (optional) 
 
 
-### for jupyter (optional) 
+### for jupyter (optional) 
 
 [jupyter notebooks and jupyter-lab](https://jupyter.org/) are web-based interactive development environment:
 
