@@ -35,6 +35,17 @@ cube_last_first = (cube[0] + cube[-1])/2
 plt.figure(); plt.title(f'first and last images - {sample_name}');
 plt.imshow(cube_last_first, cmap='viridis');
 
+
+# -
+
+def norm_01(I):
+    return (I - I.min())/I.ptp()
+
+
+Ic = np.dstack([norm_01(cube[0])**0.5, norm_01(cube[-1])**0.5, 0.5*np.ones_like(cube[0])])
+
+plt.imshow(Ic)
+
 # +
 # ===============
 #  Define a grid
@@ -65,7 +76,7 @@ sc.plot_grid_points(grid, background=cube[0],
 # =====================
 
 downscale = 3
-params = {'window_half_size': 25,
+params = {'window_half_size': 35,
           'method':'opti',
           'phase':True
          }
@@ -149,3 +160,5 @@ identity_line = [1e-2, 1e-1]
 plt.loglog(identity_line, identity_line, '-r', linewidth=3)
 plt.xlabel('triangulation gap (px)');
 plt.ylabel('estimation from Hessian (px)');
+
+
