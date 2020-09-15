@@ -134,16 +134,11 @@ The [jupytext](https://github.com/mwouts/jupytext) extension is used to automati
 
 ## Development & code structure
 
-There are 4 modules:
-- filetools : functions used to load and sort images
-- stretchablecorr : main set of function performing the processing
-- graphplot : post-processing functions
-- opti_registration : registration method using optimization & DFT for sub-pixel accuracy
-
-
 ### Documention
 
- use Github static site in the `/docs` folder
+Github static site in the `/docs` folder is used.
+
+Generate the documention using the script:
 
     $ source make_doc.sh
 
@@ -151,16 +146,17 @@ There are 4 modules:
 
 _note:_ [numpy's style](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) of docstrings is used
 
-docstring to html is done using [pdoc](https://pdoc3.github.io/pdoc/)
+docstring to html transmutation is done using [pdoc](https://pdoc3.github.io/pdoc/)
 
     $ pdoc --html --output-dir docs stretchablecorr filetools --force
 
 #### Markdown with math
 
-* convert markdown file to html using [pandoc](https://pandoc.org/MANUAL.html). _simplest solution to display **math equation** online, with Katex_
+* convert markdown file to html using [pandoc](https://pandoc.org/MANUAL.html)  
+_simplest solution to display **math equation** online, with Katex_
 
 
-* use pandoc's config file `pandoc.yaml` (need pandoc 2.10+)
+* use pandoc's config file `pandoc.yaml` (needs pandoc 2.10+)
 
         $ pandoc --defaults=pandoc.yaml
 
