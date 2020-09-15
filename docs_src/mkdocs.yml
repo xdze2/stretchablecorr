@@ -1,0 +1,10 @@
+site_name: stretchablecorr
+
+
+theme: readthedocs
+
+
+nav:
+    - Home: index.md
+    - intro: DIC_introduction.md
+    - API: stretchablecorr_doc.md
