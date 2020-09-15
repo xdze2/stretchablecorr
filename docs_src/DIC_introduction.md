@@ -70,9 +70,7 @@ Further needed hypothesis, which are obvious in case of mechanical test analysis
 
 ### Remarks
 
-[1]  $T_\theta(B(x))$ could be written
-
-[2] Continuous notation is used here $A(x)$. However, digital images are discrete. At the end, intensity of pixels $\mathtt A[i, j]$ will be used. Also, computing the cost function will require to obtain image intensity at non-integer pixel position. Displacement smaller than one pixel could be deduced with appropriate method (subîxel accuracy). For these reason, $A(x)$ refere to the theoretical "true" image, before the acquisition and the sampling. Interpolation and smoothing methods will be used to get an estimation of $A(x)$ from the actual measured image $\mathtt A[i, j]$
+[1] Continuous notation is used here $A(x)$. However, digital images are discrete. At the end, intensity of pixels $\mathtt A[i, j]$ will be used. Also, computing the cost function will require to obtain image intensity at non-integer pixel position. Displacement smaller than one pixel could be deduced with appropriate method (subîxel accuracy). For these reason, $A(x)$ refere to the theoretical "true" image, before the acquisition and the sampling. Interpolation and smoothing methods will be used to get an estimation of $A(x)$ from the actual measured image $\mathtt A[i, j]$
 
 ---
 [← back to github page](https://github.com/xdze2/stretchablecorr)

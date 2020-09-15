@@ -61,17 +61,6 @@ However, large displacement or deformation could occur between these two images,
 ![error propagationr](./schema/sch_error_propagation.png)
 
 
-Therefore, at least four different combinations are possible to estimate the displacement field:
-
-* either Eulerian or Lagrangian, 
-* and image-to-image (relative) or image-to-reference (absolute) correlations.
-
-> For the moment, Image-to-reference is not used. Image-to-reference displacement field is obtained by summation (`cumsum()`) of the image-to-image displacement field.
-
-_note:_ **High order** correlation methods (for instance global DIC) are used to reduce the correlation error in the image-to-reference case.
-
-Multi-image registration 
-
 
 ## Data structures
 
@@ -134,11 +123,11 @@ The [jupytext](https://github.com/mwouts/jupytext) extension is used to automati
 
 ## Development & code structure
 
-### Documention
+### Documentation
 
 Github static site in the `/docs` folder is used.
 
-Generate the documention from `./docs_src` using the script:
+Generate the HTMLs from the source folder `./docs_src` using the script:
 
     $ source make_doc.sh
 
