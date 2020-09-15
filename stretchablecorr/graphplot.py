@@ -2,6 +2,18 @@ import numpy as np
 import matplotlib.pylab as plt
 
 
+
+def imshow_color_diff(I, J):
+    """display I and J images superimposed on different color channels
+    """
+    def norm_01(I):
+        return (I - I.min())/I.ptp()
+    Ic = np.dstack([norm_01(I)**0.5,
+                    norm_01(J)**0.5,
+                    0.5*np.ones_like(J)])
+    plt.imshow(Ic)
+
+
 def plot_vector_field(points, displacements,
                       view_factor=None, color='white'):
     amplitudes = np.sqrt(np.nansum(displacements**2, axis=1))
