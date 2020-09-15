@@ -129,7 +129,7 @@ Here a "2-scale" approach is used:
 
 in jupyter-lab, search for command: `enable extension manager` then install **jupytext** extension.
 
-The [jupytext](https://github.com/mwouts/jupytext) extension is used to automatically convert ̀̀ .ipynb` notebook file to a ̀`.py` runable python script.
+The [jupytext](https://github.com/mwouts/jupytext) extension is used to automatically convert `ipynb` notebook file to a ̀`.py` runable python script.
 
 
 ## Development & code structure
