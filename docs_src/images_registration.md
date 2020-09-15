@@ -25,9 +25,9 @@ $$
 \underset{\delta}{\text{argmax}} \int_x A(x+\delta) \cdot B(x) \,  dx
 $$
 
-> _note:_ convolution is the same as cross-correlation plus or minus a sign change. Also, complex conjugate $B^\star$ appears due to the sign change.
+> _note 1 :_ convolution is the same as cross-correlation plus or minus a sign change. Complex conjugate $B^\star$ appears due to the sign change.
 
-> _note 2:_ because of the indefinite integrale notation, $\int A^2 \,dx$ and $\int B^2 \,dx$, could be forgotten (they are constant). However, if the integration domain is of a fixed size, the image ROI could be normalized before (see [Pan2009] review).
+> _note 2 :_  $\int A^2 \,dx$ and $\int B^2 \,dx$ are constant relative to the translation parameter $\delta$ for a given integration domain (ROI). There should be no need to normalize the images ROI  before (see [Pan2009] review).
 
 The key benefit of the correlation formulation is the possible use of the Fourier transform and the Fast Fourier Transform algorithm for the computation. 
 
@@ -59,7 +59,7 @@ $$
 \right\rbrace
 $$
 
-> _Question:_  What are the differences and advantages between the phase correlation approach (working with the phase only) and the "cross-correlation" approach (working with the absolute value)
+> _question :_  What are the differences and advantages between the phase correlation approach (working with the phase only) and the "cross-correlation" approach (working with the absolute value)
 
 ## Sub-pixel accuracy
 
@@ -78,16 +78,25 @@ Possible sub-pixel accuracy methods are:
   - using semi-analytcal approximation [Foroosh2002]
 - an interresting approach is to use the Fourier transform itself for interpolation (upsampling using zero padding) [Guizar-Sicairos2008]
 - Non-linear optimization method (gradient descent) on the interpolated peak function (see also [Guizar-Sicairos2008]). Initial guess using argmax on the FFT-based cross-correlation without upsampling.
-- Phase unwrapping approach, see for instance [Balci2006]. (My though: it is a non-linear problem and it involves computation of the inverse Fourier transform... better to use non-linear optimisation directly). See also [Stone2001].
-- Centroïd computation (weighted average)
+- Phase unwrapping approach, see for instance [Balci2006]. _(My though: it is a non-linear problem and it involves computation of inverse Fourier transform or another... better to use non-linear optimisation directly)._ See also [Stone2001].
+- Centroïd computation (weighted average): possible bias when off-center sampling
 
 > It is similar to the peak fitting problem. However, here no known mathematical function of the peak shape is assumed and only position of the maximum is searched for.  
 
 
---> Phase correlation with appropriate windowing VS  "cross-correlation"  
---> Why the method proposed by Guizar-Sicairos et al. (i.e. brute force optimization) is preferred over gradient descent optimization? 
+ 
+> _question :_ Why the method proposed by Guizar-Sicairos et al. (i.e. brute force optimization) is preferred over gradient descent optimization? 
 
-Windowing see Stone2001
+
+## Phase correlation and appropriate windowing
+
+Phase correlation works better when a windowing function is applied before computation of the fourier transforms. The [Blackman window](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.blackman.html) is used. See [Stone2001].
+
+
+## Maximum peak value and sum of square difference
+
+To 
+
 
 ## References
 
