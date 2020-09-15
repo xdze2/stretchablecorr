@@ -103,10 +103,6 @@ Phase correlation works better when a windowing function is applied before compu
 
 
 
-## Error estimation
-
-- Kybic, J. « Bootstrap Resampling for Image Registration Uncertainty Estimation Without Ground Truth ». IEEE Transactions on Image Processing 19, nᵒ 1 (janvier 2010): 64‑73. https://doi.org/10.1109/TIP.2009.2030955.
-
 
 ----
 [← back to introduction](./index.html)
