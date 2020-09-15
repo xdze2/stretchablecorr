@@ -32,7 +32,7 @@ Possible transformations could be classified regarding their order:
 - Non-linear: quadratic, splines... etc
 
 
-![./files/def_states.png](./files/def_states.png)
+![picture of possible transformations](./files/def_states.png)
 
 Distinction between **local** and **global** methods are sometime used for Digital Image Correlation methods, which could be understood as low or high order methods. 
 
@@ -43,28 +43,29 @@ Any high order deformation could be reduced to a low order transformations provi
 
 One advantage of high order methods is that deformation field $\varepsilon_{ij}(x)$ is directly obtained, in addition to the displacement field $u_i(x)$. To numericaly derive the deformation from the estimated displacement field, interpolation and smoothing methods have to be used. 
 
-Further hypothesis which are obvious in case of mechanical test analysis:
+Further needed hypothesis, which are obvious in case of mechanical test analysis, are:
 
 * the two observed sampled images represent the same scene
 * obtained under similar conditions (same set-up and same camera)
-* sampled on identical grids
 
 
 
 ### Next
 
-* [math of images registration](./images_registration.html)
-* [List of DIC softwares](./list_DICsoftwares.html)
-* Bibliography on  DIC (specific to mecanical test)
+* [more maths about images registration](./images_registration.html)
+* [list of other DIC softwares](./list_DICsoftwares.html)
+* [list of articles about DIC](./list_of_references.html)
+* [code documentation (docstrings)](./stretchablecorr/index.html)
 
-* [Code documentation (docstrings)](./stretchablecorr/index.html)
-
-### Some references 
+### Some references (review)
 
 - Pan, Bing, Kemao Qian, Huimin Xie, et Anand Asundi. « Two-Dimensional Digital Image Correlation for in-Plane Displacement and Strain Measurement: A Review ». Measurement Science and Technology 20, nᵒ 6 (1 juin 2009): 062001. https://doi.org/10.1088/0957-0233/20/6/062001.
 
 - Stone, H.S., M.T. Orchard, Ee-Chien Chang, et S.A. Martucci. « A Fast Direct Fourier-Based Algorithm for Subpixel Registration of Images ». IEEE Transactions on Geoscience and Remote Sensing 39, nᵒ 10 (octobre 2001): 2235‑43. https://doi.org/10.1109/36.957286.
 
+- F. Hild and S. Roux, “Comparison of Local and Global Approaches to Digital Image Correlation,” Experimental Mechanics, vol. 52, no. 9, pp. 1503–1519, Nov. 2012, doi: 10.1007/s11340-012-9603-7.
+
+- B. Pan, “Recent Progress in Digital Image Correlation,” Experimental Mechanics, vol. 51, no. 7, pp. 1223–1235, Sep. 2011, doi: 10.1007/s11340-010-9418-3.
 
 
 ### Remarks

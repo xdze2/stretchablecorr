@@ -64,7 +64,9 @@
 <li>Linear: rotation, scaling and deformation <span class="math inline">u(x) = C + M\times x</span></li>
 <li>Non-linear: quadratic, splines&#x2026; etc</li>
 </ul>
-<p><span class="image">./files/def_states.png</span></p>
+<figure>
+<img src="../docs//a9287707b295e049a77e1bb3678c2d26d4a54f0f.png" alt="picture of possible transformations" /><figcaption aria-hidden="true">picture of possible transformations</figcaption>
+</figure>
 <p>Distinction between <strong>local</strong> and <strong>global</strong> methods are sometime used for Digital Image Correlation methods, which could be understood as low or high order methods.</p>
 <p>Any high order deformation could be reduced to a low order transformations provided that:</p>
 <ul>
@@ -72,26 +74,27 @@
 <li>and that the two images are similar enough</li>
 </ul>
 <p>One advantage of high order methods is that deformation field <span class="math inline">\varepsilon_{ij}(x)</span> is directly obtained, in addition to the displacement field <span class="math inline">u_i(x)</span>. To numericaly derive the deformation from the estimated displacement field, interpolation and smoothing methods have to be used.</p>
-<p>Further hypothesis which are obvious in case of mechanical test analysis:</p>
+<p>Further needed hypothesis, which are obvious in case of mechanical test analysis, are:</p>
 <ul>
 <li>the two observed sampled images represent the same scene</li>
 <li>obtained under similar conditions (same set-up and same camera)</li>
-<li>sampled on identical grids</li>
 </ul>
 <section id="foonext" class="level4">
 <h4>Next</h4>
 <ul>
-<li><p><a href="./images_registration.html">math of images registration</a></p></li>
-<li><p><a href="./list_DICsoftwares.html">List of DIC softwares</a></p></li>
-<li><p>Bibliography on DIC (specific to mecanical test)</p></li>
-<li><p><a href="./stretchablecorr/index.html">Code documentation (docstrings)</a></p></li>
+<li><a href="./images_registration.html">more maths about images registration</a></li>
+<li><a href="./list_DICsoftwares.html">list of other DIC softwares</a></li>
+<li><a href="./list_of_references.html">list of articles about DIC</a></li>
+<li><a href="./stretchablecorr/index.html">code documentation (docstrings)</a></li>
 </ul>
 </section>
-<section id="foosome-references" class="level4">
-<h4>Some references</h4>
+<section id="foosome-references-review" class="level4">
+<h4>Some references (review)</h4>
 <ul>
 <li><p>Pan, Bing, Kemao Qian, Huimin Xie, et Anand Asundi. &#xAB;&#xA0;Two-Dimensional Digital Image Correlation for in-Plane Displacement and Strain Measurement: A Review&#xA0;&#xBB;. Measurement Science and Technology 20, n&#x1D52; 6 (1 juin 2009): 062001. https://doi.org/10.1088/0957-0233/20/6/062001.</p></li>
 <li><p>Stone, H.S., M.T. Orchard, Ee-Chien Chang, et S.A. Martucci. &#xAB; A Fast Direct Fourier-Based Algorithm for Subpixel Registration of Images &#xBB;. IEEE Transactions on Geoscience and Remote Sensing 39, n&#x1D52; 10 (octobre 2001): 2235&#x2011;43. https://doi.org/10.1109/36.957286.</p></li>
+<li><p>F. Hild and S. Roux, &#x201C;Comparison of Local and Global Approaches to Digital Image Correlation,&#x201D; Experimental Mechanics, vol.&#xA0;52, no. 9, pp.&#xA0;1503&#x2013;1519, Nov.&#xA0;2012, doi: 10.1007/s11340-012-9603-7.</p></li>
+<li><p>B. Pan, &#x201C;Recent Progress in Digital Image Correlation,&#x201D; Experimental Mechanics, vol.&#xA0;51, no. 7, pp.&#xA0;1223&#x2013;1235, Sep.&#xA0;2011, doi: 10.1007/s11340-010-9418-3.</p></li>
 </ul>
 </section>
 <section id="fooremarks" class="level4">

@@ -138,7 +138,7 @@ The [jupytext](https://github.com/mwouts/jupytext) extension is used to automati
 
 Github static site in the `/docs` folder is used.
 
-Generate the documention using the script:
+Generate the documention from `./docs_src` using the script:
 
     $ source make_doc.sh
 

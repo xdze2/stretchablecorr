@@ -33,9 +33,18 @@ from scipy.fft import fftn, ifftn
 from scipy.fft import fftshift, fftfreq
 from scipy.signal.windows import blackman
 from scipy.optimize import minimize
-from numba import jit
 
-nopython = False
+try:
+    from numba import jit
+except ModuleNotFoundError:
+    print(&#39;Warning: numba is not installed (no compilation optimization)&#39;)
+
+    def jit(*args, **kwargs):
+        def do_nothing(f):
+            return f
+        return do_nothing
+
+nopython = True
 
 @jit(nopython=nopython)
 def custom_fftfreq(n):
@@ -130,8 +139,6 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     tuple of floats
         error estimations
     &#34;&#34;&#34;
-    #A = (A - np.min(A) )/np.std(A)
-    #B = (B - np.min(B) )/np.std(B)
     upsamplefactor = 1
 
     if phase:
@@ -379,6 +386,21 @@ def grad_dft(data, yx):
     return np.array([grady, gradx]) / data.size</code></pre>
 </details>
 </dd>
+<dt id="stretchablecorr.opti_registration.jit"><code class="name flex">
+<span>def <span class="ident">jit</span></span>(<span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def jit(*args, **kwargs):
+    def do_nothing(f):
+        return f
+    return do_nothing</code></pre>
+</details>
+</dd>
 <dt id="stretchablecorr.opti_registration.output_cross_correlation"><code class="name flex">
 <span>def <span class="ident">output_cross_correlation</span></span>(<span>A, B, upsamplefactor=1, phase=True)</span>
 </code></dt>
@@ -519,8 +541,6 @@ use iterative optimization</p>
     tuple of floats
         error estimations
     &#34;&#34;&#34;
-    #A = (A - np.min(A) )/np.std(A)
-    #B = (B - np.min(B) )/np.std(B)
     upsamplefactor = 1
 
     if phase:
@@ -599,6 +619,7 @@ use iterative optimization</p>
 <li><code><a title="stretchablecorr.opti_registration.custom_fftfreq" href="#stretchablecorr.opti_registration.custom_fftfreq">custom_fftfreq</a></code></li>
 <li><code><a title="stretchablecorr.opti_registration.dft_dot" href="#stretchablecorr.opti_registration.dft_dot">dft_dot</a></code></li>
 <li><code><a title="stretchablecorr.opti_registration.grad_dft" href="#stretchablecorr.opti_registration.grad_dft">grad_dft</a></code></li>
+<li><code><a title="stretchablecorr.opti_registration.jit" href="#stretchablecorr.opti_registration.jit">jit</a></code></li>
 <li><code><a title="stretchablecorr.opti_registration.output_cross_correlation" href="#stretchablecorr.opti_registration.output_cross_correlation">output_cross_correlation</a></code></li>
 <li><code><a title="stretchablecorr.opti_registration.phase_registration_optim" href="#stretchablecorr.opti_registration.phase_registration_optim">phase_registration_optim</a></code></li>
 </ul>
