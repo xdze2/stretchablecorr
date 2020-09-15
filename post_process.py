@@ -14,10 +14,6 @@
 #     name: python3
 # ---
 
-# +
-# %load_ext autoreload
-# %autoreload 2
-
 import numpy as np
 import matplotlib.pylab as plt
 import pickle
@@ -27,8 +23,6 @@ import yaml
 from skimage.io import imread
 import stretchablecorr as sc
 
-
-# -
 
 # # Stretchable Corr - Post-process
 
@@ -62,9 +56,9 @@ plt.figure(); plt.title(f'sequence standard deviation - {sample_name}');
 plt.imshow(np.std(cube, axis=0), cmap='viridis');
 sc.save_fig('01_cube_std', sample_name, output_dir=output_dir)
 
-# extract stretch value from filenames
-stretch_values = [get_stretch(n, 'hpr1') for n in image_names]
-print('\n', f'{len(stretch_values)} stretch values extracted')
+# Extract stretch value from filenames
+#stretch_values = [get_stretch(n, 'hpr1') for n in image_names]
+#print('\n', f'{len(stretch_values)} stretch values extracted')
 # -
 
 # ## Lagrangian displacement
@@ -75,8 +69,8 @@ print('\n', f'{len(stretch_values)} stretch values extracted')
 # ========================
 datasets = glob(os.path.join(resultdir, '*.pck'))
 
-print(f'Available data set for {sample_name}')
-print( '=======================' + '='*len(sample_name) )
+print(f'Available dataset for {sample_name}')
+print( '======================' + '='*len(sample_name) )
 sc.print_numbered_list([os.path.basename(d) for d in datasets])
 
 # Select a sample:
@@ -105,7 +99,7 @@ try:
     image_mask = ~(image_mask[:, :, -1] < 150)
 
     points_mask = image_mask[points[:, 1], points[:, 0]]
-    points_mask = points_mask.reshape(grid[0].shape)
+    points_mask = points_mask.reshape(grid[0].shape).astype(np.int)
 
     plt.title('image mask')
     plt.imshow(image_mask)
@@ -120,7 +114,7 @@ displ_to_ref = sc.integrate_displacement(displ)
 
 plt.figure(figsize=(15, 8));
 sc.plot_deformed_mesh(grid, displ_to_ref[19],
-                      color_values=points_mask.astype(np.int),
+                      color_values=points_mask,
                       view_factor=2)
 
 
@@ -148,7 +142,7 @@ def finite_diff_strain(grid, displ_field, nu=0.33):
 
 
 # +
-view_factor = 20
+view_factor = 5
 Poisson_coeff = 0.3
 eps_zz_limits = -5, 5 # None  #
 save = False

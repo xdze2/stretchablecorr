@@ -14,10 +14,6 @@
 #     name: python3
 # ---
 
-# +
-# %load_ext autoreload
-# %autoreload 2
-
 import numpy as np
 import matplotlib.pylab as plt
 import stretchablecorr as sc
@@ -31,20 +27,8 @@ sample_name, sample_input_dir = sc.select_sample_dir('./images')
 cube, image_names = sc.load_image_sequence(sample_input_dir)
 metadata['sample_name'] = sample_name
 
-cube_last_first = (cube[0] + cube[-1])/2
 plt.figure(); plt.title(f'first and last images - {sample_name}');
-plt.imshow(cube_last_first, cmap='viridis');
-
-
-# -
-
-def norm_01(I):
-    return (I - I.min())/I.ptp()
-
-
-Ic = np.dstack([norm_01(cube[0])**0.5, norm_01(cube[-1])**0.5, 0.5*np.ones_like(cube[0])])
-
-plt.imshow(Ic)
+sc.imshow_color_diff(cube[0], cube[-1]);
 
 # +
 # ===============
@@ -98,7 +82,7 @@ metadata.update(meta_coarse)
 coarse_trajectories = sc.integrate_displacement(displ_coarse) + points
 
 plt.figure(figsize=(10, 10*cube.shape[1]/cube.shape[2]));
-sc.plot_trajectories(coarse_trajectories, background=cube_last_first)
+sc.plot_trajectories(coarse_trajectories, background=cube[0])
 plt.title('coarse trajectories');
 
 # +
@@ -128,6 +112,7 @@ sc.save_data((grid, displ, err, metadata),
 trajectories = sc.integrate_displacement(displ) + points
 
 plt.figure(figsize=(10, 10*cube.shape[1]/cube.shape[2]));
+cube_last_first = (cube[0] + cube[-1])/2
 sc.plot_trajectories(coarse_trajectories, background=cube_last_first, color='r')
 sc.plot_trajectories(trajectories, background=None)
 
@@ -152,9 +137,7 @@ sc.plot_trajectories(tw_steps_trajectories,
                      background=cube_last_first, gaps=gaps)
 # -
 
-plt.title(f'{sample_name} - Hessian vs. gap error');
-#plt.loglog(gaps.flatten(), np.sqrt(err1[1:, :, 1].flatten()), '.g', alpha=0.5);
-#plt.loglog(gaps.flatten(), np.sqrt(err1[:, :, 1]), '.m', alpha=0.5);
+plt.title(f'{sample_name} - "Hessian" vs. gap error');
 plt.loglog(gaps.flatten(), np.sqrt(err2[:, :, 1].flatten()), '.k', alpha=0.1);
 identity_line = [1e-2, 1e-1]
 plt.loglog(identity_line, identity_line, '-r', linewidth=3)
