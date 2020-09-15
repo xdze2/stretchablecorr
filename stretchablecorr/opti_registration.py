@@ -7,7 +7,14 @@ from scipy.fft import fftn, ifftn
 from scipy.fft import fftshift, fftfreq
 from scipy.signal.windows import blackman
 from scipy.optimize import minimize
-from numba import jit
+
+try:
+    from numba import jit
+except ModuleNotFoundError:
+    print('Warning: numba is not installed')
+
+    def jit(f, *args, **kwargs):
+        return f
 
 nopython = False
 
