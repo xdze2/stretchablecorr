@@ -11,12 +11,14 @@ from scipy.optimize import minimize
 try:
     from numba import jit
 except ModuleNotFoundError:
-    print('Warning: numba is not installed')
+    print('Warning: numba is not installed (no compilation optimization)')
 
-    def jit(f, *args, **kwargs):
-        return f
+    def jit(*args, **kwargs):
+        def do_nothing(f):
+            return f
+        return do_nothing
 
-nopython = False
+nopython = True
 
 @jit(nopython=nopython)
 def custom_fftfreq(n):
@@ -111,8 +113,6 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     tuple of floats
         error estimations
     """
-    #A = (A - np.min(A) )/np.std(A)
-    #B = (B - np.min(B) )/np.std(B)
     upsamplefactor = 1
 
     if phase:
