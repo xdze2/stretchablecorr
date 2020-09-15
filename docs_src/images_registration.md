@@ -93,10 +93,6 @@ Possible sub-pixel accuracy methods are:
 Phase correlation works better when a windowing function is applied before computation of the fourier transforms. The [Blackman window](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.blackman.html) is used. See [Stone2001].
 
 
-## Maximum peak value and sum of square difference
-
-To 
-
 
 ## References
 
