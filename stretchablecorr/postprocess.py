@@ -24,6 +24,64 @@ def integrate_displacement(displ_img_to_img):
     return displ_image_to_ref
 
 
+def centered_diff_2D(u, v):
+    """
+    for a given 2D vector field [u, v](x, y) sampled on a grid
+    returns the centered finite difference for each cell
+    
+    Cell abcd:
+        a--b
+        |  |
+        c--d
+
+    du_x = (ub+ud)/2 - (ua+uc)/2
+    du_y = (ua+ub)/2 - (uc+ud)/2
+    """
+    u_center_y = 0.5*(u[1:, :] + u[:-1, :])
+    u_center_x = 0.5*(u[:, 1:] + u[:, :-1])
+    v_center_y = 0.5*(v[1:, :] + v[:-1, :])
+    v_center_x = 0.5*(v[:, 1:] + v[:, :-1])
+
+    delta_u_x = u_center_y[:, 1:] - u_center_y[:, :-1]
+    delta_u_y = u_center_x[1:, :] - u_center_x[:-1, :]
+
+    delta_v_x = v_center_y[:, 1:] - v_center_y[:, :-1]
+    delta_v_y = v_center_x[1:, :] - v_center_x[:-1, :]
+    
+    return delta_u_x, delta_u_y, delta_v_x, delta_v_y
+
+
+def centered_grad_rect2D(xgrid, ygrid, u, v):
+    """Finite difference gradient for the vector fields u and v
+    evaluated at cell center
+    
+    This is not a proper bilinear interpolation (ie. quad4 element).
+    The xy-grid has to be rectangular.
+
+    output: (dudx, dudy), (dvdx, dvdy)
+    """
+    du_x, du_y, dv_x, dv_y = centered_diff_2D(u, v)
+    dx, _ydx, _xdy, dy = centered_diff_2D(xgrid, ygrid)
+    
+    return [[du_x/dx, du_y/dy],
+            [dv_x/dx, dv_y/dy]]
+
+
+# --- test centered_grad_rect2D
+xgrid, ygrid = np.meshgrid(np.linspace(-1, 1, 5)**2,
+                           np.linspace(1,  5, 7)**0.5)
+u = 5*xgrid + 3*ygrid
+v = 2*xgrid + 7*ygrid
+
+(dudx, dudy), (dvdx, dvdy) = centered_grad_rect2D(xgrid, ygrid, u, v)
+
+np.testing.assert_almost_equal(dudx, 5*np.ones_like(dudx))
+np.testing.assert_almost_equal(dudy, 3*np.ones_like(dudx))
+np.testing.assert_almost_equal(dvdx, 2*np.ones_like(dudx))
+np.testing.assert_almost_equal(dvdy, 7*np.ones_like(dudx))
+# ---
+
+
 def bilinear_fit(points, displacements):
     """Performs a bilinear fit on the displacements field
 
