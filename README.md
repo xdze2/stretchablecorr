@@ -152,3 +152,6 @@ _simplest solution to display **math equation** online, with Katex_
 * and use simple **css style**
 
 
+## Acknowledgment
+
+Code written for the ANR Street ARt Nano Project (ANR 18-CE09-0038-01)
