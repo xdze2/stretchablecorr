@@ -91,6 +91,7 @@ def grad_dft(data, yx):
     return np.array([grady, gradx]) / data.size
 
 
+from skimage.feature import peak_local_max
 
 def phase_registration_optim(A, B, phase=False, verbose=False):
     """Find translation between images A and B
@@ -167,7 +168,11 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     #uy2 = np.dot(uy, uy)
     #uxy2 = np.dot(ux, uy)**2
     #CRBD = sigma2 * (ux2 + uy2)/(ux2*uy2 - uxy2)
-    return -res.x, (1, C_theta)
+
+    # nbr of peaks
+    peaks = peak_local_max(phase_corr-np.min(phase_corr),
+                           min_distance=2, threshold_rel=0.7)
+    return -res.x, (peaks.shape[0], C_theta)
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
@@ -229,3 +234,61 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
                    jac=jac)
 
     return -dx_span, -dy_span, phase_corr, res
+
+
+
+import matplotlib.pylab as plt
+
+def plot_cross_correlation(A0, B0, zoom_factor=1, upsamplefactor=1, phase=True):
+
+    dx_span, dy_span, cross_corr, res = output_cross_correlation(A0, B0,
+                                                                 upsamplefactor=upsamplefactor,
+                                                                 phase=phase)
+    x_opt = -res.x
+
+    argmax_idx = np.unravel_index(np.argmax(cross_corr), cross_corr.shape)
+    argmax = dy_span[argmax_idx[0]], dx_span[argmax_idx[1]]
+    argmax_idx_cc = argmax_idx
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10,4))
+    ax1.pcolor(dx_span, dy_span, np.log(cross_corr))
+    ax1.plot(*x_opt[::-1], 'xr'); 
+    ax1.axis('equal')
+    print('x_opt:', x_opt[::-1])
+    zoom_lim = int( zoom_factor*A0.shape[0]/2 )
+    title = 'phase corr.' if phase else 'cross corr.'
+    ax1.set_title('cross corr')
+    ax1.set_xlim(np.array([-zoom_lim, zoom_lim]) + x_opt[::-1])
+    ax1.set_ylim(np.array([-zoom_lim, zoom_lim]) + x_opt[::-1])
+
+    ax2.set_title('profiles at max')
+    ax2.plot(dy_span, cross_corr[argmax_idx[0], :], label='cut along x')
+    ax2.plot(dx_span, cross_corr[:, argmax_idx[1]], label='cut along y'); ax2.legend()
+    ax2.set_xlim(np.array([-zoom_lim, zoom_lim]) + x_opt[::-1])
+
+
+    ky = -(cross_corr[argmax_idx[0]+1, argmax_idx[1]] +\
+        cross_corr[argmax_idx[0]-1, argmax_idx[1]] -\
+        2*cross_corr[argmax_idx[0], argmax_idx[1]] )/np.diff(dy_span).mean()**2
+    x_peak = np.linspace(-1.5, 1.5, 55)
+    y = np.max(cross_corr) - 0.5*ky*x_peak**2
+    ax2.plot(x_peak, y, label='k FD'); ax2.legend();
+
+    H = np.linalg.inv(res.hess_inv)
+    x_peak = np.linspace(-1.7, 1.7, 55)
+    y = np.max(cross_corr) - 0.5*H[0, 0]*x_peak**2
+    ax2.plot(x_peak, y, label='k Hessian'); ax2.legend();
+
+    print('ky', ky)
+    print('H0', H[0, 0])
+
+    peaks = peak_local_max(cross_corr-np.min(cross_corr), min_distance=4, threshold_rel=0.7)
+    peaks_ampl = cross_corr[peaks[:, 0], peaks[:, 1]] - np.min(cross_corr)
+    arg_peaks = np.argsort(peaks_ampl)
+
+    ax1.plot(dx_span[peaks[arg_peaks, 1]],
+            dy_span[peaks[arg_peaks, 0]], '-sr',
+            markersize=3, linewidth=1, alpha=0.2);
+
+    
+    return -dx_span, -dy_span, cross_corr, res
