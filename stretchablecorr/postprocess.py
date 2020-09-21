@@ -24,15 +24,15 @@ def integrate_displacement(displ_img_to_img):
     return displ_image_to_ref
 
 
-def centered_diff_2D(u, v):
+def cellcentered_diff_2D(u, v):
     """
     for a given 2D vector field [u, v](x, y) sampled on a grid
     returns the centered finite difference for each cell
     
     Cell abcd:
-        a--b
-        |  |
-        c--d
+        a───b
+        │ + │
+        c───d
 
     du_x = (ub+ud)/2 - (ua+uc)/2
     du_y = (ua+ub)/2 - (uc+ud)/2
@@ -51,34 +51,94 @@ def centered_diff_2D(u, v):
     return delta_u_x, delta_u_y, delta_v_x, delta_v_y
 
 
-def centered_grad_rect2D(xgrid, ygrid, u, v):
+def cellcentered_grad_rect2D(xgrid, ygrid, u, v):
     """Finite difference gradient for the vector fields u and v
     evaluated at cell center
     
     This is not a proper bilinear interpolation (ie. quad4 element).
     The xy-grid has to be rectangular.
 
+    used to computed the "Displacement gradient tensor"
+    see Bower p.14
+
     output: (dudx, dudy), (dvdx, dvdy)
     """
-    du_x, du_y, dv_x, dv_y = centered_diff_2D(u, v)
-    dx, _ydx, _xdy, dy = centered_diff_2D(xgrid, ygrid)
+    du_x, du_y, dv_x, dv_y = cellcentered_diff_2D(u, v)
+    dx, _ydx, _xdy, dy = cellcentered_diff_2D(xgrid, ygrid)
     
     return [[du_x/dx, du_y/dy],
             [dv_x/dx, dv_y/dy]]
 
 
-# --- test centered_grad_rect2D
+# --- test cellcentered_grad_rect2D
 xgrid, ygrid = np.meshgrid(np.linspace(-1, 1, 5)**2,
                            np.linspace(1,  5, 7)**0.5)
 u = 5*xgrid + 3*ygrid
 v = 2*xgrid + 7*ygrid
 
-(dudx, dudy), (dvdx, dvdy) = centered_grad_rect2D(xgrid, ygrid, u, v)
+(dudx, dudy), (dvdx, dvdy) = cellcentered_grad_rect2D(xgrid, ygrid, u, v)
 
 np.testing.assert_almost_equal(dudx, 5*np.ones_like(dudx))
 np.testing.assert_almost_equal(dudy, 3*np.ones_like(dudx))
 np.testing.assert_almost_equal(dvdx, 2*np.ones_like(dudx))
 np.testing.assert_almost_equal(dvdy, 7*np.ones_like(dudx))
+# ---
+
+
+def get_LagrangeStrainTensor(xgrid, ygrid, u, v):
+    """Lagrange Strain Tensor (E)
+
+        F = grad(u) + Id 
+        E = 1/2*( FF^T - Id )
+
+    Parameters
+    ----------
+    xgrid, ygrid : 2d arrays of shape (n_y, n_x)
+        underformed grid points
+    u, v : 2d arrays of shape (n_y, n_x)
+        displacements values (u along x, v along y)
+
+    Returns
+    -------
+    4D array of shape (n_y, n_x, 2, 2)
+        Lagrange Strain Tensor for all grid points
+    """
+    grad_u, grad_v = cellcentered_grad_rect2D(xgrid, ygrid, u, v)
+
+    grad_u = np.stack(grad_u, axis=2)
+    grad_v = np.stack(grad_v, axis=2)
+
+    # u = 1*xgrid + 3*ygrid
+    # v = 5*xgrid + 7*ygrid
+    G = np.stack([grad_u, grad_v], axis=3)
+    G = np.transpose(G, axes=(0, 1, 3, 2))
+    # G >>> array([[1., 3.],  [5., 7.]])
+
+    Id = np.ones((*grad_u.shape[:2], 2, 2))
+    Id[:, :] = np.eye(2, 2)
+    # Id[0, 0] >> array([[1., 0.], [0., 1.]])
+
+    F = G + Id
+
+    # Lagrange Strain Tensor
+    E = 0.5*( np.einsum('...ki,...kj', F, F) - Id )
+    return E
+
+
+# --- test get_LagrangeStrainTensor
+xgrid, ygrid = np.meshgrid(np.linspace(-1, 1, 5),
+                           np.linspace(1,  5, 7))
+u = 5*xgrid + 3*ygrid
+v = 2*xgrid + 7*ygrid
+
+E = get_LagrangeStrainTensor(xgrid, ygrid, u, v)
+
+# array([[[[14., 23.],
+#          [23., 36.]],
+np.testing.assert_almost_equal(E[:, :, 0 ,0], 14*np.ones_like(E[:, :, 0 ,1]))
+np.testing.assert_almost_equal(E[:, :, 0 ,1], 23*np.ones_like(E[:, :, 0 ,1]))
+np.testing.assert_almost_equal(E[:, :, 1 ,1], 36*np.ones_like(E[:, :, 0 ,1]))
+np.testing.assert_almost_equal(E[:, :, 1 ,0], 23*np.ones_like(E[:, :, 0 ,1]))
 # ---
 
 
