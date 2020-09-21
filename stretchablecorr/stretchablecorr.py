@@ -10,7 +10,7 @@ except ImportError:
 from skimage.transform.pyramids import pyramid_reduce
 
 from .opti_registration import phase_registration_optim
-
+from .opti_registration import coarse_peak_search
 
 def crop(I, xy_center, half_size):
     """Returns the centered square at the position xy
@@ -113,16 +113,31 @@ def get_shifts(I, J, x, y,
         coarse_window_half_size = min(coarse_window_half_size,
                                       x_margin,
                                       y_margin)
-        source, ij_src = crop(I, (x, y), coarse_window_half_size)
-        target, ij_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
-        #shifts = phase_cross_correlation(source, target,
-        #                                 upsample_factor=1,
-        #                                 return_error=False)
-        #shifts = -shifts  # displacement = -registration = dst - src
-        shifts, *_ = phase_registration_optim(source, target, phase=True)
+        A0, ij0_src = crop(I, (x, y), coarse_window_half_size)
+        B0, ij0_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
 
-        dx += shifts[1]
-        dy += shifts[0]
+        offsets, _percent = coarse_peak_search(A0, B0,
+                                               phase=False,
+                                               threshold_rel=0.9)
+        if  len(offsets)>1:
+            print('len(offsets)', len(offsets), '---', end='\r')
+
+        A1, ij_src = crop(I, (x, y), window_half_size)
+        res = []
+        for offset in offsets:
+            offset = offset + np.array(ij0_tgt) - np.array(ij0_src)
+            xy_with_offset = (x+dx+offset[1], y+dy+offset[0])
+            B1, ij_tgt = crop(J, xy_with_offset, window_half_size)
+            shift, err = phase_registration_optim(A1, B1, phase=False)
+            res.append((shift + ij_tgt - ij_src, err))
+            
+        shifts, errors = min(res, key=lambda x:x[1][0])
+
+        #shifts, *_ = phase_registration_optim(source, target, phase=True)
+
+        dx = shifts[1]
+        dy = shifts[0]
+        return np.array((dx, dy)), errors
 
     source, ij_src = crop(I, (x, y), window_half_size)
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)

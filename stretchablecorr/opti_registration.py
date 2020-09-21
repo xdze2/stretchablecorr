@@ -91,7 +91,54 @@ def grad_dft(data, yx):
     return np.array([grady, gradx]) / data.size
 
 
+def fft_crosscorrelation(A, B, phase=False,
+                         upsamplefactor=1):
+    upsamplefactor = 1
+
+    if phase:
+        u = blackman(A.shape[0])
+        v = blackman(A.shape[1])
+        window = u[:, np.newaxis] * v[np.newaxis, :]
+    else:
+        window = 1
+
+    a = fftn(A * window)
+    b = fftn(B * window)
+
+    ab = a * b.conj()
+    if phase:
+        ab = ab / np.abs(ab)
+
+    phase_corr = ifftn(fftshift(ab),
+                       s=upsamplefactor*np.array(ab.shape))
+    phase_corr = np.abs(fftshift(phase_corr))
+
+    dx_span = fftshift(fftfreq(phase_corr.shape[1])) * A.shape[1]
+    dy_span = fftshift(fftfreq(phase_corr.shape[0])) * A.shape[0]
+
+    return dx_span, dy_span, phase_corr
+
+
 from skimage.feature import peak_local_max
+
+def coarse_peak_search(A, B, phase=False, threshold_rel=0.9):
+
+    dx_span, dy_span, phase_corr = fft_crosscorrelation(A, B, phase=phase)
+
+    # Multi-peak search (argmax)
+    min_cc, max_cc = np.min(phase_corr), np.max(phase_corr)
+    peaks = peak_local_max(phase_corr - min_cc,
+                           min_distance=4,
+                           threshold_rel=threshold_rel)
+
+    peaks_ampl = (phase_corr[peaks[:, 0], peaks[:, 1]] - min_cc)/(max_cc - min_cc)
+    peaks_argsort = np.argsort(peaks_ampl)[::-1]
+
+    dx = -dx_span[peaks[peaks_argsort, 1]]
+    dy = -dy_span[peaks[peaks_argsort, 0]]
+
+    return list(zip(dy, dx)), peaks_ampl[peaks_argsort]
+
 
 def phase_registration_optim(A, B, phase=False, verbose=False):
     """Find translation between images A and B
@@ -169,10 +216,10 @@ def phase_registration_optim(A, B, phase=False, verbose=False):
     #uxy2 = np.dot(ux, uy)**2
     #CRBD = sigma2 * (ux2 + uy2)/(ux2*uy2 - uxy2)
 
-    # nbr of peaks
-    peaks = peak_local_max(phase_corr-np.min(phase_corr),
-                           min_distance=2, threshold_rel=0.7)
-    return -res.x, (peaks.shape[0], C_theta)
+    # nbr of peaks : 
+    #peaks = peak_local_max(phase_corr-np.min(phase_corr),
+    #                       min_distance=2, threshold_rel=0.7)
+    return -res.x, (sigma2, C_theta)
 
 
 def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
@@ -287,8 +334,7 @@ def plot_cross_correlation(A0, B0, zoom_factor=1, upsamplefactor=1, phase=True):
     arg_peaks = np.argsort(peaks_ampl)
 
     ax1.plot(dx_span[peaks[arg_peaks, 1]],
-            dy_span[peaks[arg_peaks, 0]], '-sr',
-            markersize=3, linewidth=1, alpha=0.2);
+             dy_span[peaks[arg_peaks, 0]], '-sr',
+             markersize=3, linewidth=1, alpha=0.2)
 
-    
     return -dx_span, -dy_span, cross_corr, res
