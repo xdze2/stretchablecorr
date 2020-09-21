@@ -128,8 +128,8 @@ def get_LagrangeStrainTensor(xgrid, ygrid, u, v):
 # --- test get_LagrangeStrainTensor
 xgrid, ygrid = np.meshgrid(np.linspace(-1, 1, 5),
                            np.linspace(1,  5, 7))
-u = 5*xgrid + 3*ygrid
-v = 2*xgrid + 7*ygrid
+u = 1*xgrid + 3*ygrid
+v = 5*xgrid + 7*ygrid
 
 E = get_LagrangeStrainTensor(xgrid, ygrid, u, v)
 
