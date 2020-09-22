@@ -286,17 +286,35 @@ def output_cross_correlation(A, B, upsamplefactor=1, phase=True):
 
 import matplotlib.pylab as plt
 
-def plot_cross_correlation(A0, B0, zoom=1, upsamplefactor=1, phase=True):
+def plot_cross_correlation(A0, B0, zoom=1, upsamplefactor=1, phase=False):
+    """Plot cross-correlation image for A0, B0 images
+
+    Parameters
+    ----------
+    A0, B0 : 2d array
+        input images
+    zoom : int, optional
+        zoom level, centered at the peak, by default 1
+    upsamplefactor : int, optional
+        increase the sampling of the cross-correlation, by default 1
+    phase : bool, optional
+        phase correlation or cross-corr., by default False
+
+    Returns
+    -------
+    dx_span, dy_span, cross_corr, res
+    """
 
     dx_span, dy_span, cross_corr, res = output_cross_correlation(A0, B0,
                                                                  upsamplefactor=upsamplefactor,
                                                                  phase=phase)
     shifts = -res.x[::-1]
+    dx_span, dy_span = -dx_span, -dy_span
     print('shifts:', shifts)
 
     argmax_idx = np.unravel_index(np.argmax(cross_corr), cross_corr.shape)
-    argmax = dy_span[argmax_idx[0]], dx_span[argmax_idx[1]]
-    argmax_idx_cc = argmax_idx
+    #argmax = dy_span[argmax_idx[0]], dx_span[argmax_idx[1]]
+    #argmax_idx_cc = argmax_idx
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10,4))
     ax1.pcolor(dx_span, dy_span, np.log(cross_corr))
@@ -346,4 +364,4 @@ def plot_cross_correlation(A0, B0, zoom=1, upsamplefactor=1, phase=True):
              dy_span[peaks[arg_peaks, 0]], '-sr',
              markersize=3, linewidth=1, alpha=0.2)
     ax1.plot(0, 0, '+', color='black', markersize=5)
-    return -dx_span, -dy_span, cross_corr, res
+    return dx_span, dy_span, cross_corr, res
