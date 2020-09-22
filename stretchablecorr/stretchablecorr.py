@@ -59,28 +59,26 @@ def get_shifts(I, J, x, y,
                window_half_size,
                offset=(0.0, 0.0),
                method='skimage',
-               coarse_search=False, **params):
+               **params):
     """Interface to registration methods
 
     Available methods:
-        - 'skimage': see [`phase_cross_correlation`](https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation) from skimage
-        - 'opti': use iterative optimization to find the maximum (function `phase_registration_optim`)
+        - 'skimage' : see [`phase_cross_correlation`](https://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.register_translation) from skimage  
+        - 'opti' : use iterative optimization to find the maximum (function `phase_registration_optim`)  
+        - 'multipeak' : automated coarse search, see `multi_peak_registration` function
 
     Parameters
     ----------
     I, J : 2D arrays
         input images
-    x, y : tuple
+    x, y : floats
         point coordinates arround which shift is evaluated
     window_half_size: int
         half-size of the square region centered on (x, y) used for registration
     offset : tuple (dx, dy), default (0, 0)
         pre-computed displacement of J relative to I
-    method : string {'skimage', 'opti'}
+    method : string {'skimage', 'opti', 'multipeak'}
         name of method used
-    coarse_search : Bool, default False
-        if True perform a first registration
-        on a larger region (100px) to find offset
     params : other paramters
         passed to the registration method
 
@@ -106,55 +104,96 @@ def get_shifts(I, J, x, y,
     """
     dx, dy = offset
 
-    if coarse_search:
-        coarse_window_half_size = 70  #  3*window_half_size
-        x_margin = int(min(x, I.shape[1]-x))
-        y_margin = int(min(y, I.shape[0]-y))
-        coarse_window_half_size = min(coarse_window_half_size,
-                                      x_margin,
-                                      y_margin)
-        A0, ij0_src = crop(I, (x, y), coarse_window_half_size)
-        B0, ij0_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
-
-        offsets, _percent = coarse_peak_search(A0, B0,
-                                               phase=False,
-                                               threshold_rel=0.9)
-        if  len(offsets)>1:
-            print('len(offsets)', len(offsets), '---', end='\r')
-
-        A1, ij_src = crop(I, (x, y), window_half_size)
-        res = []
-        for offset in offsets:
-            offset = offset + np.array(ij0_tgt) - np.array(ij0_src)
-            xy_with_offset = (x+dx+offset[1], y+dy+offset[0])
-            B1, ij_tgt = crop(J, xy_with_offset, window_half_size)
-            shift, err = phase_registration_optim(A1, B1, phase=False)
-            res.append((shift + ij_tgt - ij_src, err))
-            
-        shifts, errors = min(res, key=lambda x:x[1][0])
-
-        #shifts, *_ = phase_registration_optim(source, target, phase=True)
-
-        dx = shifts[1]
-        dy = shifts[0]
-        return np.array((dx, dy)), errors
-
     source, ij_src = crop(I, (x, y), window_half_size)
     target, ij_tgt = crop(J, (x+dx, y+dy), window_half_size)
 
     if method == 'skimage':
         shifts, *errors = phase_cross_correlation(source, target,
                                                   **params)
-        shifts = -shifts  # displ. = -registration = dst - src
+        dx = -shifts[1] + (ij_tgt[1] - ij_src[1])
+        dy = -shifts[0] + (ij_tgt[0] - ij_src[0])
+
     elif method == 'opti':
         shifts, errors = phase_registration_optim(source, target,
                                                   **params)
+        dx = shifts[1] + (ij_tgt[1] - ij_src[1])
+        dy = shifts[0] + (ij_tgt[0] - ij_src[0])
+
+    elif method == 'multipeak':
+        shifts, errors = multi_peak_registration(I, J, x, y, dx, dy,
+                                                 window_half_size, **params)
+        dx = shifts[0]
+        dy = shifts[1]
     else:
         raise TypeError("method must be 'skimage' or 'opti'")
 
-    dx = shifts[1] + (ij_tgt[1] - ij_src[1])
-    dy = shifts[0] + (ij_tgt[0] - ij_src[0])
 
+
+    return np.array((dx, dy)), errors
+
+
+def multi_peak_registration(I, J, x, y, dx, dy,
+                            window_half_size,
+                            coarse_window_half_size=80,
+                            threshold_rel=0.9):
+    """Multi-peak registration method
+
+    Look for all cross-correlation peaks higher than 90% of the max (threshold_rel=0.9)  
+    Keep the one with smallest residual
+
+    Parameters
+    ----------
+    I, J : 2D arrays
+        input images
+    x, y : floats
+        point coordinates arround which shift is evaluated
+    dx, dy : floats
+        offsets
+    window_half_size: int
+        half-size of the square region centered on (x, y) used for registration
+    coarse_window_half_size : int, optional
+        size used for the coarse search, by default 80
+    threshold_rel : float, optional
+        keep peak higher than threshold_rel*max(CC), by default 0.9
+
+    Returns
+    -------
+    dx, dy
+        displacements
+    error
+        scalar correlation error
+    """
+    x_margin = int(min(x, I.shape[1]-x))
+    y_margin = int(min(y, I.shape[0]-y))
+    coarse_window_half_size = min(coarse_window_half_size,
+                                  x_margin,
+                                  y_margin)
+    A0, ij0_src = crop(I, (x, y), coarse_window_half_size)
+    B0, ij0_tgt = crop(J, (x+dx, y+dy), coarse_window_half_size)
+
+    offsets, _percent = coarse_peak_search(A0, B0,
+                                            phase=False,
+                                            threshold_rel=threshold_rel)
+    offsets2, _percent = coarse_peak_search(A0, B0,
+                                            phase=True,
+                                            threshold_rel=threshold_rel)
+    offsets.extend(offsets2)
+    if  len(offsets)>1:
+        print('nbr peak :', len(offsets), '---', end='\r')
+
+    A1, ij_src = crop(I, (x, y), window_half_size)
+    res = []
+    for offset in offsets:
+        offset = offset + np.array(ij0_tgt) - np.array(ij0_src)
+        xy_with_offset = (x+dx+offset[1], y+dy+offset[0])
+        B1, ij_tgt = crop(J, xy_with_offset, window_half_size)
+        shift, err = phase_registration_optim(A1, B1, phase=False)
+        res.append((shift + ij_tgt - ij_src, err))
+
+    shifts, errors = min(res, key=lambda x:x[1][0])
+
+    dx = shifts[1]
+    dy = shifts[0]
     return np.array((dx, dy)), errors
 
 
