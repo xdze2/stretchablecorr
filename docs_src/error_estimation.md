@@ -10,6 +10,14 @@
 
 - Real images with rigid body motion only
 
+
+
+## Multi-image alignement
+- https://twitter.com/docmilanfar/status/1305028507026644993
+- A Practical Guide to Multi-image Alignment https://arxiv.org/abs/1802.03280
+- [ Constrained, globally optimal, multi-frame motion estimation ](https://ieeexplore.ieee.org/document/1628814)
+- Fundamental Limits in Multi-image Alignment https://arxiv.org/pdf/1602.01541.pdf
+
 ## Error estimators
 
 - Integral breadth: 
@@ -17,7 +25,6 @@
 - z-score (same as IB ?)
 - based on curvature at max.
 
-- Fundamental Limits in Multi-image Alignment https://arxiv.org/pdf/1602.01541.pdf
 
 1. RMS (relative error). method implemented in skimage  
 --> corresponds to peak amplitude: $max(A \otimes B)$
@@ -99,6 +106,11 @@ $$
 P \cdot log\,P(B|\delta) = \sum \frac{2}{\sigma^2} \left[ 1-  A\otimes B  \right] \cdot \exp(-\frac{2}{\sigma^2} \left[ 1-  A\otimes B  \right])
 $$ 
 
+## Craméer-Rao bounds
+
+$$
+\frac{\partial^2}{\partial \delta^2} log\,P
+$$
 
 ## FRAE (Fast Registration Accuracy Evaluation)
 
