@@ -140,16 +140,25 @@ def plot_deformed_mesh(grid, displ_field,
     ref_colors = np.zeros_like(moved_out)
     ref_colors[moved_out] = 1
     
-    plt.pcolor(*grid, ref_colors,
+    # note : pcolormesh doesn't work with NaN
+    plt.pcolor(*grid, ref_colors,  
                edgecolors='black', linewidth=1, antialiased=True,
                cmap='Reds', alpha=0.1)
+    
 
     # Front mesh:
-    plt.pcolor(x_amplified, y_amplified, color_values,
-               edgecolors='#2b2b2b',
-               linewidth=1,
-               antialiased=True,
-               cmap=cmap)
+    cs = plt.pcolor(x_amplified, y_amplified, color_values,
+                    edgecolors='#2b2b2b',
+                    linewidth=1,
+                    antialiased=True,
+                    cmap=cmap)
+    cs.cmap.set_over('gray')
+    cs.cmap.set_under('gray')
+
+
+    plt.annotate(f"×{view_factor}", (1, 1), xytext=(-5, -5),
+                 xycoords='axes fraction', textcoords='offset points',
+                 fontsize=14, fontweight='bold', ha='right', va='top')
 
     plt.axis('equal')
     plt.xlabel('x [pixel]'); plt.ylabel('y [pixel]');   
