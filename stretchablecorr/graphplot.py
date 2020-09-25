@@ -127,9 +127,9 @@ def plot_deformed_mesh(grid, displ_field,
         diff_x = np.diff(x_amplified, axis=1, prepend=np.min(x_amplified)-10)
         diff_y = np.diff(y_amplified, axis=0, prepend=np.min(y_amplified)-10)
         displ_x_mask = np.less(diff_x, 0,
-                            where=~np.isnan(diff_x))
+                               where=~np.isnan(diff_x))
         displ_y_mask = np.less(diff_y, 0,
-                            where=~np.isnan(diff_y))
+                               where=~np.isnan(diff_y))
         displ_mask = np.logical_or(displ_x_mask, displ_y_mask)
 
         x_amplified[displ_mask] = np.NaN
@@ -149,14 +149,7 @@ def plot_deformed_mesh(grid, displ_field,
                edgecolors='#2b2b2b',
                linewidth=1,
                antialiased=True,
-               cmap=cmap); # Spectral
-    #plt.clim(0, +10)
+               cmap=cmap)
 
-    #sigma = np.nanstd(eps_33_pct)
-    #m = np.nanmean(eps_33_pct)
-    #plt.clim(m-1.5*sigma, m+1.5*sigma)
-
-    plt.axis('equal');
-    #if color_values is not None:
-    #    plt.colorbar();
+    plt.axis('equal')
     plt.xlabel('x [pixel]'); plt.ylabel('y [pixel]');   
