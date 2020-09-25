@@ -108,7 +108,8 @@ def plot_trajectories(trajectories, background=None, gaps=None,
 
 def plot_deformed_mesh(grid, displ_field,
                        color_values=None,
-                       view_factor=10, cmap='Spectral'):
+                       view_factor=10,
+                       displ_threshold=True, cmap='Spectral'):
     
     if color_values is None:
         color_values = np.zeros_like(grid[0])
@@ -118,6 +119,21 @@ def plot_deformed_mesh(grid, displ_field,
     positions_amplified = displ_field*view_factor + points
     x_amplified = positions_amplified[:, 0].reshape(grid[0].shape)
     y_amplified = positions_amplified[:, 1].reshape(grid[0].shape)
+
+    displ_field_amplified = view_factor * displ_field
+
+    # Remove points where displacement > threshold
+    if displ_threshold:
+        diff_x = np.diff(x_amplified, axis=1, prepend=np.min(x_amplified)-10)
+        diff_y = np.diff(y_amplified, axis=0, prepend=np.min(y_amplified)-10)
+        displ_x_mask = np.less(diff_x, 0,
+                            where=~np.isnan(diff_x))
+        displ_y_mask = np.less(diff_y, 0,
+                            where=~np.isnan(diff_y))
+        displ_mask = np.logical_or(displ_x_mask, displ_y_mask)
+
+        x_amplified[displ_mask] = np.NaN
+        y_amplified[displ_mask] = np.NaN
 
     # Background Reference grid:
     moved_out = np.any(np.isnan(displ_field), axis=1).reshape(grid[0].shape)
@@ -130,10 +146,10 @@ def plot_deformed_mesh(grid, displ_field,
 
     # Front mesh:
     plt.pcolor(x_amplified, y_amplified, color_values,
-               edgecolors='black',
+               edgecolors='#2b2b2b',
                linewidth=1,
                antialiased=True,
-               cmap=cmap);# Spectral
+               cmap=cmap); # Spectral
     #plt.clim(0, +10)
 
     #sigma = np.nanstd(eps_33_pct)
@@ -141,6 +157,6 @@ def plot_deformed_mesh(grid, displ_field,
     #plt.clim(m-1.5*sigma, m+1.5*sigma)
 
     plt.axis('equal');
-    if color_values is not None:
-        plt.colorbar();
+    #if color_values is not None:
+    #    plt.colorbar();
     plt.xlabel('x [pixel]'); plt.ylabel('y [pixel]');   
