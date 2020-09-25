@@ -42,7 +42,7 @@ usually the points are meshed using Delaunay triangulation
 - **`bisplrep`** : (older wrapping) Low-level interface to FITPACK functions
 
 
-so there is no quad-mesh 2D interpolation method !?  (for instance bilinear interpolation)
+so there is no quad-mesh 2D interpolation method !?  (for instance bilinear interpolation, ie QUAD4 elements)
 
 For instance [matplotlib's pcolormesh](https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.pyplot.pcolormesh.html) works on a "non-regular rectangular grid"
 
