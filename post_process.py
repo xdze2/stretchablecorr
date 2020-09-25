@@ -14,6 +14,9 @@
 #     name: python3
 # ---
 
+# %load_ext autoreload
+# %autoreload 2
+
 import numpy as np
 import matplotlib.pylab as plt
 import pickle
@@ -36,8 +39,8 @@ def get_stretch(image_name, sample_name):
     image_name = image_name.replace(sample_name, '')
     image_name = image_name.split('.')[0]
     u, d = image_name.split('p')
-    d = d[:2]
-    s = float(u) + float(d)/100
+    d = d[:1]
+    s = float(u) + float(d)/10
     return s
 
 
@@ -88,14 +91,15 @@ points = np.stack( (grid[0].flatten(), grid[1].flatten()), axis=-1 )
 print('')
 print('Parameters:')
 print('===========')
-print( yaml.dump(meta, default_flow_style=False))
+print(yaml.dump(meta, default_flow_style=False))
 # -
 
 # =========================
-#  Load an image as a mask
+#  Load an image as a MASK
 # =========================
+image_mask_path = f'images/{sample_name}_mask.png'
 try:
-    image_mask = imread(f'images/{sample_name}_mask.png')
+    image_mask = imread(image_mask_path)
     image_mask = ~(image_mask[:, :, -1] < 150)
 
     points_mask = image_mask[points[:, 1], points[:, 0]]
@@ -107,51 +111,85 @@ try:
     #points_mask = np.logical_not( points_mask )
     #print(points_mask[0, 0])
 except:
-    print('no image mask')
+    print(f'no image mask found ({image_mask_path})')
     points_mask = None
+
+# ## Graph error
+
+# +
+err_H = err[:, :, 1].reshape([err.shape[0], *grid[0].shape])
 
 displ_to_ref = sc.integrate_displacement(displ)
 
+k = 5
 plt.figure(figsize=(15, 8));
-sc.plot_deformed_mesh(grid, displ_to_ref[19],
-                      color_values=points_mask,
-                      view_factor=2)
-
+sc.plot_deformed_mesh(grid, displ_to_ref[k],
+                      color_values=err_H[k], cmap='Oranges',
+                      view_factor=16)
+plt.colorbar();
+# -
 
 # ### Deformed mesh for all steps
 
-def finite_diff_strain(grid, displ_field, nu=0.33):
-    # not exactly...
-    # instantaneous or absolute ? grid(t)...
-    # see Bower page 72
-    x, y = grid
-
-    dx = np.diff(x, axis=1, append=np.NaN)
-    dy = np.diff(y, axis=0, append=np.NaN)
-
-    u = displ_field[:, 0].reshape(grid[0].shape)
-    v = displ_field[:, 1].reshape(grid[0].shape)
-    
-    dudx = np.diff(u, axis=0, append=np.NaN) / dx
-    dvdy = np.diff(v, axis=0, append=np.NaN) / dy 
-
-    # Poisson coeff
-    eps_33 = (dudx + dvdy)*nu/(1-2*nu)/(1+nu)
-    
-    return dudx*100, dvdy*100, eps_33*100
-
+k = 1
 
 # +
-view_factor = 5
+print('k=', k)
+displ_field = displ_to_ref[k]
+print(displ_field.shape)
+
+u = displ_field[:, 0].reshape(grid[0].shape)
+v = displ_field[:, 1].reshape(grid[0].shape)
+
+
+view_factor = 2
+
+# Def field shown:
+E = sc.get_LagrangeStrainTensor(*grid, u, v) *100 # percent
+field_value = E[:, :, 1, 1]
+field_name = "Lagrange Strain Eyy"
+
+# Graph
+plt.figure(figsize=(12, 8));
+sc.plot_deformed_mesh(grid, displ_field,
+                      color_values=field_value,
+                      view_factor=view_factor,
+                      cmap='PiYG')
+
+# Set color scale
+nbr_std = 1
+std = np.nanstd(field_value)
+
+ref_value = np.nanmedian(field_value)
+alpha = 0.05  # def quantile for min-max colors
+half_range = max(ref_value-np.nanquantile(field_value, alpha),
+                 np.nanquantile(field_value, 1-alpha)-ref_value)
+c_ticks = np.linspace(-half_range + ref_value, +half_range + ref_value, 7)
+c_ticks = np.sort(np.hstack([c_ticks, [ref_value, ]]))
+plt.clim([np.min(c_ticks), np.max(c_ticks)])
+
+cbar = plt.colorbar(ticks=c_ticks);
+cbar.ax.set_yticklabels([f'{u:.2f} %\n({u-ref_value:+0.2f}%)' for u in c_ticks]) ;
+#cbar.ax.get_yticklabels()[1].set_color('red') 
+
+plt.title(f'{sample_name} - #{k:02d} - {field_name}')
+
+k += 1
+
+# +
+### old
+
+# +
+view_factor = 3
 Poisson_coeff = 0.3
-eps_zz_limits = -5, 5 # None  #
+eps_zz_limits = -10, 10 # None  #
 save = False
 
-for image_id, displ_field in enumerate(displ_to_ref[:12]):
+for image_id, displ_field in enumerate(displ_to_ref):
 
     eps_xx, eps_yy, eps_zz = finite_diff_strain(grid, displ_field, nu=Poisson_coeff)
     field_value = eps_yy
-    field_value_name = 'eps_yy'
+    field_value_name = 'eps_z'
     
     if points_mask is not None:
         field_value[points_mask] = np.NaN
@@ -185,7 +223,6 @@ print('\n done')
 
 
 # -
-
 
 
 

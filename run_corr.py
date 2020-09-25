@@ -37,8 +37,8 @@ sc.imshow_color_diff(cube[0], cube[-1]);
 # margin > window_half_size
 # margin > largest displacement
 
-grid_spacing = 75  # px
-grid_margin  = 150  # px
+grid_spacing =  15  # px
+grid_margin  = 100  # px
 
 # ----
 grid = sc.build_grid(cube.shape[1:], margin=grid_margin, spacing=grid_spacing)
@@ -117,15 +117,38 @@ sc.plot_trajectories(coarse_trajectories, background=cube_last_first, color='r')
 sc.plot_trajectories(trajectories, background=None)
 
 # +
+# =====================
+#  Mutli peak method
+# =====================
+
+params = {'coarse_window_half_size': 80,
+          'window_half_size': 20,
+          'method':'multipeak'
+         }
+
+displ_multi, err = sc.track_displ_img_to_img(cube, points, **params)
+
+print('max displ:', np.nanmax(np.sqrt(np.sum(displ_multi**2, axis=-1))), 'px')
+
+# +
+# Graph
+trajectories_multi = sc.integrate_displacement(displ_multi) + points
+
+plt.figure(figsize=(10, 10*cube.shape[1]/cube.shape[2]));
+cube_last_first = (cube[0] + cube[-1])/2
+sc.plot_trajectories(coarse_trajectories, background=cube_last_first, color='r')
+sc.plot_trajectories(trajectories_multi, background=None)
+
+# + jupyter={"outputs_hidden": true}
 # ====================
 #  two steps tracking 
 # ====================
 
 params = {'window_half_size': 20,
           'method':'opti',
-          'phase':False}
+          'phase':False, 'coarse_search':True}
 tw_steps_displ, gaps, err1, err2 = sc.track_displ_2steps(cube, points,
-                                                         offsets=displ_coarse,
+                                                         offsets=None,
                                                          **params)
 
 # +
@@ -134,14 +157,36 @@ tw_steps_trajectories = sc.integrate_displacement(tw_steps_displ) + points
 
 plt.figure(figsize=(10, 10*cube.shape[1]/cube.shape[2]));
 sc.plot_trajectories(tw_steps_trajectories,
-                     background=cube_last_first, gaps=gaps)
+                     background=cube[0], gaps=gaps)
 # -
 
 plt.title(f'{sample_name} - "Hessian" vs. gap error');
-plt.loglog(gaps.flatten(), np.sqrt(err2[:, :, 1].flatten()), '.k', alpha=0.1);
+plt.loglog(gaps.flatten(), np.sqrt(err2[:, :, 1].flatten()), '.k', alpha=0.01);
 identity_line = [1e-2, 1e-1]
 plt.loglog(identity_line, identity_line, '-r', linewidth=3)
 plt.xlabel('triangulation gap (px)');
 plt.ylabel('estimation from Hessian (px)');
+
+# ## Test coarse_search (v2)
+
+# +
+params = {'window_half_size': 30,
+          'method':'opti',
+          'phase':False,
+          'coarse_search':True}
+
+displ, err = sc.track_displ_img_to_img(cube, points,
+                                       offsets=None,
+                                       **params)
+
+print('max displ:', np.nanmax(np.sqrt(np.sum(displ**2, axis=-1))), 'px')
+
+# +
+trajectories = sc.integrate_displacement(displ) + points
+
+plt.figure(figsize=(10, 10*cube.shape[1]/cube.shape[2]));
+sc.plot_trajectories(trajectories, background=cube[0])
+plt.title('coarse trajectories');
+# -
 
 
