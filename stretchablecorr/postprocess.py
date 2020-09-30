@@ -24,6 +24,13 @@ def integrate_displacement(displ_img_to_img):
     return displ_image_to_ref
 
 
+def get_center_points(xgrid, ygrid):
+    """Cell center point coordinates"""
+    center_y = 0.25*(ygrid[1:, 1:] + ygrid[1:, :-1] + ygrid[:-1, 1:] + ygrid[:-1, :-1])
+    center_x = 0.25*(xgrid[1:, 1:] + xgrid[1:, :-1] + xgrid[:-1, 1:] + xgrid[:-1, :-1])
+    return center_x, center_y
+
+
 def cellcentered_diff_2D(u, v):
     """
     for a given 2D vector field [u, v](x, y) sampled on a grid
@@ -140,6 +147,40 @@ np.testing.assert_almost_equal(E[:, :, 0 ,1], 23*np.ones_like(E[:, :, 0 ,1]))
 np.testing.assert_almost_equal(E[:, :, 1 ,1], 36*np.ones_like(E[:, :, 0 ,1]))
 np.testing.assert_almost_equal(E[:, :, 1 ,0], 23*np.ones_like(E[:, :, 0 ,1]))
 # ---
+
+
+
+def get_InfinitesimalStrainTensor(xgrid, ygrid, u, v):
+    """Small Displacement Strain Tensor (E)
+
+        E = 1/2*( grad(u) + grad(u)^T )
+
+    Parameters
+    ----------
+    xgrid, ygrid : 2d arrays of shape (n_y, n_x)
+        underformed grid points
+    u, v : 2d arrays of shape (n_y, n_x)
+        displacements values (u along x, v along y)
+
+    Returns
+    -------
+    4D array of shape (n_y, n_x, 2, 2)
+        Lagrange Strain Tensor for all grid points
+    """
+    grad_u, grad_v = cellcentered_grad_rect2D(xgrid, ygrid, u, v)
+
+    grad_u = np.stack(grad_u, axis=2)
+    grad_v = np.stack(grad_v, axis=2)
+
+    # u = 1*xgrid + 3*ygrid
+    # v = 5*xgrid + 7*ygrid
+    G = np.stack([grad_u, grad_v], axis=3)
+    G = np.transpose(G, axes=(0, 1, 3, 2))
+    # G >>> array([[1., 3.],  [5., 7.]])
+
+    # Strain Tensor
+    E = 0.5*( G + np.transpose(G, axes=(0, 1, 3, 2)) )
+    return E
 
 
 def bilinear_fit(points, displacements):
