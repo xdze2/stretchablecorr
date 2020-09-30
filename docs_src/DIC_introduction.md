@@ -56,6 +56,8 @@ Further needed hypothesis, which are obvious in case of mechanical test analysis
 * [list of other DIC softwares](./list_DICsoftwares.html)
 * [list of articles about DIC](./list_of_references.html)
 * [code documentation (docstrings)](./stretchablecorr/index.html)
+* [Finite Strain equations](./finite_strain_theo.html)
+
 
 ### Some references (review)
 
