@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>finite strain</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="./pandoc.css" />
+  <script src="./katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   var macros = [];
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     katex.render(texText.data, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      macros: macros,
+      fleqn: false
+     });
+  }}});
+  </script>
+  <link rel="stylesheet" href="./katex.min.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">finite strain</h1>
+</header>
+<section id="foofinite-strain-theory" class="level2">
+<h2>Finite Strain Theory</h2>
+<p>ref. <a href="http://solidmechanics.org/">Applied Mechanics of Solids, Allan F. Bower</a></p>
+<ul>
+<li><strong>Displacement field <span class="math inline">u</span> :</strong></li>
+</ul>
+<p><span class="math display">
+x(t) = x_0 + u(x_0, \, t)
+</span></p>
+<p>where <span class="math inline">x_0</span> is the reference position and <span class="math inline">x</span> the new position.</p>
+<ul>
+<li><strong>Displacement Gradient Tensor :</strong></li>
+</ul>
+<p><span class="math display">
+u \otimes \nabla_{ik} = \frac{\partial u_i}{\partial x_k}
+</span></p>
+<p>Indices, <span class="math inline">i</span> and <span class="math inline">k</span>, representes spatial dimensions.</p>
+<p>&#x2013;&gt; Finite difference, could be point-centered (3x3 points) or cell-centered (2x2 points)</p>
+<ul>
+<li><strong>Deformation Gradient Tensor :</strong></li>
+</ul>
+<p><span class="math display">
+F = I + u \otimes \nabla
+</span></p>
+<p>Volume change is given by The Jacobian :</p>
+<p><span class="math display">
+J = det(F)= \frac{dV}{dV_0}
+</span></p>
+<ul>
+<li><strong>The Lagrange strain tensor :</strong></li>
+</ul>
+<p><span class="math display">
+E = \frac{1}{2}(\, FF^T - I \,)
+</span></p>
+</section>
+</body>
+</html>

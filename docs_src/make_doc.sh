@@ -16,6 +16,10 @@ pandoc --defaults=./pandoc.yaml \
     ./list_of_references.md -o ../docs/list_of_references.html \
     --metadata title="list of references"
 
+pandoc --defaults=./pandoc.yaml \
+    ./finit_strain_theo.md -o ../docs/finite_strain_theo.html \
+    --metadata title="finite strain"
+
 
 pdoc --html --output-dir ../docs ../stretchablecorr --force
 
