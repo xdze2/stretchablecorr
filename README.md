@@ -154,4 +154,4 @@ _simplest solution to display **math equation** online, with Katex_
 
 ## Acknowledgment
 
-Code written for the ANR Street ARt Nano Project (ANR 18-CE09-0038-01)
+Work funded by ANR Street ARt Nano Project (ANR 18-CE09-0038-01)
